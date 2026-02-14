@@ -1,0 +1,12 @@
+# python
+__pycache__/
+*.pyc
+
+# venv
+.venv/
+
+# outputs (generated)
+outputs/
+
+# editor junk
+.vscode/
