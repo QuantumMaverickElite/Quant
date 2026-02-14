@@ -11,3 +11,5 @@ outputs/
 # python packaging/build artifacts
 stock-backtester/src/stock_backtester.egg-info/
 stock-backtester/pyproject.toml
+
+!stock-backtester/results/
