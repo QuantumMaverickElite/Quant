@@ -4,3 +4,9 @@
 **/*.csv
 **/*.log
 .DS_Store
+
+# backtest artifacts
+outputs/
+
+# python packaging/build artifacts
+stock-backtester/src/stock_backtester.egg-info/
