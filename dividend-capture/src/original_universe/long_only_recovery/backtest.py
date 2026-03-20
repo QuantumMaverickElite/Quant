@@ -229,7 +229,7 @@ def main() -> None:
     parser.add_argument("--underreaction-threshold", type=float, default=0.9)
     parser.add_argument("--min-avg-return", type=float, default=0.0)
     parser.add_argument("--min-win-rate", type=float, default=0.50)
-    parser.add_argument("--save-csv", default="../outputs/long_only_recovery_test_trades.csv")
+    parser.add_argument("--output-dir", required=True, help="Directory where results will be saved",)
     args = parser.parse_args()
 
     outputs_dir = Path(args.outputs_dir)
@@ -282,10 +282,12 @@ def main() -> None:
         label="TEST: PROFILE + UNDERREACTION REGIME",
     )
 
-    save_path = Path(args.save_csv)
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    save_path = output_dir / "long_only_recovery_test_trades.csv"
     strategy_df.to_csv(save_path, index=False)
     print(f"\nSaved test trades to: {save_path}")
-
 
 if __name__ == "__main__":
     main()

@@ -176,7 +176,7 @@ def main() -> None:
     parser.add_argument("--end", default="2026-01-01")
     parser.add_argument("--hold-days", type=int, default=1, help="Sell N trading days after ex-date")
     parser.add_argument("--capital", type=float, default=10000.0, help="Capital per trade")
-    parser.add_argument("--csv", default="dividend_capture_results.csv")
+    parser.add_argument("--output-dir", required=True, help="Directory where results will be saved as hold_<N>.csv",)
     args = parser.parse_args()
 
     all_trades: List[TradeResult] = []
@@ -198,9 +198,17 @@ def main() -> None:
     trades_df = pd.DataFrame([asdict(t) for t in all_trades])
 
     if not trades_df.empty:
+        from pathlib import Path
+
         trades_df = trades_df.sort_values(["ticker", "ex_date"]).reset_index(drop=True)
-        trades_df.to_csv(args.csv, index=False)
-        print(f"\nSaved trades to {args.csv}")
+
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        save_path = output_dir / f"hold_{args.hold_days}.csv"
+        trades_df.to_csv(save_path, index=False)
+
+        print(f"\nSaved trades to {save_path}")
 
     summarize(trades_df)
 
