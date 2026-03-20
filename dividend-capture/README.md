@@ -85,3 +85,62 @@ dividend-capture/
 ├── notes/
 ├── .gitignore
 └── README.md
+
+## Typical Session
+
+A typical workflow for testing the dividend capture strategy:
+
+Activate environment:
+
+```
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Run a backtest across multiple dividend-paying stocks:
+
+```
+python src/dividend_capture_backtest.py \
+  --tickers KO PG JNJ XOM CVX T VZ PEP \
+  --start 2018-01-01 \
+  --end 2026-01-01 \
+  --hold-days 1 \
+  --capital 10000 \
+  --csv outputs/results_hold_1.csv
+```
+
+Test different holding periods:
+
+```
+--hold-days 0   # sell on ex-date
+--hold-days 1   # sell next day
+--hold-days 3
+--hold-days 5
+```
+
+Compare results:
+
+* Win rate
+* Average return
+* Total PnL
+* Drop ratio vs dividend
+
+Outputs are saved as CSV files for further analysis.
+
+---
+
+## Interpretation Workflow
+
+1. Run multiple holding periods
+2. Identify patterns across tickers
+3. Compare dividend vs price drop behavior
+4. Look for asymmetries (e.g., consistent overreaction)
+5. Evaluate whether edge exists on:
+
+   * long side (capture)
+   * short side (fade)
+
+---
+
+This project is intended for experimentation and hypothesis testing, not production trading.
