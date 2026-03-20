@@ -10,9 +10,9 @@ import pandas as pd
 
 
 def load_results(outputs_dir: Path) -> pd.DataFrame:
-    files = sorted(outputs_dir.glob("*.csv"))
+    files = sorted(outputs_dir.glob("hold_*.csv"))
     if not files:
-        raise FileNotFoundError(f"No CSV files found in {outputs_dir}")
+        raise FileNotFoundError(f"No hold_*.csv files found in {outputs_dir}")
 
     frames = []
     for f in files:

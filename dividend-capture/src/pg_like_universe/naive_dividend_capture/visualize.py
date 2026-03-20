@@ -29,9 +29,9 @@ def parse_hold_days(filename: str) -> int | None:
 
 
 def load_pg_like_results(outputs_dir: Path) -> pd.DataFrame:
-    files = sorted(outputs_dir.glob("pg_like_hold_*.csv"))
+    files = sorted(outputs_dir.glob("hold_*.csv"))
     if not files:
-        raise FileNotFoundError(f"No pg_like_hold_*.csv files found in {outputs_dir}")
+        raise FileNotFoundError(f"No hold_*.csv files found in {outputs_dir}")
 
     frames = []
     for f in files:
