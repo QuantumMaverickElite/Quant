@@ -14,21 +14,21 @@ The initial motivation came from the idea that stocks might not always fall by t
 
 For each dividend event:
 
-- buy at the close of the trading day before the ex-dividend date
-- hold through the ex-dividend date
-- sell after a chosen number of trading days
-- include the dividend cash flow in the trade PnL
+* buy at the close of the trading day before the ex-dividend date
+* hold through the ex-dividend date
+* sell after a chosen number of trading days
+* include the dividend cash flow in the trade PnL
 
 The backtest was run on the following tickers:
 
-- KO
-- PG
-- JNJ
-- XOM
-- CVX
-- T
-- VZ
-- PEP
+* KO
+* PG
+* JNJ
+* XOM
+* CVX
+* T
+* VZ
+* PEP
 
 ## Research Goal
 
@@ -42,10 +42,10 @@ Across the tested sample, the naive strategy was generally unprofitable.
 
 Main observations:
 
-- average returns were negative across tested holding periods
-- the average ex-dividend price drop was greater than the dividend itself in this sample
-- behavior varied significantly across stocks
-- some names showed short-term recovery patterns, while others continued to drift lower
+* average returns were negative across tested holding periods
+* the average ex-dividend price drop was greater than the dividend itself in this sample
+* behavior varied significantly across stocks
+* some names showed short-term recovery patterns, while others continued to drift lower
 
 This suggests that a naive "buy before ex-date and sell after" approach is not enough on its own. Any possible edge likely depends on stock-specific behavior, filtering, or a different event-driven framework.
 
@@ -54,16 +54,16 @@ This suggests that a naive "buy before ex-date and sell after" approach is not e
 Summary from the initial runs:
 
 | Hold Days | Avg Return | Total Gross PnL |
-|----------|------------|-----------------|
-| 0        | -0.0672%   | -$1,719.43      |
-| 1        | -0.0382%   | -$976.67        |
-| 3        | -0.1964%   | -$5,027.96      |
-| 5        | -0.1341%   | -$3,433.72      |
+| --------- | ---------- | --------------- |
+| 0         | -0.0672%   | -$1,719.43      |
+| 1         | -0.0382%   | -$976.67        |
+| 3         | -0.1964%   | -$5,027.96      |
+| 5         | -0.1341%   | -$3,433.72      |
 
 Average drop ratio in the sample:
 
-- mean: 1.0754
-- median: 1.0514
+* mean: 1.0754
+* median: 1.0514
 
 A drop ratio above 1 means the stock price fell by more than the dividend amount on average in this test sample.
 
@@ -85,13 +85,15 @@ dividend-capture/
 ├── notes/
 ├── .gitignore
 └── README.md
+```
+
 ## Typical Session
 
 A typical workflow for testing the dividend capture strategy:
 
 Activate environment:
 
-```
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -99,7 +101,7 @@ pip install -r requirements.txt
 
 Run a backtest across multiple dividend-paying stocks:
 
-```
+```bash
 python src/dividend_capture_backtest.py \
   --tickers KO PG JNJ XOM CVX T VZ PEP \
   --start 2018-01-01 \
@@ -111,7 +113,7 @@ python src/dividend_capture_backtest.py \
 
 Test different holding periods:
 
-```
+```bash
 --hold-days 0   # sell on ex-date
 --hold-days 1   # sell next day
 --hold-days 3
