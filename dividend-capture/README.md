@@ -105,7 +105,7 @@ dividend-capture/
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install pandas yfinance matplotlib
+pip install -r requirements.txt
 ```
 
 ### Run Naive Strategy (Original Universe)
@@ -132,6 +132,18 @@ python src/pg_like_universe/naive_dividend_capture/backtest.py \
   --output-dir outputs/pg_like_universe/naive_dividend_capture/results
 ```
 
+### Run Long-History PG-like Experiment
+
+```bash
+python src/pg_like_universe/naive_dividend_capture/backtest.py \
+  --tickers PG PEP KO CL KMB HSY WMT COST MCD \
+  --start 1970-01-01 \
+  --end 2026-01-01 \
+  --hold-days 1 \
+  --capital 10000 \
+  --output-dir outputs/pg_like_universe/naive_dividend_capture_long_history/results
+```
+
 ### Run Long-Only Recovery Strategy
 
 ```bash
@@ -149,14 +161,13 @@ python src/original_universe/long_only_recovery/backtest.py \
   --output-dir outputs/original_universe/long_only_recovery/results
 ```
 
-### Visualize Results (Example)
+### Visualize Results
 
 ```bash
 python src/original_universe/long_only_recovery/visualize.py \
   --input-file outputs/original_universe/long_only_recovery/results/long_only_recovery_test_trades.csv \
   --plot-dir outputs/original_universe/long_only_recovery/plots
 ```
-
 ## Interpretation Workflow
 
 1. Run multiple holding periods  
