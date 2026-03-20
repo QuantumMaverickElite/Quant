@@ -90,11 +90,14 @@ dividend-capture/
 │   │   ├── naive_dividend_capture/
 │   │   │   ├── results/
 │   │   │   └── plots/
+│   │   ├── naive_dividend_capture_long_history/
+│   │   │   ├── results/
+│   │   │   └── plots/
 │   │   └── README.md
 │   └── scratch/
+├── requirements.txt
 └── README.md
 ```
-
 ## Typical Workflow
 
 ### Setup
