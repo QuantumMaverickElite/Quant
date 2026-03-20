@@ -13,3 +13,4 @@ stock-backtester/src/stock_backtester.egg-info/
 stock-backtester/pyproject.toml
 
 !stock-backtester/results/
+stock-backtester/assets/results/

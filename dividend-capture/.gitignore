@@ -1,0 +1,34 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Data (keep structure, ignore heavy/raw data)
+data/raw/
+data/processed/
+
+# Logs
+*.log
+
+# Jupyter (if I ever add notebooks later)
+.ipynb_checkpoints/
+
+# Environment variables / secrets
+.env
+
+# Build artifacts (just in case)
+dist/
+build/
+*.egg-info/
