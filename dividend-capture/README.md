@@ -85,7 +85,6 @@ dividend-capture/
 ├── notes/
 ├── .gitignore
 └── README.md
-
 ## Typical Session
 
 A typical workflow for testing the dividend capture strategy:
