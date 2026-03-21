@@ -5,46 +5,138 @@ from pathlib import Path
 
 import pandas as pd
 
-from backtester.strategies import regime_positions
+from backtester.data import fetch_prices
+from backtester.engines.event_engine import run_dividend_strategy
+from backtester.engines.position_engine import run_backtest
 from backtester.metrics import summary
 from backtester.plot import plot_equity
-from backtester.data import fetch_prices
-from backtester.engines.position_engine import run_backtest
+from backtester.strategies import regime_positions
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Stock backtester (momentum regime + streak + crash trigger + leverage).")
+    p = argparse.ArgumentParser(
+        description="Stock backtester with regime and dividend strategy support."
+    )
+
+    p.add_argument(
+        "--strategy",
+        choices=["regime", "dividend"],
+        default="regime",
+        help="Which strategy engine to run.",
+    )
 
     p.add_argument("--ticker", default="SPY")
+    p.add_argument(
+        "--tickers",
+        nargs="+",
+        help="Ticker list for dividend strategy, e.g. PG KO JNJ XOM CVX",
+    )
+
     p.add_argument("--start", default="2005-01-01")
     p.add_argument("--end", default="2024-12-31")
     p.add_argument("--fee-bps", type=float, default=2.0)
 
-    # Momentum filter
-    p.add_argument("--lookback", type=int, default=50, help="Lookback days for momentum filter (e.g., 50).")
+    # Regime strategy params
+    p.add_argument(
+        "--lookback",
+        type=int,
+        default=50,
+        help="Lookback days for momentum filter (regime strategy).",
+    )
+    p.add_argument(
+        "--down-days",
+        type=int,
+        default=2,
+        help="Buy after N down days in a row (regime strategy).",
+    )
+    p.add_argument(
+        "--up-days",
+        type=int,
+        default=1,
+        help="Sell after N up days in a row (regime strategy).",
+    )
+    p.add_argument(
+        "--crash-week-drop",
+        type=float,
+        default=0.08,
+        help="Trigger crash mode if 5-day return <= -this (regime strategy).",
+    )
+    p.add_argument(
+        "--crash-hold-days",
+        type=int,
+        default=5,
+        help="Keep crash mode active for this many trading days after trigger.",
+    )
+    p.add_argument(
+        "--crash-down-days",
+        type=int,
+        default=1,
+        help="Buy streak during crash mode (regime strategy).",
+    )
+    p.add_argument(
+        "--crash-up-days",
+        type=int,
+        default=1,
+        help="Sell streak during crash mode (regime strategy).",
+    )
+    p.add_argument(
+        "--down-leverage",
+        type=float,
+        default=1.3,
+        help="Exposure when mom <= 0 and long (regime strategy).",
+    )
+    p.add_argument(
+        "--allow-leverage-in-crash",
+        action="store_true",
+        help="If set, leverage is also applied during crash mode.",
+    )
 
-    # Normal streak (used when mom <= 0 and not in crash mode)
-    p.add_argument("--down-days", type=int, default=2, help="Buy after N down days in a row (when mom <= 0).")
-    p.add_argument("--up-days", type=int, default=1, help="Sell after N up days in a row (when mom <= 0).")
-
-    # Crash trigger (5 trading days ~ 1 week)
-    p.add_argument("--crash-week-drop", type=float, default=0.08,
-                   help="Trigger crash mode if 5-day return <= -this (e.g., 0.08 = -8%).")
-    p.add_argument("--crash-hold-days", type=int, default=5,
-                   help="Keep crash mode active for this many trading days after trigger.")
-    p.add_argument("--crash-down-days", type=int, default=1,
-                   help="Buy streak during crash mode (faster).")
-    p.add_argument("--crash-up-days", type=int, default=1,
-                   help="Sell streak during crash mode (faster).")
-
-    # Leverage in mom<=0 regime
-    p.add_argument("--down-leverage", type=float, default=1.3,
-                   help="Exposure when mom <= 0 and long (e.g., 1.3 = 130% long).")
-    p.add_argument("--allow-leverage-in-crash", action="store_true",
-                   help="If set, leverage is also applied during crash mode (NOT recommended).")
+    # Dividend strategy params
+    p.add_argument(
+        "--hold-days",
+        type=int,
+        default=1,
+        help="Sell N trading days after ex-date (dividend strategy).",
+    )
+    p.add_argument(
+        "--capital",
+        type=float,
+        default=10000.0,
+        help="Capital per trade for dividend strategy.",
+    )
 
     p.add_argument("--debug", action="store_true", help="Print sanity checks.")
     args = p.parse_args()
+
+    Path("outputs").mkdir(exist_ok=True)
+
+    if args.strategy == "dividend":
+        if not args.tickers:
+            raise ValueError("--tickers is required when --strategy dividend is used.")
+
+        tickers = [t.upper() for t in args.tickers]
+
+        trades_df = run_dividend_strategy(
+            tickers=tickers,
+            start=args.start,
+            end=args.end,
+            hold_days=args.hold_days,
+            capital_per_trade=args.capital,
+        )
+
+        tag = f"dividend_hold{args.hold_days}_{args.start}_to_{args.end}"
+        out_csv = f"outputs/{tag}_trades.csv"
+        trades_df.to_csv(out_csv, index=False)
+
+        print(f"\nStrategy: dividend | Tickers: {', '.join(tickers)}")
+        print(f"Saved CSV -> {out_csv}")
+
+        if trades_df.empty:
+            print("No trades found.")
+        else:
+            print(trades_df.head(20).to_string(index=False))
+
+        return
 
     df = fetch_prices(args.ticker, args.start, args.end)
     close = df["close"].dropna()
@@ -70,16 +162,13 @@ def main() -> None:
 
     res = run_backtest(close, positions, args.fee_bps)
 
-    # Buy & hold benchmark
     bh_rets = close.pct_change().fillna(0.0)
     bh_equity = (1.0 + bh_rets).cumprod()
 
-    # Outputs (unique per run)
-    Path("outputs").mkdir(exist_ok=True)
     tag = (
         f"{args.ticker}_mom{args.lookback}"
         f"_d{args.down_days}_u{args.up_days}"
-        f"_cr{int(args.crash_week_drop*100)}w"
+        f"_cr{int(args.crash_week_drop * 100)}w"
         f"_ch{args.crash_hold_days}"
         f"_cd{args.crash_down_days}_cu{args.crash_up_days}"
         f"_lev{args.down_leverage:.2f}"
@@ -112,4 +201,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
