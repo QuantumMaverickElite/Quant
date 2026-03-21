@@ -41,3 +41,20 @@ def run_dividend_strategy(
             print(f"{ticker}: ERROR -> {e}")
 
     return dividend_trades_to_frame(all_trades)
+
+def summarize_dividend_trades(trades_df: pd.DataFrame) -> pd.DataFrame:
+    if trades_df.empty:
+        return pd.DataFrame()
+
+    total_trades = len(trades_df)
+    wins = (trades_df["gross_pnl"] > 0).sum()
+
+    summary = {
+        "Trades": total_trades,
+        "Win Rate %": (wins / total_trades) * 100,
+        "Avg Return %": trades_df["gross_return_pct"].mean(),
+        "Median Return %": trades_df["gross_return_pct"].median(),
+        "Total PnL": trades_df["gross_pnl"].sum(),
+    }
+
+    return pd.DataFrame([summary])

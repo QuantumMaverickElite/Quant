@@ -6,7 +6,10 @@ from pathlib import Path
 import pandas as pd
 
 from backtester.data import fetch_prices
-from backtester.engines.event_engine import run_dividend_strategy
+from backtester.engines.event_engine import (
+    run_dividend_strategy,
+    summarize_dividend_trades,
+)
 from backtester.engines.position_engine import run_backtest
 from backtester.metrics import summary
 from backtester.plot import plot_equity
@@ -124,16 +127,29 @@ def main() -> None:
             capital_per_trade=args.capital,
         )
 
+        summary_df = summarize_dividend_trades(trades_df)
+
         tag = f"dividend_hold{args.hold_days}_{args.start}_to_{args.end}"
         out_csv = f"outputs/{tag}_trades.csv"
         trades_df.to_csv(out_csv, index=False)
 
         print(f"\nStrategy: dividend | Tickers: {', '.join(tickers)}")
-        print(f"Saved CSV -> {out_csv}")
+
+        if not summary_df.empty:
+            print("\n=== SUMMARY ===")
+            print(
+                summary_df.to_string(
+                    index=False,
+                    float_format=lambda x: f"{x:0.4f}" if isinstance(x, float) else str(x)
+                )
+            )
+
+        print(f"\nSaved CSV -> {out_csv}")
 
         if trades_df.empty:
             print("No trades found.")
         else:
+            print("\n=== FIRST 20 TRADES ===")
             print(trades_df.head(20).to_string(index=False))
 
         return
