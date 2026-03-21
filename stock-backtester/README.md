@@ -1,54 +1,65 @@
-# Stock Backtester — Multi-Regime Strategy  
-Momentum + Crash Trigger + Adaptive Leverage
+# Stock Backtester — Multi-Strategy Quant Framework
 
-A lightweight Python backtesting engine that:
+A modular Python-based backtesting system for experimenting with both **continuous trading strategies** and **event-driven strategies**.
 
-- Downloads historical data using `yfinance`
-- Generates exposure with momentum + streak + crash logic
-- Applies leverage rules
-- Simulates transaction costs
-- Exports CSV + equity curve plots vs buy & hold
+This project currently supports:
+
+- **Regime-based strategies** (momentum + mean reversion + crash logic)
+- **Dividend capture strategies** (event-driven trades around ex-dividend dates)
 
 ---
 
-# PROJECT STRUCTURE
+## 🧠 Core Idea
+
+Most retail backtesters only support one type of strategy.
+
+This system is built to handle **multiple strategy classes**:
+
+- **Position-based (continuous exposure)**  
+  → e.g. momentum, mean reversion, leverage
+
+- **Event-based (discrete trades)**  
+  → e.g. dividend capture, earnings plays, macro events
+
+---
+
+## 🏗️ Project Structure
 
 ```
 stock-backtester/
 ├── src/backtester/
-│   ├── cli.py
-│   ├── strategies.py
-│   ├── metrics.py
-│   └── plot.py
-├── outputs/        # auto-generated (ignored by git)
-├── results/        # tracked showcase plots (optional)
+│
+│   ├── cli.py                 # Entry point (strategy selection)
+│
+│   ├── data.py                # Data loading (prices + dividends)
+│
+│   ├── engines/
+│   │   ├── position_engine.py # Continuous backtesting engine
+│   │   └── event_engine.py    # Event-driven trade engine
+│
+│   ├── strategies/
+│   │   ├── position_strategies.py  # Momentum / streak logic
+│   │   └── event_strategies.py     # Dividend capture logic
+│
+│   ├── models/
+│   │   └── trade_result.py    # Data structures (results)
+│
+│   ├── utils.py              # Shared utilities
+│   ├── metrics.py            # Performance metrics
+│   ├── plot.py               # Equity curve plotting
+│   └── universes.py          # (future) ticker group definitions
+│
+├── outputs/                  # Generated CSVs + plots (ignored)
+├── results/                  # Curated outputs (optional)
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-# HOW TO RUN THE PROJECT
+## 🚀 How to Run
 
-## 1) Enter the project
-
-From the repo root:
-
-```bash
-cd stock-backtester
-```
-
----
-
-## 2) Create virtual environment (if needed)
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-If it already exists:
+### Activate environment
 
 ```bash
 source .venv/bin/activate
@@ -56,229 +67,126 @@ source .venv/bin/activate
 
 ---
 
-## 3) Run default backtest (SPY)
+## 📈 Regime Strategy (Default)
 
-Always use module mode:
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli
-```
-
-This will:
-
-- Print performance metrics
-- Save CSV
-- Save equity curve plot
-
-Outputs go to:
-
-```
-stock-backtester/outputs/
-```
-
----
-
-# DEBUG MODE
-
-Print exposure statistics:
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --debug
-```
-
----
-
-# RUN DIFFERENT STOCKS
-
-Example:
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --ticker QQQ
-```
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --ticker NVDA
-```
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --ticker TSLA
-```
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --ticker AAPL
-```
-
----
-
-# RUN MULTIPLE STOCKS
-
-```bash
-for t in SPY QQQ NVDA TSLA AAPL; do
-  MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --ticker "$t"
-done
-```
-
----
-
-# STRATEGY PARAMETER TESTING
-
-## Change momentum lookback
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --lookback 100
-```
-
----
-
-## Adjust streak logic
+Momentum + mean reversion + crash detection + adaptive leverage
 
 ```bash
 MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli \
-  --down-days 3 \
-  --up-days 2
+  --strategy regime \
+  --ticker SPY
 ```
+
+### Output
+
+- Equity curve plot
+- CSV with:
+  - price
+  - exposure
+  - returns
+  - equity
 
 ---
 
-## Modify crash sensitivity
+## 💰 Dividend Capture Strategy
+
+Event-driven trading around ex-dividend dates
 
 ```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli \
-  --crash-week-drop 0.10 \
-  --crash-hold-days 7
+PYTHONPATH=src python -m backtester.cli \
+  --strategy dividend \
+  --tickers PG KO JNJ XOM CVX \
+  --start 2018-01-01 \
+  --end 2026-01-01 \
+  --hold-days 1 \
+  --capital 10000
 ```
+
+### Output
+
+- Trade-level CSV
+- Summary metrics:
+  - total trades
+  - win rate
+  - average return
+  - total PnL
 
 ---
 
-## Adjust leverage
+## ⚙️ Strategy Details
 
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --down-leverage 1.0
-```
+### Regime Strategy
 
----
-
-# OUTPUT FILES
-
-Each run produces:
-
-```
-outputs/*_backtest.csv
-outputs/*_equity_curve.png
-```
-
-CSV contains:
-
-- close price
-- exposure
-- strategy return
-- equity curve
+- 50-day momentum filter
+- Mean reversion via streak logic
+- Crash detection using 5-day drops
+- Adaptive leverage when momentum is negative
 
 ---
 
-# VIEWING CHARTS
+### Dividend Strategy
 
-## Open most recent plot for a ticker
+For each ex-dividend event:
 
-```bash
-imv "$(ls -t outputs/QQQ_*equity_curve.png | head -n 1)"
-```
+1. Buy 1 day before ex-date  
+2. Collect dividend  
+3. Sell after N trading days  
 
----
+Tracks:
 
-## Open all plots for a ticker
-
-```bash
-imv outputs/QQQ_*equity_curve.png
-```
-
----
-
-## Open multiple stocks
-
-```bash
-imv outputs/NVDA_*equity_curve.png \
-    outputs/TSLA_*equity_curve.png \
-    outputs/AAPL_*equity_curve.png
-```
+- price movement
+- dividend income
+- total return
+- drop ratio (price drop vs dividend)
 
 ---
 
-# INSTALL IMAGE VIEWER (Gentoo)
+## 🔥 Why This Project Matters
 
-```bash
-sudo emerge media-gfx/imv
-```
+This is not just a backtester — it's a **framework**.
 
----
+It allows:
 
-# COMMON ERRORS
-
-## ModuleNotFoundError: backtester
-
-Always run with:
-
-```bash
-PYTHONPATH=src python -m backtester.cli
-```
-
-Never run:
-
-```bash
-python cli.py
-```
+- comparing fundamentally different strategy types
+- combining signals (future work)
+- building a research pipeline for quant ideas
 
 ---
 
-## Plots not saving
+## 📌 Future Improvements
 
-Always include:
-
-```bash
-MPLBACKEND=Agg
-```
-
----
-
-# GIT HYGIENE
-
-Recommended `.gitignore` entries:
-
-```
-outputs/
-.venv/
-src/*.egg-info/
-```
-
-If you want to track showcase images:
-
-```
-results/
-```
-
-Workflow:
-
-1. Run experiments → outputs/
-2. Copy best plots → results/
-3. Commit results
-4. Keep outputs ignored
+- Combine regime + dividend strategies
+- Add transaction cost modeling to dividend trades
+- Portfolio-level capital allocation
+- Strategy stacking / ensemble models
+- Custom universes (S&P sectors, dividend aristocrats, etc.)
+- Risk management layer
 
 ---
 
-# FULL EXAMPLE SESSION
+## ⚠️ Notes
 
-```bash
-cd stock-backtester
-source .venv/bin/activate
-
-for t in SPY NVDA TSLA; do
-  MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli --ticker "$t"
-done
-
-imv outputs/SPY_*equity_curve.png
-```
+- Uses `yfinance` (not perfect data quality)
+- No slippage modeling yet
+- Dividend strategy is currently **naive baseline**
 
 ---
 
-Built for fast quant strategy iteration and controlled experimentation.
+## 🧪 Philosophy
 
+Build fast → test ideas → refine → iterate
+
+This repo is designed for **experimentation and iteration**, not perfection.
+
+---
+
+## 📊 Status
+
+✔ Modular architecture  
+✔ Multi-strategy support  
+✔ CLI interface  
+✔ Clean separation of concerns  
+
+🚧 Strategy combination (next step)
+
+---
