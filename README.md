@@ -104,6 +104,7 @@ The repository is moving toward a broader multi-strategy research framework, wit
 - better output organization
 - modular strategy development
 - future universe selection and portfolio construction
+- Integration of multiple simultaneous strategies
 
 ---
 
