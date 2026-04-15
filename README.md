@@ -81,10 +81,12 @@ Some ideas will fail. That is part of the process.
 
 ## Structure
 
+```
 quant
 ├── dividend-capture
 ├── README.md
 └── stock-backtester
+```
 
 Each project is self-contained, with its own:
 
