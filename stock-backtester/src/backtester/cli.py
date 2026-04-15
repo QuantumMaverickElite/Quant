@@ -14,6 +14,7 @@ from backtester.engines.position_engine import run_backtest
 from backtester.metrics import summary
 from backtester.plot import plot_equity
 from backtester.strategies import regime_positions
+from backtester.utils.output import get_output_paths
 
 
 def main() -> None:
@@ -129,9 +130,8 @@ def main() -> None:
 
         summary_df = summarize_dividend_trades(trades_df)
 
-        tag = f"dividend_hold{args.hold_days}_{args.start}_to_{args.end}"
-        out_csv = f"outputs/{tag}_trades.csv"
-        trades_df.to_csv(out_csv, index=False)
+        paths = get_output_paths("dividend", "multi")
+        trades_df.to_csv(paths["trades"], index=False)
 
         print(f"\nStrategy: dividend | Tickers: {', '.join(tickers)}")
 
@@ -140,11 +140,13 @@ def main() -> None:
             print(
                 summary_df.to_string(
                     index=False,
-                    float_format=lambda x: f"{x:0.4f}" if isinstance(x, float) else str(x)
+                    float_format=lambda x: (
+                        f"{x:0.4f}" if isinstance(x, float) else str(x)
+                    ),
                 )
             )
 
-        print(f"\nSaved CSV -> {out_csv}")
+        print(f"\nSaved CSV -> {paths['trades']}")
 
         if trades_df.empty:
             print("No trades found.")
@@ -191,8 +193,8 @@ def main() -> None:
         f"_{args.start}_to_{args.end}"
     )
 
-    out_csv = f"outputs/{tag}_backtest.csv"
-    out_plot = plot_equity(res.equity, bh_equity, tag)
+    paths = get_output_paths("regime", args.ticker)
+    out_plot = plot_equity(res.equity, bh_equity, paths["plot"])
 
     pd.DataFrame(
         {
@@ -201,7 +203,7 @@ def main() -> None:
             "strategy_return": res.returns,
             "equity": res.equity,
         }
-    ).to_csv(out_csv)
+    ).to_csv(paths["data"])
 
     print(f"\nStrategy: regime_positions | Ticker: {args.ticker}")
     print(f"Period: {close.index.min().date()} to {close.index.max().date()}")
@@ -210,8 +212,7 @@ def main() -> None:
             float_format=lambda x: f"{x:0.4f}" if isinstance(x, float) else str(x)
         )
     )
-
-    print(f"\nSaved CSV -> {out_csv}")
+    print(f"\nSaved CSV -> {paths['data']}")
     print(f"Saved plot -> {out_plot}")
 
 

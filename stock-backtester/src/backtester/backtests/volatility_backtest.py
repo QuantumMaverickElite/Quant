@@ -1,9 +1,11 @@
 import sys
+from datetime import datetime
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import yfinance as yf
-import os
 
 from backtester.strategies.options_strategies import volatility_options_decision
 
@@ -26,7 +28,17 @@ PREMIUM_COST = 0.03
 MOVE_SENSITIVITY = 0.35
 STRANGLE_HAIRCUT = 0.60
 
-OUTPUT_PLOT = f"outputs/volatility/{TICKER}_backtest.png"
+
+def get_output_paths(strategy: str, ticker: str) -> tuple[Path, Path]:
+    base = Path("outputs")
+    strategy_dir = base / strategy / ticker
+    strategy_dir.mkdir(parents=True, exist_ok=True)
+
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    plot_path = strategy_dir / f"{run_id}_backtest.png"
+    csv_path = strategy_dir / f"{run_id}_data.csv"
+
+    return plot_path, csv_path
 
 
 def compute_returns_and_vol(prices: pd.Series) -> pd.DataFrame:
@@ -78,13 +90,6 @@ def simulate_trade_pnl(
     move_sensitivity: float,
     hold_days: int,
 ) -> float:
-    """
-    Harsher path-based PnL proxy.
-
-    - Gains only partially track absolute movement
-    - Theta-like decay every day
-    - Additional entry friction
-    """
     pnl = 0.0
     daily_theta = premium_cost / hold_days
     entry_slippage = 0.005
@@ -103,7 +108,6 @@ def simulate_trade_pnl(
         pnl += multiplier * move_sensitivity * daily_move
         pnl -= daily_theta
 
-    # cap maximum loss roughly at premium + slippage
     pnl = max(pnl, -(premium_cost + entry_slippage))
     return float(pnl)
 
@@ -177,11 +181,15 @@ def main() -> None:
         else:
             i += 1
 
+    df["signal"] = pd.Series(signals, index=df.index, dtype="object")
     df["strategy_return"] = pd.Series(strategy_returns, index=df.index, dtype="float64")
     df["bh_return"] = df["log_return"].fillna(0.0).astype(float)
+    df["ticker"] = TICKER
 
     df["strategy_equity"] = (1.0 + df["strategy_return"]).cumprod()
     df["bh_equity"] = (1.0 + df["bh_return"]).cumprod()
+
+    plot_path, csv_path = get_output_paths("volatility", TICKER)
 
     plt.figure(figsize=(10, 6))
     plt.plot(df.index, df["strategy_equity"], label=f"{TICKER} Vol Strategy")
@@ -191,12 +199,15 @@ def main() -> None:
     plt.xlabel("Date")
     plt.ylabel("Equity")
     plt.tight_layout()
-    os.makedirs("outputs/volatility", exist_ok=True)
-    plt.savefig(OUTPUT_PLOT)
+    plt.savefig(plot_path)
+    plt.close()
+
+    df.to_csv(csv_path)
 
     print(f"Ticker: {TICKER}")
     print("Using dynamic slow-vol proxy as IV benchmark")
-    print(f"Saved: {OUTPUT_PLOT}")
+    print(f"Saved plot: {plot_path}")
+    print(f"Saved data: {csv_path}")
     print()
     print("Strategy:", compute_stats(df["strategy_return"]))
     print("Buy & Hold:", compute_stats(df["bh_return"]))
