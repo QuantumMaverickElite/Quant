@@ -83,7 +83,7 @@ Some ideas will fail. That is part of the process.
 
 quant/
 ├── stock-backtester/
-├── dividend-capture/
+└── dividend-capture/
 
 Each project is self-contained, with its own:
 
