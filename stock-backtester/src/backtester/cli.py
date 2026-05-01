@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from backtester.analytics.volatility import compute_garch_metrics
 from backtester.data import fetch_prices
+from backtester.decision.position_sizing import apply_route_risk_scaling
+from backtester.decision.regime_router import add_regime_routes
 from backtester.engines.event_engine import (
     run_dividend_strategy,
     summarize_dividend_trades,
@@ -39,6 +42,12 @@ def main() -> None:
     p.add_argument("--start", default="2005-01-01")
     p.add_argument("--end", default="2024-12-31")
     p.add_argument("--fee-bps", type=float, default=2.0)
+
+    p.add_argument(
+        "--use-regime-router",
+        action="store_true",
+        help="Use GARCH regime router to scale position exposure.",
+    )
 
     # Regime strategy params
     p.add_argument(
@@ -172,6 +181,31 @@ def main() -> None:
         disable_leverage_in_crash=(not args.allow_leverage_in_crash),
     )
 
+    routes = None
+
+    if args.use_regime_router:
+        garch_df = compute_garch_metrics(close)
+        routes = add_regime_routes(garch_df)
+
+        positions = apply_route_risk_scaling(
+            positions=positions,
+            routes=routes,
+        )
+
+        if args.debug:
+            print("\n=== REGIME ROUTER ENABLED ===")
+            print(
+                routes[
+                    [
+                        "active_regime",
+                        "route_risk_multiplier",
+                        "route_preferred_strategy",
+                        "route_allow_options",
+                        "route_allow_new_equity_positions",
+                    ]
+                ].tail(10)
+            )
+
     if args.debug:
         print("exposure value counts:\n", positions.value_counts(dropna=False).head(10))
         print("avg exposure:", float(positions.mean()))
@@ -183,6 +217,8 @@ def main() -> None:
     bh_rets = close.pct_change().fillna(0.0)
     bh_equity = (1.0 + bh_rets).cumprod()
 
+    route_tag = "_router" if args.use_regime_router else ""
+
     tag = (
         f"{args.ticker}_mom{args.lookback}"
         f"_d{args.down_days}_u{args.up_days}"
@@ -190,22 +226,40 @@ def main() -> None:
         f"_ch{args.crash_hold_days}"
         f"_cd{args.crash_down_days}_cu{args.crash_up_days}"
         f"_lev{args.down_leverage:.2f}"
+        f"{route_tag}"
         f"_{args.start}_to_{args.end}"
     )
 
     paths = get_output_paths("regime", args.ticker)
     out_plot = plot_equity(res.equity, bh_equity, paths["plot"])
 
-    pd.DataFrame(
+    output_df = pd.DataFrame(
         {
             "close": close,
             "exposure": res.positions,
             "strategy_return": res.returns,
             "equity": res.equity,
         }
-    ).to_csv(paths["data"])
+    )
 
-    print(f"\nStrategy: regime_positions | Ticker: {args.ticker}")
+    if routes is not None:
+        route_cols = [
+            "active_regime",
+            "route_risk_multiplier",
+            "route_preferred_strategy",
+            "route_allow_options",
+            "route_allow_new_equity_positions",
+        ]
+
+        output_df = output_df.join(routes[route_cols], how="left")
+
+    output_df.to_csv(paths["data"])
+
+    strategy_name = "regime_positions"
+    if args.use_regime_router:
+        strategy_name += " + regime_router"
+
+    print(f"\nStrategy: {strategy_name} | Ticker: {args.ticker}")
     print(f"Period: {close.index.min().date()} to {close.index.max().date()}")
     print(
         summary(res.equity, res.returns, res.positions).to_string(
