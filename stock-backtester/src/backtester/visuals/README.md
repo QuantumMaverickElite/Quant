@@ -1,7 +1,4 @@
-python - <<'PY'
-from pathlib import Path
-
-readme = r"""# GARCH Volatility Surface Visualizer
+# GARCH Volatility Surface Visualizer
 
 This module contains an experimental 3D volatility visualization tool for the stock backtesting system.
 
