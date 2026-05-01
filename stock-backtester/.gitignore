@@ -20,3 +20,8 @@ requirements.lock.txt
 
 # Local Python wheel cache
 wheelhouse/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
