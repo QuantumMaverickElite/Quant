@@ -10,3 +10,13 @@ outputs/
 
 # editor junk
 .vscode/
+
+# GARCH visualizer raw recording frames
+src/outputs/garch_recordings/*/frames/
+
+# Python local/version tooling
+.python-version
+requirements.lock.txt
+
+# Local Python wheel cache
+wheelhouse/
