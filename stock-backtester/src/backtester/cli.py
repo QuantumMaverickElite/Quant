@@ -13,6 +13,7 @@ from backtester.engines.event_engine import (
     run_dividend_strategy,
     summarize_dividend_trades,
 )
+from backtester.engines.options_overlay_engine import run_options_overlay
 from backtester.engines.position_engine import run_backtest
 from backtester.metrics import summary
 from backtester.plot import plot_equity
@@ -22,7 +23,7 @@ from backtester.utils.output import get_output_paths
 
 def main() -> None:
     p = argparse.ArgumentParser(
-        description="Stock backtester with regime and dividend strategy support."
+        description="Stock backtester with regime, dividend, router, and options-overlay support."
     )
 
     p.add_argument(
@@ -46,7 +47,12 @@ def main() -> None:
     p.add_argument(
         "--use-regime-router",
         action="store_true",
-        help="Use GARCH regime router to scale position exposure.",
+        help="Use GARCH regime router to scale equity exposure.",
+    )
+    p.add_argument(
+        "--use-options-overlay",
+        action="store_true",
+        help="Add simplified straddle/strangle options overlay returns.",
     )
 
     # Regime strategy params
@@ -183,10 +189,11 @@ def main() -> None:
 
     routes = None
 
-    if args.use_regime_router:
+    if args.use_regime_router or args.use_options_overlay:
         garch_df = compute_garch_metrics(close)
         routes = add_regime_routes(garch_df)
 
+    if args.use_regime_router:
         positions = apply_route_risk_scaling(
             positions=positions,
             routes=routes,
@@ -207,38 +214,67 @@ def main() -> None:
             )
 
     if args.debug:
-        print("exposure value counts:\n", positions.value_counts(dropna=False).head(10))
+        print("\n=== EQUITY EXPOSURE ===")
+        print("exposure value counts:\n", positions.value_counts(dropna=False).head(15))
         print("avg exposure:", float(positions.mean()))
         print("fraction invested:", float((positions > 0).mean()))
         print("max exposure:", float(positions.max()))
 
-    res = run_backtest(close, positions, args.fee_bps)
+    equity_res = run_backtest(close, positions, args.fee_bps)
+
+    options_overlay = None
+    options_returns = pd.Series(0.0, index=equity_res.returns.index, name="options_overlay_return")
+
+    if args.use_options_overlay:
+        options_overlay = run_options_overlay(close, routes=routes)
+
+        options_returns = (
+            options_overlay.returns
+            .reindex(equity_res.returns.index)
+            .fillna(0.0)
+            .astype(float)
+        )
+        options_returns.name = "options_overlay_return"
+
+        if args.debug:
+            print("\n=== OPTIONS OVERLAY ENABLED ===")
+            print("signal counts:")
+            print(options_overlay.signals.value_counts())
+            print("\nlatest options diagnostics:")
+            print(
+                options_overlay.diagnostics[
+                    [
+                        "fast_vol",
+                        "slow_iv_proxy",
+                        "regime_mean",
+                        "options_signal",
+                        "options_overlay_return",
+                        "options_overlay_equity",
+                    ]
+                ].tail(10)
+            )
+
+    combined_returns = equity_res.returns.add(options_returns, fill_value=0.0)
+    combined_returns.name = "combined_strategy_return"
+    combined_equity = (1.0 + combined_returns).cumprod()
+    combined_equity.name = "combined_equity"
 
     bh_rets = close.pct_change().fillna(0.0)
     bh_equity = (1.0 + bh_rets).cumprod()
 
-    route_tag = "_router" if args.use_regime_router else ""
-
-    tag = (
-        f"{args.ticker}_mom{args.lookback}"
-        f"_d{args.down_days}_u{args.up_days}"
-        f"_cr{int(args.crash_week_drop * 100)}w"
-        f"_ch{args.crash_hold_days}"
-        f"_cd{args.crash_down_days}_cu{args.crash_up_days}"
-        f"_lev{args.down_leverage:.2f}"
-        f"{route_tag}"
-        f"_{args.start}_to_{args.end}"
-    )
-
     paths = get_output_paths("regime", args.ticker)
-    out_plot = plot_equity(res.equity, bh_equity, paths["plot"])
+    out_plot = plot_equity(combined_equity, bh_equity, paths["plot"])
 
     output_df = pd.DataFrame(
         {
             "close": close,
-            "exposure": res.positions,
-            "strategy_return": res.returns,
-            "equity": res.equity,
+            "exposure": equity_res.positions,
+            "equity_strategy_return": equity_res.returns,
+            "equity_strategy_equity": equity_res.equity,
+            "options_overlay_return": options_returns,
+            "combined_strategy_return": combined_returns,
+            "combined_equity": combined_equity,
+            "buy_hold_equity": bh_equity,
         }
     )
 
@@ -253,19 +289,46 @@ def main() -> None:
 
         output_df = output_df.join(routes[route_cols], how="left")
 
+    if options_overlay is not None:
+        option_cols = [
+            "options_signal",
+            "fast_vol",
+            "slow_iv_proxy",
+            "regime_mean",
+            "options_overlay_equity",
+        ]
+
+        output_df = output_df.join(
+            options_overlay.diagnostics[option_cols],
+            how="left",
+        )
+
     output_df.to_csv(paths["data"])
 
     strategy_name = "regime_positions"
     if args.use_regime_router:
         strategy_name += " + regime_router"
+    if args.use_options_overlay:
+        strategy_name += " + options_overlay"
 
     print(f"\nStrategy: {strategy_name} | Ticker: {args.ticker}")
     print(f"Period: {close.index.min().date()} to {close.index.max().date()}")
+
+    print("\n=== COMBINED PORTFOLIO SUMMARY ===")
     print(
-        summary(res.equity, res.returns, res.positions).to_string(
+        summary(combined_equity, combined_returns, equity_res.positions).to_string(
             float_format=lambda x: f"{x:0.4f}" if isinstance(x, float) else str(x)
         )
     )
+
+    if args.use_options_overlay:
+        print("\n=== EQUITY-ONLY SUMMARY ===")
+        print(
+            summary(equity_res.equity, equity_res.returns, equity_res.positions).to_string(
+                float_format=lambda x: f"{x:0.4f}" if isinstance(x, float) else str(x)
+            )
+        )
+
     print(f"\nSaved CSV -> {paths['data']}")
     print(f"Saved plot -> {out_plot}")
 
