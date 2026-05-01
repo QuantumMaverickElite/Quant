@@ -55,8 +55,8 @@ This is safer and faster than repeatedly recreating the surface during playback.
 - A/D or Left/Right: rotate azimuth
 - R: reset camera
 - Space: pause / play animation
-- - / =: increase animation speed
-- - / \_: decrease animation speed
+- '+' / =: increase animation speed
+- '-' / \_: decrease animation speed
 - V: start / stop recording
 - Shift+S: screenshot
 - Q / Esc: quit
