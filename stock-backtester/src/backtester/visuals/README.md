@@ -111,4 +111,3 @@ The raw `frames/` directory can become very large and should usually remain igno
 ## Notes
 
 This visualizer is experimental research infrastructure. It is intended for studying volatility behavior and creating portfolio demonstrations. It is not financial advice and should not be treated as a trading signal by itself.
-"""
