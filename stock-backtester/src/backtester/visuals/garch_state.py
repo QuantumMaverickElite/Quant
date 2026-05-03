@@ -102,7 +102,13 @@ except ImportError:
     _USING_REAL_GARCH = False
 
     def compute_garch_metrics(price_series: pd.Series) -> pd.DataFrame:
-        prices = pd.Series(np.asarray(price_series).squeeze(), name="close")
+        prices = price_series.copy()
+
+        if isinstance(prices, pd.DataFrame):
+            prices = prices.iloc[:, 0]
+
+        prices = pd.Series(prices, index=prices.index, name="close")
+        prices.index = pd.to_datetime(prices.index)
         prices = prices.dropna().astype(float)
 
         ret = np.log(prices / prices.shift(1)).dropna()
@@ -966,4 +972,11 @@ if __name__ == "__main__":
     if raw.empty:
         sys.exit(f"No data returned for '{ticker}'.")
 
-    run(raw["Close"], ticker=ticker)
+    close = raw["Close"]
+
+    if isinstance(close, pd.DataFrame):
+        close = close.iloc[:, 0]
+
+    close.index = pd.to_datetime(close.index)
+
+    run(close, ticker=ticker)
