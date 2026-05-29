@@ -56,6 +56,10 @@ DATE_CANDIDATES = [
 ]
 
 STRATEGY_EQUITY_CANDIDATES = [
+    # Preferred modern output columns.
+    # combined_equity = equity strategy + options overlay when present.
+    "combined_equity",
+    "equity_strategy_equity",
     "strategy_equity",
     "equity",
     "portfolio_value",
@@ -84,6 +88,8 @@ EXPOSURE_CANDIDATES = [
 ]
 
 RETURNS_CANDIDATES = [
+    "combined_strategy_return",
+    "equity_strategy_return",
     "strategy_return",
     "returns",
     "return",
@@ -139,6 +145,9 @@ class ScorecardRow:
     worst_year_pct: float
     best_year_pct: float
     source_csv: str
+    equity_column: str
+    buy_hold_column: str
+    exposure_column: str
     notes: str
 
 
@@ -579,6 +588,9 @@ def compute_metrics_for_run(
         worst_year_pct=pct(worst_year),
         best_year_pct=pct(best_year),
         source_csv=str(source_csv),
+        equity_column=strategy_col or "",
+        buy_hold_column=buy_hold_col or "",
+        exposure_column=exposure_col or "",
         notes=notes,
     )
 
@@ -694,6 +706,9 @@ def add_scores(df: pd.DataFrame, mode: str = "balanced") -> pd.DataFrame:
         "rows",
         "run_path",
         "source_csv",
+        "equity_column",
+        "buy_hold_column",
+        "exposure_column",
         "notes",
     ]
 
@@ -776,6 +791,31 @@ def format_terminal_table(df: pd.DataFrame, limit: int = 20) -> str:
     return shown.to_string(index=False)
 
 
+def dataframe_to_markdown_table(df: pd.DataFrame) -> str:
+    """Render a small DataFrame as a markdown table without requiring tabulate."""
+    if df.empty:
+        return ""
+
+    safe = df.copy().fillna("")
+
+    def clean_cell(value: object) -> str:
+        text = str(value)
+        text = text.replace("|", r"\|")
+        text = text.replace(" ", " ")
+        return text
+
+    headers = [clean_cell(c) for c in safe.columns]
+    rows = []
+    for _, row in safe.iterrows():
+        rows.append([clean_cell(row[c]) for c in safe.columns])
+
+    header_line = "| " + " | ".join(headers) + " |"
+    separator_line = "| " + " | ".join(["---"] * len(headers)) + " |"
+    row_lines = ["| " + " | ".join(row) + " |" for row in rows]
+
+    return " ".join([header_line, separator_line, *row_lines])
+
+
 def write_markdown_report(df: pd.DataFrame, path: Path, root: Path, mode: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -842,7 +882,7 @@ def write_markdown_report(df: pd.DataFrame, path: Path, root: Path, mode: str) -
     ]
     table_cols = [c for c in table_cols if c in df.columns]
     top_table = df.head(20)[table_cols].copy()
-    lines.append(top_table.to_markdown(index=False))
+    lines.append(dataframe_to_markdown_table(top_table))
     lines.append("")
 
     errors = df.attrs.get("errors", [])
