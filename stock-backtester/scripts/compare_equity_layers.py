@@ -344,6 +344,11 @@ def parse_args() -> argparse.Namespace:
         default=30,
         help="Number of rows to print.",
     )
+    parser.add_argument(
+        "--latest-only",
+        action="store_true",
+        help="Only keep the latest run per ticker based on run_id.",
+    )
     return parser.parse_args()
 
 
@@ -368,6 +373,12 @@ def main() -> int:
             "Need backtest.csv files with combined_equity and equity_strategy_equity."
         )
         return 2
+    if args.latest_only:
+        df = (
+            df.sort_values(["ticker", "run_id"])
+            .groupby("ticker", as_index=False, group_keys=False)
+            .tail(1)
+        )
 
     df = df.sort_values(
         ["overlay_help_score", "delta_sharpe", "delta_cagr_pct", "delta_maxdd_pct"],
