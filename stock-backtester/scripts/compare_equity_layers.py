@@ -176,7 +176,15 @@ def compare_file(path: Path) -> Optional[dict[str, object]]:
         + int(overlay_helped_drawdown)
     )
 
-    if overlay_help_score == 3:
+    epsilon = 1e-9
+
+    if (
+        abs(delta_cagr) <= epsilon
+        and abs(delta_sharpe) <= epsilon
+        and abs(delta_maxdd) <= epsilon
+    ):
+        verdict = "UNCHANGED"
+    elif overlay_help_score == 3:
         verdict = "HELPED"
     elif overlay_help_score == 2:
         verdict = "MOSTLY_HELPED"

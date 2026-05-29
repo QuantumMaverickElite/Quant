@@ -43,6 +43,7 @@ def main() -> None:
     p.add_argument("--start", default="2005-01-01")
     p.add_argument("--end", default="2024-12-31")
     p.add_argument("--fee-bps", type=float, default=2.0)
+
     p.add_argument(
         "--output-root",
         type=Path,
@@ -52,6 +53,7 @@ def main() -> None:
             "Default: outputs. Example: outputs/experiments/extreme_only_router"
         ),
     )
+
     p.add_argument(
         "--use-regime-router",
         action="store_true",
@@ -61,6 +63,16 @@ def main() -> None:
         "--use-options-overlay",
         action="store_true",
         help="Add simplified straddle/strangle options overlay returns.",
+    )
+    p.add_argument(
+        "--options-overlay-tickers",
+        nargs="+",
+        default=None,
+        help=(
+            "Only apply the options overlay to these tickers. "
+            "Example: --options-overlay-tickers NVDA TSLA. "
+            "If omitted, --use-options-overlay applies to all tickers."
+        ),
     )
 
     # Regime strategy params
@@ -133,15 +145,20 @@ def main() -> None:
     )
 
     p.add_argument("--debug", action="store_true", help="Print sanity checks.")
+
     args = p.parse_args()
 
-    Path("outputs").mkdir(exist_ok=True)
+    options_overlay_tickers: set[str] | None = None
+    if args.options_overlay_tickers is not None:
+        options_overlay_tickers = {ticker.upper() for ticker in args.options_overlay_tickers}
+
+    args.output_root.mkdir(parents=True, exist_ok=True)
 
     if args.strategy == "dividend":
         if not args.tickers:
             raise ValueError("--tickers is required when --strategy dividend is used.")
 
-        tickers = [t.upper() for t in args.tickers]
+        tickers = [ticker.upper() for ticker in args.tickers]
 
         trades_df = run_dividend_strategy(
             tickers=tickers,
@@ -179,7 +196,17 @@ def main() -> None:
 
         return
 
-    df = fetch_prices(args.ticker, args.start, args.end)
+    ticker = args.ticker.upper()
+
+    allow_options_overlay_for_ticker = (
+        args.use_options_overlay
+        and (
+            options_overlay_tickers is None
+            or ticker in options_overlay_tickers
+        )
+    )
+
+    df = fetch_prices(ticker, args.start, args.end)
     close = df["close"].dropna()
 
     positions = regime_positions(
@@ -197,7 +224,9 @@ def main() -> None:
 
     routes = None
 
-    if args.use_regime_router or args.use_options_overlay:
+    # We need GARCH routes when either the equity router is enabled or the
+    # options overlay is actually allowed for this ticker.
+    if args.use_regime_router or allow_options_overlay_for_ticker:
         garch_df = compute_garch_metrics(close)
         routes = add_regime_routes(garch_df)
 
@@ -228,6 +257,15 @@ def main() -> None:
         print("fraction invested:", float((positions > 0).mean()))
         print("max exposure:", float(positions.max()))
 
+        if args.use_options_overlay and not allow_options_overlay_for_ticker:
+            allowed = (
+                "ALL"
+                if options_overlay_tickers is None
+                else ", ".join(sorted(options_overlay_tickers))
+            )
+            print("\n=== OPTIONS OVERLAY SKIPPED ===")
+            print(f"Ticker {ticker} is not in allowed overlay set: {allowed}")
+
     equity_res = run_backtest(close, positions, args.fee_bps)
 
     options_overlay = None
@@ -235,7 +273,7 @@ def main() -> None:
         0.0, index=equity_res.returns.index, name="options_overlay_return"
     )
 
-    if args.use_options_overlay:
+    if allow_options_overlay_for_ticker:
         options_overlay = run_options_overlay(close, routes=routes)
 
         options_returns = (
@@ -270,8 +308,9 @@ def main() -> None:
 
     bh_rets = close.pct_change().fillna(0.0)
     bh_equity = (1.0 + bh_rets).cumprod()
+    bh_equity.name = "buy_hold_equity"
 
-    paths = get_output_paths("regime", args.ticker, output_root=args.output_root)
+    paths = get_output_paths("regime", ticker, output_root=args.output_root)
     out_plot = plot_equity(combined_equity, bh_equity, paths["plot"])
 
     output_df = pd.DataFrame(
@@ -311,16 +350,23 @@ def main() -> None:
             options_overlay.diagnostics[option_cols],
             how="left",
         )
+    elif args.use_options_overlay:
+        # Keep a useful column in skipped-overlay runs so comparison scripts can
+        # still see that the overlay contributed nothing.
+        output_df["options_signal"] = "SKIPPED"
+        output_df["options_overlay_equity"] = 1.0
 
     output_df.to_csv(paths["data"])
 
     strategy_name = "regime_positions"
     if args.use_regime_router:
         strategy_name += " + regime_router"
-    if args.use_options_overlay:
+    if allow_options_overlay_for_ticker:
         strategy_name += " + options_overlay"
+    elif args.use_options_overlay and options_overlay_tickers is not None:
+        strategy_name += " + options_overlay_skipped"
 
-    print(f"\nStrategy: {strategy_name} | Ticker: {args.ticker}")
+    print(f"\nStrategy: {strategy_name} | Ticker: {ticker}")
     print(f"Period: {close.index.min().date()} to {close.index.max().date()}")
 
     print("\n=== COMBINED PORTFOLIO SUMMARY ===")
