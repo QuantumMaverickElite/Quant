@@ -43,7 +43,15 @@ def main() -> None:
     p.add_argument("--start", default="2005-01-01")
     p.add_argument("--end", default="2024-12-31")
     p.add_argument("--fee-bps", type=float, default=2.0)
-
+    p.add_argument(
+        "--output-root",
+        type=Path,
+        default=Path("outputs"),
+        help=(
+            "Root folder for saved backtest outputs. "
+            "Default: outputs. Example: outputs/experiments/extreme_only_router"
+        ),
+    )
     p.add_argument(
         "--use-regime-router",
         action="store_true",
@@ -145,7 +153,7 @@ def main() -> None:
 
         summary_df = summarize_dividend_trades(trades_df)
 
-        paths = get_output_paths("dividend", "multi")
+        paths = get_output_paths("dividend", "multi", output_root=args.output_root)
         trades_df.to_csv(paths["trades"], index=False)
 
         print(f"\nStrategy: dividend | Tickers: {', '.join(tickers)}")
@@ -223,14 +231,15 @@ def main() -> None:
     equity_res = run_backtest(close, positions, args.fee_bps)
 
     options_overlay = None
-    options_returns = pd.Series(0.0, index=equity_res.returns.index, name="options_overlay_return")
+    options_returns = pd.Series(
+        0.0, index=equity_res.returns.index, name="options_overlay_return"
+    )
 
     if args.use_options_overlay:
         options_overlay = run_options_overlay(close, routes=routes)
 
         options_returns = (
-            options_overlay.returns
-            .reindex(equity_res.returns.index)
+            options_overlay.returns.reindex(equity_res.returns.index)
             .fillna(0.0)
             .astype(float)
         )
@@ -262,7 +271,7 @@ def main() -> None:
     bh_rets = close.pct_change().fillna(0.0)
     bh_equity = (1.0 + bh_rets).cumprod()
 
-    paths = get_output_paths("regime", args.ticker)
+    paths = get_output_paths("regime", args.ticker, output_root=args.output_root)
     out_plot = plot_equity(combined_equity, bh_equity, paths["plot"])
 
     output_df = pd.DataFrame(
@@ -324,7 +333,9 @@ def main() -> None:
     if args.use_options_overlay:
         print("\n=== EQUITY-ONLY SUMMARY ===")
         print(
-            summary(equity_res.equity, equity_res.returns, equity_res.positions).to_string(
+            summary(
+                equity_res.equity, equity_res.returns, equity_res.positions
+            ).to_string(
                 float_format=lambda x: f"{x:0.4f}" if isinstance(x, float) else str(x)
             )
         )
