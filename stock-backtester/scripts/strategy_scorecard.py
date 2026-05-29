@@ -328,6 +328,7 @@ def group_csvs_by_run(csvs: Iterable[Path], root: Path) -> dict[Path, list[Path]
 
 def try_load_equity_csv(
     path: Path,
+    requested_equity_column: Optional[str] = None,
 ) -> Optional[tuple[pd.DataFrame, dict[str, Optional[str]], str]]:
     """
     Try loading a CSV and infer useful columns.
@@ -344,7 +345,12 @@ def try_load_equity_csv(
         return None
 
     date_col = pick_column(df, DATE_CANDIDATES)
-    strategy_col = pick_column(df, STRATEGY_EQUITY_CANDIDATES)
+    if requested_equity_column is not None:
+        if requested_equity_column not in df.columns:
+            return None
+        strategy_col = requested_equity_column
+    else:
+        strategy_col = pick_column(df, STRATEGY_EQUITY_CANDIDATES)
     buy_hold_col = pick_column(df, BUY_HOLD_EQUITY_CANDIDATES)
     exposure_col = pick_column(df, EXPOSURE_CANDIDATES)
     returns_col = pick_column(df, RETURNS_CANDIDATES)
@@ -400,11 +406,15 @@ def try_load_equity_csv(
 
 
 def load_best_equity_for_run(
-    run_dir: Path, csvs: list[Path]
+    run_dir: Path,
+    csvs: list[Path],
+    requested_equity_column: Optional[str] = None,
 ) -> Optional[tuple[pd.DataFrame, dict[str, Optional[str]], Path, str]]:
     """Pick the first CSV in a run directory that looks like an equity curve."""
     for csv_path in csvs:
-        loaded = try_load_equity_csv(csv_path)
+        loaded = try_load_equity_csv(
+            csv_path, requested_equity_column=requested_equity_column
+        )
         if loaded is not None:
             df, column_map, notes = loaded
             return df, column_map, csv_path, notes
@@ -722,7 +732,11 @@ def add_scores(df: pd.DataFrame, mode: str = "balanced") -> pd.DataFrame:
 # -----------------------------------------------------------------------------
 
 
-def build_scorecard(root: Path, mode: str = "balanced") -> pd.DataFrame:
+def build_scorecard(
+    root: Path,
+    mode: str = "balanced",
+    equity_column: Optional[str] = None,
+) -> pd.DataFrame:
     csvs = discover_candidate_csvs(root)
     if not csvs:
         return pd.DataFrame()
@@ -732,7 +746,11 @@ def build_scorecard(root: Path, mode: str = "balanced") -> pd.DataFrame:
     errors: list[str] = []
 
     for run_dir, run_csvs in grouped.items():
-        loaded = load_best_equity_for_run(run_dir, run_csvs)
+        loaded = load_best_equity_for_run(
+            run_dir,
+            run_csvs,
+            requested_equity_column=equity_column,
+        )
         if loaded is None:
             continue
 
@@ -931,6 +949,16 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Composite scoring mode.",
     )
     parser.add_argument(
+        "--equity-column",
+        type=str,
+        default=None,
+        help=(
+            "Force the scorecard to use a specific equity curve column, such as "
+            "combined_equity, equity_strategy_equity, options_overlay_equity, or equity. "
+            "Runs without this column are skipped."
+        ),
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=20,
@@ -952,7 +980,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"ERROR: root path does not exist: {root}", file=sys.stderr)
         return 1
 
-    scorecard = build_scorecard(root, mode=args.mode)
+    scorecard = build_scorecard(root, mode=args.mode, equity_column=args.equity_column)
 
     if scorecard.empty:
         print("No valid backtest equity curves found.")
@@ -967,7 +995,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     if not args.no_markdown:
         write_markdown_report(scorecard, args.markdown, root=root, mode=args.mode)
 
-    print("\nStrategy Scorecard")
+    print("Strategy Scorecard")
+    if args.equity_column:
+        print(f"Equity column: {args.equity_column}")
     print("=" * 80)
     print(format_terminal_table(scorecard, limit=args.limit))
     print("=" * 80)
