@@ -9,3 +9,4 @@ vispy==0.16.1
 PyQt6==6.11.0
 imageio
 imageio-ffmpeg
+tabulate==0.10.0
