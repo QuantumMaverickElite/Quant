@@ -2,17 +2,25 @@ from pathlib import Path
 from datetime import datetime
 
 
-def get_output_dir(strategy: str, ticker: str) -> Path:
+def get_output_dir(
+    strategy: str,
+    ticker: str,
+    output_root: Path | str = "outputs",
+) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    base = Path("outputs") / strategy / ticker / timestamp
+    base = Path(output_root) / strategy / ticker / timestamp
     base.mkdir(parents=True, exist_ok=True)
 
     return base
 
 
-def get_output_paths(strategy: str, ticker: str):
-    base = get_output_dir(strategy, ticker)
+def get_output_paths(
+    strategy: str,
+    ticker: str,
+    output_root: Path | str = "outputs",
+) -> dict[str, Path]:
+    base = get_output_dir(strategy, ticker, output_root=output_root)
 
     return {
         "dir": base,

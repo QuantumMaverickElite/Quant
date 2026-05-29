@@ -16,15 +16,22 @@ From the project root:
 
     python scripts/strategy_scorecard.py outputs/regime
 
-Optional:
+Force a specific equity curve:
+
+    python scripts/strategy_scorecard.py outputs/regime \
+        --equity-column combined_equity
+
+Keep only the latest run per strategy/ticker:
+
+    python scripts/strategy_scorecard.py outputs/regime \
+        --equity-column combined_equity \
+        --latest-only
+
+Write custom outputs:
 
     python scripts/strategy_scorecard.py outputs/regime \
         --out outputs/research/strategy_scorecard.csv \
         --markdown outputs/research/strategy_scorecard.md
-
-This script is intentionally defensive. It searches for likely CSV files and
-tries to infer the strategy equity, buy-and-hold equity, date, and exposure
-columns from common names.
 """
 
 from __future__ import annotations
@@ -32,12 +39,13 @@ from __future__ import annotations
 import argparse
 import math
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
 import numpy as np
 import pandas as pd
+
 
 TRADING_DAYS_PER_YEAR = 252
 
@@ -178,7 +186,16 @@ def safe_float(value: object, default: float = np.nan) -> float:
         out = float(value)
     except Exception:
         return default
+
     return out if math.isfinite(out) else default
+
+
+def pct(x: float) -> float:
+    return safe_float(x * 100.0)
+
+
+def finite_or_nan(x: float) -> float:
+    return safe_float(x, np.nan)
 
 
 def infer_strategy_from_path(run_dir: Path, root: Path) -> str:
@@ -228,6 +245,7 @@ def infer_ticker_from_path(run_dir: Path, root: Path) -> str:
         return parts[1]
     if len(parts) == 1:
         return parts[0]
+
     return run_dir.parent.name
 
 
@@ -236,6 +254,7 @@ def annualization_years(index: pd.Index, n_rows: int) -> float:
     if isinstance(index, pd.DatetimeIndex) and len(index) >= 2:
         days = max((index[-1] - index[0]).days, 1)
         return max(days / 365.25, 1 / TRADING_DAYS_PER_YEAR)
+
     return max(n_rows / TRADING_DAYS_PER_YEAR, 1 / TRADING_DAYS_PER_YEAR)
 
 
@@ -252,6 +271,7 @@ def compute_drawdown(equity: pd.Series) -> pd.Series:
 def compute_monthly_returns(equity: pd.Series) -> pd.Series:
     if not isinstance(equity.index, pd.DatetimeIndex):
         return pd.Series(dtype=float)
+
     monthly = equity.resample("ME").last().pct_change().dropna()
     return monthly.replace([np.inf, -np.inf], np.nan).dropna()
 
@@ -259,16 +279,9 @@ def compute_monthly_returns(equity: pd.Series) -> pd.Series:
 def compute_yearly_returns(equity: pd.Series) -> pd.Series:
     if not isinstance(equity.index, pd.DatetimeIndex):
         return pd.Series(dtype=float)
+
     yearly = equity.resample("YE").last().pct_change().dropna()
     return yearly.replace([np.inf, -np.inf], np.nan).dropna()
-
-
-def pct(x: float) -> float:
-    return safe_float(x * 100.0)
-
-
-def finite_or_nan(x: float) -> float:
-    return safe_float(x, np.nan)
 
 
 # -----------------------------------------------------------------------------
@@ -288,6 +301,7 @@ def discover_candidate_csvs(root: Path) -> list[Path]:
     def score_path(path: Path) -> tuple[int, str]:
         name = path.name.lower()
         score = 0
+
         if name in PREFERRED_CSV_NAMES:
             score += 100
         if "equity" in name:
@@ -298,6 +312,7 @@ def discover_candidate_csvs(root: Path) -> list[Path]:
             score -= 25
         if "trade" in name:
             score -= 20
+
         return (-score, str(path))
 
     return sorted(all_csvs, key=score_path)
@@ -310,6 +325,7 @@ def group_csvs_by_run(csvs: Iterable[Path], root: Path) -> dict[Path, list[Path]
     In the simplest case, each run directory contains one equity CSV.
     """
     grouped: dict[Path, list[Path]] = {}
+
     for csv in csvs:
         run_dir = csv.parent
         grouped.setdefault(run_dir, []).append(csv)
@@ -323,6 +339,7 @@ def group_csvs_by_run(csvs: Iterable[Path], root: Path) -> dict[Path, list[Path]
                 str(p),
             ),
         )
+
     return grouped
 
 
@@ -345,12 +362,14 @@ def try_load_equity_csv(
         return None
 
     date_col = pick_column(df, DATE_CANDIDATES)
+
     if requested_equity_column is not None:
         if requested_equity_column not in df.columns:
             return None
         strategy_col = requested_equity_column
     else:
         strategy_col = pick_column(df, STRATEGY_EQUITY_CANDIDATES)
+
     buy_hold_col = pick_column(df, BUY_HOLD_EQUITY_CANDIDATES)
     exposure_col = pick_column(df, EXPOSURE_CANDIDATES)
     returns_col = pick_column(df, RETURNS_CANDIDATES)
@@ -360,6 +379,7 @@ def try_load_equity_csv(
 
     if date_col is not None:
         parsed_dates = pd.to_datetime(df[date_col], errors="coerce")
+
         if parsed_dates.notna().sum() >= max(3, int(0.5 * len(df))):
             df = df.copy()
             df[date_col] = parsed_dates
@@ -372,6 +392,7 @@ def try_load_equity_csv(
         # Last-resort fallback: use a returns column to construct equity.
         if returns_col is not None:
             returns = clean_numeric_series(df[returns_col])
+
             if len(returns) >= 3:
                 df = df.copy()
                 df["_constructed_strategy_equity"] = (1.0 + returns).cumprod()
@@ -386,6 +407,7 @@ def try_load_equity_csv(
         return None
 
     strategy_series = clean_numeric_series(df[strategy_col])
+
     if len(strategy_series) < 3:
         return None
 
@@ -413,11 +435,14 @@ def load_best_equity_for_run(
     """Pick the first CSV in a run directory that looks like an equity curve."""
     for csv_path in csvs:
         loaded = try_load_equity_csv(
-            csv_path, requested_equity_column=requested_equity_column
+            csv_path,
+            requested_equity_column=requested_equity_column,
         )
+
         if loaded is not None:
             df, column_map, notes = loaded
             return df, column_map, csv_path, notes
+
     return None
 
 
@@ -457,7 +482,10 @@ def compute_metrics_for_run(
 
     initial_equity = safe_float(equity.iloc[0])
     final_equity = safe_float(equity.iloc[-1])
-    total_return = final_equity / initial_equity - 1.0 if initial_equity > 0 else np.nan
+
+    total_return = (
+        final_equity / initial_equity - 1.0 if initial_equity > 0 else np.nan
+    )
     cagr = (
         (final_equity / initial_equity) ** (1.0 / years) - 1.0
         if initial_equity > 0 and years > 0
@@ -500,10 +528,14 @@ def compute_metrics_for_run(
         else np.nan
     )
     worst_year = (
-        safe_float(yearly_returns.min(), np.nan) if not yearly_returns.empty else np.nan
+        safe_float(yearly_returns.min(), np.nan)
+        if not yearly_returns.empty
+        else np.nan
     )
     best_year = (
-        safe_float(yearly_returns.max(), np.nan) if not yearly_returns.empty else np.nan
+        safe_float(yearly_returns.max(), np.nan)
+        if not yearly_returns.empty
+        else np.nan
     )
 
     if exposure_col is not None and exposure_col in df.columns:
@@ -540,6 +572,7 @@ def compute_metrics_for_run(
     if buy_hold_col is not None and buy_hold_col in df.columns:
         bh = clean_numeric_series(df[buy_hold_col]).astype(float)
         bh = bh[bh > 0]
+
         if len(bh) >= 3:
             bh_initial = safe_float(bh.iloc[0])
             buy_hold_final = safe_float(bh.iloc[-1])
@@ -613,6 +646,7 @@ def compute_metrics_for_run(
 def percentile_rank(series: pd.Series, higher_is_better: bool = True) -> pd.Series:
     """Return 0..1 percentile ranks. Missing values get neutral 0.5."""
     s = pd.to_numeric(series, errors="coerce")
+
     if s.notna().sum() <= 1:
         return pd.Series(0.5, index=series.index)
 
@@ -678,12 +712,14 @@ def add_scores(df: pd.DataFrame, mode: str = "balanced") -> pd.DataFrame:
         }
 
     score = pd.Series(0.0, index=out.index)
+
     for name, weight in weights.items():
         score += components[name] * weight
 
     out["score"] = (score * 100).round(2)
     out = out.sort_values(
-        ["score", "sharpe", "cagr_pct"], ascending=[False, False, False]
+        ["score", "sharpe", "cagr_pct"],
+        ascending=[False, False, False],
     )
     out["rank"] = range(1, len(out) + 1)
 
@@ -724,6 +760,7 @@ def add_scores(df: pd.DataFrame, mode: str = "balanced") -> pd.DataFrame:
 
     existing_cols = [c for c in preferred_cols if c in out.columns]
     other_cols = [c for c in out.columns if c not in existing_cols]
+
     return out[existing_cols + other_cols]
 
 
@@ -736,8 +773,10 @@ def build_scorecard(
     root: Path,
     mode: str = "balanced",
     equity_column: Optional[str] = None,
+    latest_only: bool = False,
 ) -> pd.DataFrame:
     csvs = discover_candidate_csvs(root)
+
     if not csvs:
         return pd.DataFrame()
 
@@ -751,21 +790,36 @@ def build_scorecard(
             run_csvs,
             requested_equity_column=equity_column,
         )
+
         if loaded is None:
             continue
 
         df, column_map, source_csv, notes = loaded
+
         try:
             row = compute_metrics_for_run(
-                run_dir, root, df, column_map, source_csv, notes
+                run_dir,
+                root,
+                df,
+                column_map,
+                source_csv,
+                notes,
             )
             rows.append(asdict(row))
         except Exception as exc:
             errors.append(f"{run_dir}: {exc}")
 
     scorecard = pd.DataFrame(rows)
+
     if scorecard.empty:
         return scorecard
+
+    if latest_only:
+        scorecard = (
+            scorecard.sort_values(["strategy", "ticker", "run_id"])
+            .groupby(["strategy", "ticker"], as_index=False, group_keys=False)
+            .tail(1)
+        )
 
     scorecard = add_scores(scorecard, mode=mode)
 
@@ -793,6 +847,7 @@ def format_terminal_table(df: pd.DataFrame, limit: int = 20) -> str:
         "avg_exposure_pct",
     ]
     display_cols = [c for c in display_cols if c in df.columns]
+
     shown = df.head(limit)[display_cols].copy()
 
     for col in [
@@ -819,11 +874,12 @@ def dataframe_to_markdown_table(df: pd.DataFrame) -> str:
     def clean_cell(value: object) -> str:
         text = str(value)
         text = text.replace("|", r"\|")
-        text = text.replace(" ", " ")
+        text = text.replace("\n", " ")
         return text
 
     headers = [clean_cell(c) for c in safe.columns]
     rows = []
+
     for _, row in safe.iterrows():
         rows.append([clean_cell(row[c]) for c in safe.columns])
 
@@ -831,10 +887,16 @@ def dataframe_to_markdown_table(df: pd.DataFrame) -> str:
     separator_line = "| " + " | ".join(["---"] * len(headers)) + " |"
     row_lines = ["| " + " | ".join(row) + " |" for row in rows]
 
-    return " ".join([header_line, separator_line, *row_lines])
+    return "\n".join([header_line, separator_line, *row_lines])
 
 
-def write_markdown_report(df: pd.DataFrame, path: Path, root: Path, mode: str) -> None:
+def write_markdown_report(
+    df: pd.DataFrame,
+    path: Path,
+    root: Path,
+    mode: str,
+    latest_only: bool = False,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
     lines: list[str] = []
@@ -842,6 +904,7 @@ def write_markdown_report(df: pd.DataFrame, path: Path, root: Path, mode: str) -
     lines.append("")
     lines.append(f"Root analyzed: `{root}`")
     lines.append(f"Ranking mode: `{mode}`")
+    lines.append(f"Latest only: `{latest_only}`")
     lines.append(f"Runs scored: **{len(df)}**")
     lines.append("")
 
@@ -851,6 +914,7 @@ def write_markdown_report(df: pd.DataFrame, path: Path, root: Path, mode: str) -
         return
 
     top = df.iloc[0]
+
     lines.append("## Best Overall Run")
     lines.append("")
     lines.append(
@@ -867,10 +931,13 @@ def write_markdown_report(df: pd.DataFrame, path: Path, root: Path, mode: str) -
 
     def add_leader(section: str, col: str, higher_is_better: bool = True) -> None:
         valid = df[pd.to_numeric(df[col], errors="coerce").notna()].copy()
+
         if valid.empty:
             return
+
         valid[col] = pd.to_numeric(valid[col], errors="coerce")
         leader = valid.sort_values(col, ascending=not higher_is_better).iloc[0]
+
         lines.append(f"## {section}")
         lines.append("")
         lines.append(
@@ -899,18 +966,23 @@ def write_markdown_report(df: pd.DataFrame, path: Path, root: Path, mode: str) -
         "alpha_vs_buy_hold_pct",
     ]
     table_cols = [c for c in table_cols if c in df.columns]
+
     top_table = df.head(20)[table_cols].copy()
     lines.append(dataframe_to_markdown_table(top_table))
     lines.append("")
 
     errors = df.attrs.get("errors", [])
+
     if errors:
         lines.append("## Skipped / Error Notes")
         lines.append("")
+
         for error in errors[:25]:
             lines.append(f"- {error}")
+
         if len(errors) > 25:
             lines.append(f"- ...and {len(errors) - 25} more.")
+
         lines.append("")
 
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -959,6 +1031,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--latest-only",
+        action="store_true",
+        help="Only keep the latest run per strategy/ticker based on run_id.",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=20,
@@ -969,6 +1046,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Do not write a markdown report.",
     )
+
     return parser.parse_args(argv)
 
 
@@ -980,12 +1058,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"ERROR: root path does not exist: {root}", file=sys.stderr)
         return 1
 
-    scorecard = build_scorecard(root, mode=args.mode, equity_column=args.equity_column)
+    scorecard = build_scorecard(
+        root,
+        mode=args.mode,
+        equity_column=args.equity_column,
+        latest_only=args.latest_only,
+    )
 
     if scorecard.empty:
         print("No valid backtest equity curves found.")
         print(
-            "Checked for CSV files with columns like equity, strategy_equity, portfolio_value, date, buy_hold_equity."
+            "Checked for CSV files with columns like equity, strategy_equity, "
+            "portfolio_value, date, buy_hold_equity."
         )
         return 2
 
@@ -993,19 +1077,29 @@ def main(argv: Optional[list[str]] = None) -> int:
     scorecard.to_csv(args.out, index=False)
 
     if not args.no_markdown:
-        write_markdown_report(scorecard, args.markdown, root=root, mode=args.mode)
+        write_markdown_report(
+            scorecard,
+            args.markdown,
+            root=root,
+            mode=args.mode,
+            latest_only=args.latest_only,
+        )
 
-    print("Strategy Scorecard")
+    print("\nStrategy Scorecard")
     if args.equity_column:
         print(f"Equity column: {args.equity_column}")
+    if args.latest_only:
+        print("Latest only: True")
     print("=" * 80)
     print(format_terminal_table(scorecard, limit=args.limit))
     print("=" * 80)
     print(f"Wrote CSV: {args.out}")
+
     if not args.no_markdown:
         print(f"Wrote report: {args.markdown}")
 
     errors = scorecard.attrs.get("errors", [])
+
     if errors:
         print(f"Skipped/error runs: {len(errors)}")
 

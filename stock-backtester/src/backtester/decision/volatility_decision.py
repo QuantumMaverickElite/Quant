@@ -46,13 +46,13 @@ def make_volatility_decision(row: pd.Series) -> VolatilityDecision:
     if regime == "LOW":
         return VolatilityDecision(
             vol_regime=regime,
-            risk_multiplier=1.10,
+            risk_multiplier=1.00,
             preferred_strategy="mean_reversion",
             allow_mean_reversion=True,
             allow_breakout=False,
             allow_options=False,
             allow_new_equity_positions=True,
-            notes="Low volatility: favor mean reversion and normal-to-slightly-increased equity exposure.",
+            notes="Low volatility: no router intervention in extreme-only experiment.",
         )
 
     if regime == "NORMAL":
@@ -70,25 +70,25 @@ def make_volatility_decision(row: pd.Series) -> VolatilityDecision:
     if regime == "HIGH":
         return VolatilityDecision(
             vol_regime=regime,
-            risk_multiplier=0.70,
+            risk_multiplier=1.00,
             preferred_strategy="breakout",
             allow_mean_reversion=False,
             allow_breakout=True,
             allow_options=True,
             allow_new_equity_positions=True,
-            notes="High volatility: reduce equity risk, prefer breakout behavior, and allow long-volatility options logic.",
+            notes="High volatility: no equity scaling in extreme-only experiment; options logic may still be allowed.",
         )
 
     if regime == "EXTREME":
         return VolatilityDecision(
             vol_regime=regime,
-            risk_multiplier=0.35,
+            risk_multiplier=0.50,
             preferred_strategy="defensive_or_long_vol",
             allow_mean_reversion=False,
             allow_breakout=False,
             allow_options=True,
             allow_new_equity_positions=False,
-            notes="Extreme volatility: heavily reduce directional equity exposure and prefer defensive or convex options logic.",
+            notes="Extreme volatility: reduce directional equity exposure as a risk override.",
         )
 
     return VolatilityDecision(
