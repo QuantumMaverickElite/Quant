@@ -1,27 +1,49 @@
-# python
-__pycache__/
-*.pyc
-
-# venv
-.venv/
-
-# outputs (generated)
-outputs/
-
-# editor junk
-.vscode/
-
-# GARCH visualizer raw recording frames
-src/outputs/garch_recordings/*/frames/
-
-# Python local/version tooling
-.python-version
-requirements.lock.txt
-
-# Local Python wheel cache
-wheelhouse/
-
 # Python cache
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 *$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build / packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test / lint / type-check caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Generated outputs
+outputs/
+results/
+archive/old_backtests/
+src/outputs/
+
+# GARCH visualizer raw recording frames / generated media
+src/outputs/garch_recordings/
+*.mp4
+*.gif
+
+# Wheelhouse / local dependency cache
+wheelhouse/
+
+# Local Python version tooling
+.python-version
+requirements.lock.txt
+
+# Editor / OS junk
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
