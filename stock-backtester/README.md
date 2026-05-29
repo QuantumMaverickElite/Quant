@@ -1,192 +1,522 @@
-# Stock Backtester — Multi-Strategy Quant Framework
+# Stock Backtester — Modular Quant Research Framework
 
-A modular Python-based backtesting system for experimenting with both **continuous trading strategies** and **event-driven strategies**.
+A modular Python backtesting and research framework for testing trading strategies, volatility regimes, routing logic, and strategy overlays.
 
-This project currently supports:
+The project started as a simple stock backtester, but has grown into a research system for comparing strategy behavior across tickers, market regimes, and experimental branches.
 
-- **Regime-based strategies** (momentum + mean reversion + crash logic)
-- **Dividend capture strategies** (event-driven trades around ex-dividend dates)
+The current architecture supports:
 
----
+- Regime-based equity strategies
+- Dividend/event-driven strategies
+- GARCH-style volatility analytics
+- Volatility regime routing
+- Regime-aware position sizing
+- Simplified options overlay experiments
+- Conditional options-overlay gating by ticker
+- Isolated experiment output folders
+- Strategy scorecards and research comparison reports
 
-## 🧠 Core Idea
-
-Most retail backtesters only support one type of strategy.
-
-This system is built to handle **multiple strategy classes**:
-
-- **Position-based (continuous exposure)**  
-  → e.g. momentum, mean reversion, leverage
-
-- **Event-based (discrete trades)**  
-  → e.g. dividend capture, earnings plays, macro events
+Generated outputs are ignored by Git. The repository is meant to store source code, scripts, documentation, and reproducible research tools, not large backtest artifacts.
 
 ---
 
-## 🏗️ Project Structure
+## Core Idea
 
-```
+The project is built around a research loop:
+
+~~~text
+strategy idea
+    -> backtest
+    -> isolated experiment output
+    -> scorecard
+    -> layer comparison
+    -> decision: keep, modify, or reject
+~~~
+
+Instead of treating every backtest as a one-off script, this framework separates the system into:
+
+- data loading
+- strategy signal generation
+- decision/routing logic
+- execution/backtest engines
+- risk and overlay logic
+- research evaluation scripts
+
+The long-term goal is to evolve toward a modular quant engine:
+
+~~~text
+strategies -> orthogonalization -> allocator -> risk -> execution
+~~~
+
+---
+
+## Project Structure
+
+~~~text
 stock-backtester/
 ├── src/backtester/
-│
-│   ├── cli.py                 # Entry point (strategy selection)
-│
-│   ├── data.py                # Data loading (prices + dividends)
-│
+│   ├── cli.py
+│   ├── data.py
+│   ├── metrics.py
+│   ├── plot.py
+│   ├── universes.py
+│   │
+│   ├── analytics/
+│   │   ├── volatility.py
+│   │   ├── volatility_state.py
+│   │   └── options_data.py
+│   │
+│   ├── decision/
+│   │   ├── regime_router.py
+│   │   ├── position_sizing.py
+│   │   └── volatility_decision.py
+│   │
 │   ├── engines/
-│   │   ├── position_engine.py # Continuous backtesting engine
-│   │   └── event_engine.py    # Event-driven trade engine
-│
+│   │   ├── position_engine.py
+│   │   ├── event_engine.py
+│   │   └── options_overlay_engine.py
+│   │
 │   ├── strategies/
-│   │   ├── position_strategies.py  # Momentum / streak logic
-│   │   └── event_strategies.py     # Dividend capture logic
-│
+│   │   ├── position_strategies.py
+│   │   ├── event_strategies.py
+│   │   ├── options_strategies.py
+│   │   ├── options_engine.py
+│   │   └── volatility_strategy.py
+│   │
 │   ├── models/
-│   │   └── trade_result.py    # Data structures (results)
+│   │   └── trade_result.py
+│   │
+│   ├── utils/
+│   │   ├── output.py
+│   │   └── helpers.py
+│   │
+│   └── visuals/
+│       └── garch_state.py
 │
-│   ├── utils.py              # Shared utilities
-│   ├── metrics.py            # Performance metrics
-│   ├── plot.py               # Equity curve plotting
-│   └── universes.py          # (future) ticker group definitions
+├── scripts/
+│   ├── strategy_scorecard.py
+│   ├── compare_equity_layers.py
+│   ├── run_regime_basket.py
+│   ├── summarize_regime_basket.py
+│   ├── compare_regime_by_year.py
+│   ├── compare_regime_runs.py
+│   ├── backtest_options_overlay.py
+│   └── test_*.py
 │
-├── outputs/                  # Generated CSVs + plots (ignored)
-├── results/                  # Curated outputs (optional)
+├── docs/
+│   └── market_state_engine.md
+│
+├── archive/
+│   └── old_backtests/          # ignored; local historical outputs
+│
+├── outputs/                    # ignored; generated experiment outputs
+├── results/                    # ignored; old generated plots
+├── assets/                     # curated documentation assets only
 ├── requirements.txt
+├── pyproject.toml
 └── README.md
-```
+~~~
 
 ---
 
-## 🚀 How to Run
+## Core Package
 
-### Activate environment
+### `src/backtester/cli.py`
 
-```bash
+Main command-line entry point.
+
+It supports:
+
+- regime strategy backtests
+- dividend/event strategy backtests
+- GARCH regime routing
+- options overlay experiments
+- ticker-gated options overlays
+- custom output roots for isolated experiments
+
+Important CLI flags:
+
+~~~bash
+--strategy regime
+--strategy dividend
+--use-regime-router
+--use-options-overlay
+--options-overlay-tickers NVDA TSLA
+--output-root outputs/experiments/<experiment_name>
+~~~
+
+---
+
+### `src/backtester/data.py`
+
+Data loading layer.
+
+Currently handles price retrieval and formatting for the rest of the system.
+
+---
+
+### `src/backtester/analytics/`
+
+Market-state analytics.
+
+Key files:
+
+- `volatility.py`: computes GARCH-style volatility metrics.
+- `volatility_state.py`: helpers for classifying volatility states.
+- `options_data.py`: options-related data helpers and experimental utilities.
+
+---
+
+### `src/backtester/decision/`
+
+Decision logic and routing layer.
+
+Key files:
+
+- `regime_router.py`: converts volatility state into routing decisions.
+- `position_sizing.py`: applies regime-aware risk scaling to equity exposure.
+- `volatility_decision.py`: defines volatility decision schemas and EXTREME/HIGH/NORMAL/LOW style classification behavior.
+
+This layer is where market-state information starts affecting strategy behavior.
+
+---
+
+### `src/backtester/engines/`
+
+Backtest execution engines.
+
+Key files:
+
+- `position_engine.py`: core continuous-position backtest engine.
+- `event_engine.py`: event-driven trade engine, currently used for dividend capture tests.
+- `options_overlay_engine.py`: simplified options overlay engine for straddle/strangle-style return experiments.
+
+---
+
+### `src/backtester/strategies/`
+
+Strategy signal logic.
+
+Key files:
+
+- `position_strategies.py`: regime strategy logic using momentum, streaks, crash detection, and leverage behavior.
+- `event_strategies.py`: event-driven strategy helper logic.
+- `options_strategies.py`: options strategy experiments.
+- `volatility_strategy.py`: volatility strategy experiments.
+
+---
+
+### `src/backtester/utils/`
+
+Shared utilities.
+
+Key files:
+
+- `output.py`: creates organized output directories and supports custom experiment roots through `--output-root`.
+
+---
+
+### `src/backtester/visuals/`
+
+Visualization experiments.
+
+Key files:
+
+- `garch_state.py`: interactive and recorded GARCH volatility surface visualizer.
+
+Generated visual recordings should not be committed to Git.
+
+---
+
+## Research Scripts
+
+### `scripts/strategy_scorecard.py`
+
+Scans backtest output folders and ranks runs using performance metrics.
+
+Metrics include:
+
+- CAGR
+- total return
+- annualized volatility
+- Sharpe
+- max drawdown
+- Calmar
+- exposure
+- exposure efficiency
+- buy-and-hold comparison
+- alpha versus buy-and-hold
+
+Example:
+
+~~~bash
+python scripts/strategy_scorecard.py outputs/experiments/conditional_options_overlay/regime \
+  --equity-column combined_equity \
+  --latest-only
+~~~
+
+Useful equity columns:
+
+~~~text
+combined_equity
+equity_strategy_equity
+options_overlay_equity
+~~~
+
+`--latest-only` keeps only the newest run per strategy/ticker.
+
+---
+
+### `scripts/compare_equity_layers.py`
+
+Compares strategy layers inside each backtest.
+
+Main comparison:
+
+~~~text
+combined_equity vs equity_strategy_equity
+~~~
+
+This answers:
+
+~~~text
+Did the options overlay help or hurt?
+~~~
+
+Example:
+
+~~~bash
+python scripts/compare_equity_layers.py outputs/experiments/conditional_options_overlay/regime \
+  --latest-only
+~~~
+
+Possible verdicts:
+
+~~~text
+HELPED
+MOSTLY_HELPED
+MIXED
+HURT
+UNCHANGED
+~~~
+
+---
+
+### Other Scripts
+
+- `run_regime_basket.py`: runs regime backtests across baskets of tickers.
+- `summarize_regime_basket.py`: summarizes basket backtest outputs.
+- `compare_regime_by_year.py`: produces year-by-year comparisons.
+- `compare_regime_runs.py`: compares multiple regime runs.
+- `backtest_options_overlay.py`: standalone options overlay experiment runner.
+
+---
+
+## Running the Project
+
+Activate the environment:
+
+~~~bash
 source .venv/bin/activate
-```
+~~~
+
+If needed, install the package in editable mode:
+
+~~~bash
+pip install -e .
+~~~
+
+Then check the CLI:
+
+~~~bash
+python -m backtester.cli --help
+~~~
 
 ---
 
-## 📈 Regime Strategy (Default)
+## Run a Basic Regime Backtest
 
-Momentum + mean reversion + crash detection + adaptive leverage
-
-```bash
-MPLBACKEND=Agg PYTHONPATH=src python -m backtester.cli \
+~~~bash
+python -m backtester.cli \
   --strategy regime \
-  --ticker SPY
-```
-
-### Output
-
-- Equity curve plot
-- CSV with:
-  - price
-  - exposure
-  - returns
-  - equity
+  --ticker SPY \
+  --start 2015-01-01 \
+  --end 2024-12-31
+~~~
 
 ---
 
-## 💰 Dividend Capture Strategy
+## Run a Regime Backtest with Router and Options Overlay
 
-Event-driven trading around ex-dividend dates
+~~~bash
+python -m backtester.cli \
+  --strategy regime \
+  --ticker NVDA \
+  --start 2015-01-01 \
+  --end 2024-12-31 \
+  --use-regime-router \
+  --use-options-overlay \
+  --output-root outputs/experiments/extreme_only_router
+~~~
 
-```bash
-PYTHONPATH=src python -m backtester.cli \
+This writes output to:
+
+~~~text
+outputs/experiments/extreme_only_router/regime/NVDA/<RUN_ID>/
+~~~
+
+Generated files usually include:
+
+~~~text
+backtest.csv
+equity_curve.png
+~~~
+
+---
+
+## Run Conditional Options Overlay Experiment
+
+The options overlay should not always be applied globally. In testing, it helped high-volatility names like NVDA and TSLA, but dragged or did not help steadier names.
+
+A ticker-gated overlay can be run like this:
+
+~~~bash
+for ticker in SPY QQQ AAPL MSFT NVDA TSLA; do
+  python -m backtester.cli \
+    --strategy regime \
+    --ticker "$ticker" \
+    --start 2015-01-01 \
+    --end 2024-12-31 \
+    --use-regime-router \
+    --use-options-overlay \
+    --options-overlay-tickers NVDA TSLA \
+    --output-root outputs/experiments/conditional_options_overlay
+done
+~~~
+
+Expected behavior:
+
+~~~text
+SPY, QQQ, AAPL, MSFT -> options overlay skipped
+NVDA, TSLA           -> options overlay active
+~~~
+
+Then evaluate:
+
+~~~bash
+python scripts/strategy_scorecard.py outputs/experiments/conditional_options_overlay/regime \
+  --equity-column combined_equity \
+  --latest-only
+
+python scripts/compare_equity_layers.py outputs/experiments/conditional_options_overlay/regime \
+  --latest-only
+~~~
+
+---
+
+## Dividend Capture Strategy
+
+Event-driven trading around ex-dividend dates.
+
+~~~bash
+python -m backtester.cli \
   --strategy dividend \
   --tickers PG KO JNJ XOM CVX \
   --start 2018-01-01 \
   --end 2026-01-01 \
   --hold-days 1 \
   --capital 10000
-```
+~~~
 
-### Output
+The dividend engine tracks:
 
-- Trade-level CSV
-- Summary metrics:
-  - total trades
-  - win rate
-  - average return
-  - total PnL
-
----
-
-## ⚙️ Strategy Details
-
-### Regime Strategy
-
-- 50-day momentum filter
-- Mean reversion via streak logic
-- Crash detection using 5-day drops
-- Adaptive leverage when momentum is negative
-
----
-
-### Dividend Strategy
-
-For each ex-dividend event:
-
-1. Buy 1 day before ex-date  
-2. Collect dividend  
-3. Sell after N trading days  
-
-Tracks:
-
-- price movement
+- entry date
+- ex-dividend date
+- exit date
 - dividend income
+- price return
 - total return
-- drop ratio (price drop vs dividend)
+- trade-level PnL
 
 ---
 
-## 🔥 Why This Project Matters
+## Output Policy
 
-This is not just a backtester — it's a **framework**.
+Generated outputs are ignored by Git.
 
-It allows:
+Ignored folders include:
 
-- comparing fundamentally different strategy types
-- combining signals (future work)
-- building a research pipeline for quant ideas
+~~~text
+outputs/
+results/
+archive/old_backtests/
+src/outputs/
+wheelhouse/
+__pycache__/
+*.egg-info/
+~~~
+
+This keeps the repository focused on:
+
+- source code
+- scripts
+- documentation
+- configuration
+
+The preferred generated-output structure is:
+
+~~~text
+outputs/
+  experiments/
+    <experiment_name>/
+      regime/
+        <TICKER>/
+          <RUN_ID>/
+            backtest.csv
+            equity_curve.png
+  research/
+    scorecards and comparison reports
+~~~
+
+Outputs can be regenerated and should not be committed unless a file is intentionally curated for documentation.
+
+---
+
+## Current Research Direction
+
+The project is moving toward a layered strategy engine:
+
+~~~text
+strategies -> decision/routing -> allocation -> risk -> execution
+~~~
+
+Current active research themes:
+
+- volatility regime classification
+- GARCH-based market-state routing
+- regime-aware position sizing
+- options overlays as conditional convexity exposure
+- scorecard-based research evaluation
+- separating base strategy performance from overlay contribution
 
 ---
 
-## 📌 Future Improvements
+## Notes and Limitations
 
-- Combine regime + dividend strategies
-- Add transaction cost modeling to dividend trades
-- Portfolio-level capital allocation
-- Strategy stacking / ensemble models
-- Custom universes (S&P sectors, dividend aristocrats, etc.)
-- Risk management layer
-
----
-
-## ⚠️ Notes
-
-- Uses `yfinance` (not perfect data quality)
-- No slippage modeling yet
-- Dividend strategy is currently **naive baseline**
+- Data currently comes from `yfinance`, which is convenient but not institutional-grade.
+- The options overlay is simplified and experimental.
+- Dividend capture logic is a naive baseline.
+- Slippage and market impact are not fully modeled yet.
+- Results should be treated as research output, not trading advice.
 
 ---
 
-## 🧪 Philosophy
+## Philosophy
 
-Build fast → test ideas → refine → iterate
+Build fast.  
+Test ideas.  
+Score them honestly.  
+Keep what improves the system.  
+Reject what only looks good in isolation.
 
-This repo is designed for **experimentation and iteration**, not perfection.
-
----
-
-## 📊 Status
-
-✔ Modular architecture  
-✔ Multi-strategy support  
-✔ CLI interface  
-✔ Clean separation of concerns  
-
-🚧 Strategy combination (next step)
-
----
+This repo is designed for experimentation, iteration, and gradual movement toward a more serious quant research platform.
