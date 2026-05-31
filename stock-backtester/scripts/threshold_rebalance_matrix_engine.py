@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import os
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -56,9 +59,64 @@ def parse_args() -> argparse.Namespace:
         default="outputs/threshold_rebalance/matrix_engine_weekly_sample24_port8",
     )
 
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=max((os.cpu_count() or 2) - 1, 1),
+        help="Number of worker processes. Use 1 to disable multiprocessing.",
+    )
+
     parser.add_argument("--progress-every", type=int, default=100)
 
     return parser.parse_args()
+
+
+def run_sample_task(
+    task: tuple[
+        int,
+        Any,
+        Any,
+        Any,
+        int,
+        float,
+        float,
+    ],
+) -> list[dict[str, object]]:
+    (
+        run_id,
+        matrices,
+        sample_indices,
+        thresholds,
+        portfolio_size,
+        max_weight,
+        capital,
+    ) = task
+
+    result = run_batched_threshold_grid_for_sample(
+        matrices=matrices,
+        sample_indices=sample_indices,
+        thresholds=thresholds,
+        portfolio_size=portfolio_size,
+        max_weight=max_weight,
+        capital=capital,
+        run_id=run_id,
+        save_curves=False,
+    )
+
+    sampled_tickers = [matrices.tickers[i] for i in sample_indices]
+    ticker_string = ",".join(sampled_tickers)
+
+    rows = []
+    for row in result.rows:
+        rows.append(
+            {
+                "run_id": run_id,
+                "tickers": ticker_string,
+                **row,
+            }
+        )
+
+    return rows
 
 
 def main() -> None:
@@ -89,38 +147,40 @@ def main() -> None:
     print(f"Sample size: {min(args.sample_size, len(matrices.tickers))}")
     print(f"Portfolio size: {args.portfolio_size}")
     print(f"Thresholds: {args.thresholds}")
+    print(f"Workers: {args.workers}")
     print(f"Save mode: {args.save_mode}")
+
+    tasks = [
+        (
+            run_id,
+            matrices,
+            sample_indices,
+            thresholds,
+            args.portfolio_size,
+            args.max_weight,
+            args.capital,
+        )
+        for run_id, sample_indices in enumerate(run_samples, start=1)
+    ]
 
     rows = []
 
-    for run_id, sample_indices in enumerate(run_samples, start=1):
-        result = run_batched_threshold_grid_for_sample(
-            matrices=matrices,
-            sample_indices=sample_indices,
-            thresholds=thresholds,
-            portfolio_size=args.portfolio_size,
-            max_weight=args.max_weight,
-            capital=args.capital,
-            run_id=run_id,
-            save_curves=False,
-        )
+    if args.workers <= 1:
+        for completed, task in enumerate(tasks, start=1):
+            rows.extend(run_sample_task(task))
 
-        result_rows = result.rows
+            if args.progress_every > 0 and completed % args.progress_every == 0:
+                print(f"completed runs={completed}/{args.runs}")
+    else:
+        with ProcessPoolExecutor(max_workers=args.workers) as executor:
+            for completed, result_rows in enumerate(
+                executor.map(run_sample_task, tasks),
+                start=1,
+            ):
+                rows.extend(result_rows)
 
-        sampled_tickers = [matrices.tickers[i] for i in sample_indices]
-        ticker_string = ",".join(sampled_tickers)
-
-        for row in result_rows:
-            rows.append(
-                {
-                    "run_id": run_id,
-                    "tickers": ticker_string,
-                    **row,
-                }
-            )
-
-        if args.progress_every > 0 and run_id % args.progress_every == 0:
-            print(f"completed runs={run_id}/{args.runs}")
+                if args.progress_every > 0 and completed % args.progress_every == 0:
+                    print(f"completed runs={completed}/{args.runs}")
 
     trials = pd.DataFrame(rows)
     summary = summarize_threshold_trials(trials)
