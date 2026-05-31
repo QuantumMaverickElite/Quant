@@ -1,215 +1,216 @@
 # Strategy Math and Signal Definitions
 
-This document explains the mathematical ideas used across the backtesting system.
+This document explains the math behind the signals, engines, allocation rules, risk controls, and backtest metrics used in the project.
 
-The goal is not only to document what each strategy does, but also to make the logic understandable to someone reading the project without needing to reverse-engineer the code.
-
-The project is built around several layers:
-
-1. Price and return calculations
-2. Strategy signals
-3. Volatility and regime engines
-4. Scoring and ranking
-5. Allocation
-6. Risk controls
-7. Backtest evaluation metrics
+The goal is to make the project understandable without requiring someone to reverse-engineer the Python code.
 
 ---
 
-# 1. Price and Return Math
+## 1. Price and Return Math
 
 Let:
 
-- \(P\_{i,t}\) be the price of asset \(i\) at time \(t\)
-- \(r\_{i,t}\) be the simple return of asset \(i\) at time \(t\)
-- \(\ell\_{i,t}\) be the log return of asset \(i\) at time \(t\)
+- `P_{i,t}` be the price of asset `i` at time `t`
+- `r_{i,t}` be the simple return of asset `i` at time `t`
+- `ell_{i,t}` be the log return of asset `i` at time `t`
+- `w_{i,t}` be the portfolio weight assigned to asset `i` at time `t`
+- `N` be the number of assets in the universe
 
 Simple return:
 
-\[
-r*{i,t} = \frac{P*{i,t}}{P\_{i,t-1}} - 1
-\]
+```math
+r_{i,t} = \frac{P_{i,t}}{P_{i,t-1}} - 1
+```
 
 Log return:
 
-\[
-\ell*{i,t} = \log(P*{i,t}) - \log(P\_{i,t-1})
-\]
+```math
+\ell_{i,t} = \log(P_{i,t}) - \log(P_{i,t-1})
+```
 
 Portfolio return:
 
-\[
-r*{p,t} = \sum*{i=1}^{N} w*{i,t} r*{i,t}
-\]
-
-where:
-
-- \(w\_{i,t}\) is the portfolio weight assigned to asset \(i\)
-- \(N\) is the number of assets in the universe
+```math
+r_{p,t} = \sum_{i=1}^{N} w_{i,t} r_{i,t}
+```
 
 Portfolio value:
 
-\[
-V*t = V*{t-1}(1 + r\_{p,t})
-\]
+```math
+V_t = V_{t-1}(1 + r_{p,t})
+```
 
 ---
 
-# 2. Momentum Signals
+## 2. Momentum Signals
 
 A momentum signal measures whether an asset has recently been rising or falling.
 
-For a lookback window \(k\), the momentum of asset \(i\) is:
+For a lookback window `k`, the momentum of asset `i` is:
 
-\[
-M*{i,t}^{(k)} = \frac{P*{i,t}}{P\_{i,t-k}} - 1
-\]
+```math
+M_{i,t}^{(k)} = \frac{P_{i,t}}{P_{i,t-k}} - 1
+```
 
-A positive value means the asset has gone up over the lookback period.
+Interpretation:
 
-A negative value means the asset has gone down over the lookback period.
-
-A basic momentum strategy may rank assets by \(M\_{i,t}^{(k)}\) and buy the strongest assets.
+- Positive momentum means the asset has gone up over the lookback period.
+- Negative momentum means the asset has gone down over the lookback period.
+- A simple momentum strategy may rank assets by `M_{i,t}^{(k)}` and select the strongest names.
 
 ---
 
-# 3. Mean Reversion Signals
+## 3. Mean Reversion Signals
 
 A mean reversion signal measures how far an asset is from its recent average.
 
 Rolling mean:
 
-\[
-\mu*{i,t}^{(k)} = \frac{1}{k}\sum*{j=0}^{k-1} P\_{i,t-j}
-\]
+```math
+\mu_{i,t}^{(k)} = \frac{1}{k}\sum_{j=0}^{k-1} P_{i,t-j}
+```
 
 Rolling standard deviation:
 
-\[
-\sigma*{i,t}^{(k)} = \sqrt{\frac{1}{k-1}\sum*{j=0}^{k-1}(P*{i,t-j} - \mu*{i,t}^{(k)})^2}
-\]
+```math
+\sigma_{i,t}^{(k)} =
+\sqrt{
+\frac{1}{k-1}
+\sum_{j=0}^{k-1}
+\left(P_{i,t-j} - \mu_{i,t}^{(k)}\right)^2
+}
+```
 
 Z-score:
 
-\[
-z*{i,t}^{(k)} = \frac{P*{i,t} - \mu*{i,t}^{(k)}}{\sigma*{i,t}^{(k)}}
-\]
+```math
+z_{i,t}^{(k)} =
+\frac{P_{i,t} - \mu_{i,t}^{(k)}}{\sigma_{i,t}^{(k)}}
+```
 
 Interpretation:
 
-- \(z\_{i,t} > 0\): price is above its recent average
-- \(z\_{i,t} < 0\): price is below its recent average
-- very negative \(z\): possible oversold condition
-- very positive \(z\): possible overbought condition
+- `z_{i,t} > 0`: price is above its recent average.
+- `z_{i,t} < 0`: price is below its recent average.
+- Very negative z-scores may indicate an oversold condition.
+- Very positive z-scores may indicate an overbought condition.
 
-A simple mean reversion strategy may buy assets with low z-scores and avoid or reduce exposure to assets with high z-scores.
+A mean reversion strategy may buy assets with low z-scores and reduce exposure to assets with high z-scores.
 
 ---
 
-# 4. Volatility Signals
+## 4. Volatility Signals
 
 Volatility measures how much an asset moves.
 
-Using returns over a lookback window \(k\), rolling volatility is:
+Using returns over a lookback window `k`, rolling volatility is:
 
-\[
-\sigma*{i,t}^{(k)} = \sqrt{\frac{1}{k-1}\sum*{j=0}^{k-1}(r*{i,t-j} - \bar{r}*{i,t}^{(k)})^2}
-\]
+```math
+\sigma_{i,t}^{(k)} =
+\sqrt{
+\frac{1}{k-1}
+\sum_{j=0}^{k-1}
+\left(r_{i,t-j} - \bar{r}_{i,t}^{(k)}\right)^2
+}
+```
 
 Annualized volatility:
 
-\[
-\sigma*{i,t,\text{ann}}^{(k)} = \sqrt{252} \cdot \sigma*{i,t}^{(k)}
-\]
+```math
+\sigma_{i,t,\text{ann}}^{(k)}
+=
+\sqrt{252} \cdot \sigma_{i,t}^{(k)}
+```
 
-where 252 is the approximate number of trading days in a year.
+Volatility can be used as:
 
-Volatility can be used in several ways:
-
-1. As a risk penalty
-2. As a regime signal
-3. As a position sizing input
-4. As a trigger for reducing exposure
-5. As a high-volatility opportunity signal
+- a risk penalty
+- a regime signal
+- a position sizing input
+- a trigger for reducing exposure
+- a high-volatility opportunity signal
 
 ---
 
-# 5. GARCH Volatility Engine
+## 5. GARCH Volatility Engine
 
 The GARCH engine estimates changing volatility over time.
 
 A common model is GARCH(1,1):
 
-\[
+```math
 r_t = \mu + \epsilon_t
-\]
+```
 
-\[
+```math
 \epsilon_t = \sigma_t z_t
-\]
+```
 
-\[
-\sigma*t^2 = \omega + \alpha \epsilon*{t-1}^2 + \beta \sigma\_{t-1}^2
-\]
+```math
+\sigma_t^2 =
+\omega
++
+\alpha \epsilon_{t-1}^2
++
+\beta \sigma_{t-1}^2
+```
 
 where:
 
-- \(\sigma_t^2\) is the conditional variance at time \(t\)
-- \(\omega\) is the baseline variance level
-- \(\alpha\) controls how strongly recent shocks affect volatility
-- \(\beta\) controls how persistent volatility is
-- \(\epsilon\_{t-1}^2\) is the previous squared shock
-- \(z_t\) is usually assumed to be a standardized random variable
+- `sigma_t^2` is the conditional variance at time `t`
+- `omega` is the baseline variance level
+- `alpha` controls how strongly recent shocks affect volatility
+- `beta` controls how persistent volatility is
+- `epsilon_{t-1}^2` is the previous squared shock
+- `z_t` is usually treated as a standardized random variable
 
 Interpretation:
 
 - A large shock increases future volatility.
-- A high \(\beta\) means volatility decays slowly.
-- GARCH is useful because market volatility clusters. Large moves tend to be followed by large moves, and calm periods tend to be followed by calm periods.
+- A high `beta` means volatility decays slowly.
+- GARCH is useful because market volatility clusters.
 
-The GARCH engine can be used to estimate future risk and help decide whether the system should increase, reduce, or reroute exposure.
+The GARCH engine can help decide whether the system should increase exposure, reduce exposure, or route into a different strategy mode.
 
 ---
 
-# 6. Entropy Engine
+## 6. Entropy Engine
 
-Entropy measures disorder, uncertainty, or unpredictability.
+Entropy measures uncertainty, disorder, or unpredictability.
 
-For a set of possible market states with probabilities \(p_1, p_2, \dots, p_n\), Shannon entropy is:
+For market states with probabilities `p_1, p_2, ..., p_n`, Shannon entropy is:
 
-\[
-H = -\sum\_{i=1}^{n} p_i \log(p_i)
-\]
+```math
+H = -\sum_{i=1}^{n} p_i \log(p_i)
+```
+
+For binned return states:
+
+```math
+H_t =
+-\sum_{j=1}^{m}
+p_{j,t}\log(p_{j,t})
+```
+
+where:
+
+- `p_{j,t}` is the probability of returns falling into bin `j`
+- `m` is the number of bins
 
 Interpretation:
 
 - Low entropy means the system is more ordered or predictable.
 - High entropy means the system is more uncertain or chaotic.
 
-In a market setting, entropy can be estimated from return distributions, regime probabilities, signal distributions, or transition behavior.
+Possible market interpretations:
 
-Example using binned return states:
-
-\[
-H*t = -\sum*{j=1}^{m} p*{j,t} \log(p*{j,t})
-\]
-
-where:
-
-- \(p\_{j,t}\) is the probability of returns falling into bin \(j\)
-- \(m\) is the number of bins
-
-The entropy engine can help detect whether the market is in a clean directional environment or a noisy unstable environment.
-
-Possible interpretation:
-
-- Low entropy + positive trend: cleaner momentum environment
-- High entropy + high volatility: unstable risk environment
-- Low entropy + compressed volatility: possible pre-breakout environment
+- Low entropy plus positive trend may indicate a cleaner momentum environment.
+- High entropy plus high volatility may indicate unstable risk conditions.
+- Low entropy plus compressed volatility may indicate a possible pre-breakout environment.
 
 ---
 
-# 7. Regime Engine
+## 7. Regime Engine
 
 A regime engine classifies the market into different states.
 
@@ -223,37 +224,38 @@ Examples:
 - crisis regime
 - recovery regime
 
-A simple regime score may combine trend and volatility:
+A simple regime score can combine trend and volatility:
 
-\[
-R_t = a \cdot T_t - b \cdot \sigma_t
-\]
+```math
+R_t = aT_t - b\sigma_t
+```
 
 where:
 
-- \(T_t\) is a trend signal
-- \(\sigma_t\) is volatility
-- \(a\) and \(b\) are weights
+- `T_t` is a trend signal
+- `sigma_t` is volatility
+- `a` and `b` are weights
 
-A simple trend signal could be:
+A simple trend signal can be:
 
-\[
-T_t = \frac{P_t}{MA_t^{(k)}} - 1
-\]
+```math
+T_t =
+\frac{P_t}{MA_t^{(k)}} - 1
+```
 
-where \(MA_t^{(k)}\) is a moving average.
+where `MA_t^{(k)}` is a moving average.
 
-Possible regime classification:
+Example classification rule:
 
-\[
+```math
 \text{Regime}_t =
 \begin{cases}
 \text{Bull}, & T_t > 0 \text{ and } \sigma_t < \sigma_{\text{high}} \\
-\text{Volatile Bull}, & T*t > 0 \text{ and } \sigma_t \geq \sigma*{\text{high}} \\
-\text{Bear}, & T*t < 0 \text{ and } \sigma_t < \sigma*{\text{high}} \\
-\text{Crisis}, & T*t < 0 \text{ and } \sigma_t \geq \sigma*{\text{high}}
+\text{Volatile Bull}, & T_t > 0 \text{ and } \sigma_t \geq \sigma_{\text{high}} \\
+\text{Bear}, & T_t < 0 \text{ and } \sigma_t < \sigma_{\text{high}} \\
+\text{Crisis}, & T_t < 0 \text{ and } \sigma_t \geq \sigma_{\text{high}}
 \end{cases}
-\]
+```
 
 The regime engine allows the strategy to behave differently depending on market conditions.
 
@@ -266,173 +268,162 @@ For example:
 
 ---
 
-# 8. Correlation Engine
+## 8. Correlation Engine
 
 The correlation engine measures how similarly assets move.
 
-For assets \(i\) and \(j\), rolling correlation is:
+For assets `i` and `j`, rolling correlation is:
 
-\[
-\rho\_{ij,t}^{(k)} =
+```math
+\rho_{ij,t}^{(k)}
+=
 \frac{\text{Cov}(r_i, r_j)}
 {\sigma_i \sigma_j}
-\]
-
-where:
-
-- \(\rho\_{ij,t}^{(k)}\) is the rolling correlation between assets \(i\) and \(j\)
-- \(\text{Cov}(r_i, r_j)\) is the covariance of their returns
-- \(\sigma_i\) and \(\sigma_j\) are their volatilities
+```
 
 Interpretation:
 
-- \(\rho \approx 1\): assets move together
-- \(\rho \approx 0\): assets are mostly unrelated
-- \(\rho \approx -1\): assets move in opposite directions
-
-The correlation engine can help avoid building a portfolio that appears diversified but is actually concentrated in similar assets.
+- `rho` near `1`: assets move together
+- `rho` near `0`: assets are mostly unrelated
+- `rho` near `-1`: assets move in opposite directions
 
 Average portfolio correlation:
 
-\[
+```math
 \bar{\rho}_t =
 \frac{2}{N(N-1)}
-\sum_{i<j} \rho\_{ij,t}
-\]
+\sum_{i<j} \rho_{ij,t}
+```
 
 A high average correlation may indicate that diversification is weakening.
 
 ---
 
-# 9. High-Volatility Engine
+## 9. High-Volatility Engine
 
 The high-volatility engine looks for situations where volatility itself may create opportunity.
 
-A high-volatility score may be based on how current volatility compares to recent volatility.
+A volatility z-score can compare current volatility to recent volatility:
 
-Volatility z-score:
-
-\[
-z*{\sigma,t} =
-\frac{\sigma_t - \mu*{\sigma,t}^{(k)}}{\sigma\_{\sigma,t}^{(k)}}
-\]
-
-where:
-
-- \(\sigma_t\) is current volatility
-- \(\mu\_{\sigma,t}^{(k)}\) is average volatility over a lookback window
-- \(\sigma\_{\sigma,t}^{(k)}\) is the standard deviation of volatility over that window
+```math
+z_{\sigma,t}
+=
+\frac{\sigma_t - \mu_{\sigma,t}^{(k)}}
+{\sigma_{\sigma,t}^{(k)}}
+```
 
 Interpretation:
 
-- high \(z\_{\sigma,t}\): volatility is unusually high
-- low \(z\_{\sigma,t}\): volatility is unusually low
+- High `z_{sigma,t}` means volatility is unusually high.
+- Low `z_{sigma,t}` means volatility is unusually low.
 
-The high-volatility engine can be used in two different ways:
+A high-volatility mean reversion setup may require both high volatility and an oversold price:
 
-1. Defensive mode: reduce exposure during abnormal volatility
-2. Opportunity mode: look for oversold assets after volatility spikes
+```math
+z_{\sigma,t} > c
+```
 
-For example, a high-volatility mean-reversion setup may require:
-
-\[
-z\_{\sigma,t} > c
-\]
-
-and
-
-\[
-z\_{price,t} < -d
-\]
+```math
+z_{price,t} < -d
+```
 
 This means volatility is unusually high and price is unusually low.
 
 ---
 
-# 10. Volatility Router
+## 10. Volatility Router
 
-A volatility router changes the behavior of the strategy depending on volatility conditions.
+A volatility router changes strategy behavior depending on volatility conditions.
 
-Example:
+Example routing rule:
 
-\[
+```math
 \text{Route}_t =
 \begin{cases}
 \text{Normal Strategy}, & \sigma_t < \sigma_{\text{medium}} \\
-\text{Reduced Exposure}, & \sigma*{\text{medium}} \leq \sigma_t < \sigma*{\text{high}} \\
-\text{Extreme Risk Mode}, & \sigma*t \geq \sigma*{\text{high}}
+\text{Reduced Exposure}, & \sigma_{\text{medium}} \leq \sigma_t < \sigma_{\text{high}} \\
+\text{Extreme Risk Mode}, & \sigma_t \geq \sigma_{\text{high}}
 \end{cases}
-\]
+```
 
-The router does not necessarily create a signal by itself. Instead, it decides which strategy behavior should be active.
+The router does not necessarily create a signal by itself. Instead, it decides which behavior should be active.
 
 For example:
 
-- Low volatility: allow normal allocation
-- Medium volatility: reduce position sizes
-- High volatility: use defensive rules
-- Extreme volatility: only trade if the opportunity is very strong
+- Low volatility: allow normal allocation.
+- Medium volatility: reduce position sizes.
+- High volatility: use defensive rules.
+- Extreme volatility: only trade if the opportunity is very strong.
 
 ---
 
-# 11. Dividend Signal
+## 11. Dividend Signal
 
 A dividend signal can rank assets based on dividend-related events or yield.
 
 Dividend yield:
 
-\[
-DY*{i,t} = \frac{D*{i,t}}{P\_{i,t}}
-\]
+```math
+DY_{i,t} =
+\frac{D_{i,t}}{P_{i,t}}
+```
 
 where:
 
-- \(D\_{i,t}\) is annual dividend per share
-- \(P\_{i,t}\) is price
+- `D_{i,t}` is annual dividend per share
+- `P_{i,t}` is price
 
-A dividend capture strategy may focus on the ex-dividend date.
+A simplified dividend event return can be written as:
 
-A simplified event return around a dividend date can be written as:
-
-\[
-R*{event} = \frac{P*{sell} + D - P*{buy}}{P*{buy}}
-\]
+```math
+R_{\text{event}}
+=
+\frac{P_{\text{sell}} + D - P_{\text{buy}}}
+{P_{\text{buy}}}
+```
 
 where:
 
-- \(P\_{buy}\) is the entry price
-- \(P\_{sell}\) is the exit price
-- \(D\) is the dividend received
+- `P_buy` is the entry price
+- `P_sell` is the exit price
+- `D` is the dividend received
 
 This type of signal is event-driven rather than purely technical.
 
 ---
 
-# 12. Buyback Signal
+## 12. Buyback Signal
 
 A buyback signal attempts to capture the effect of companies repurchasing their own shares.
 
 A simple buyback yield can be estimated as:
 
-\[
-BY*{i,t} = \frac{\text{Net Buybacks}*{i,t}}{\text{Market Cap}\_{i,t}}
-\]
+```math
+BY_{i,t}
+=
+\frac{\text{Net Buybacks}_{i,t}}
+{\text{Market Cap}_{i,t}}
+```
 
-Buybacks can matter because reducing the share count may increase ownership concentration and earnings per share.
+Buybacks can matter because reducing share count may increase ownership concentration and earnings per share.
 
 The signal may become stronger when buybacks are large relative to market capitalization.
 
 ---
 
-# 13. Stock Split Signal
+## 13. Stock Split Signal
 
 A stock split signal is event-driven.
 
-For a split ratio \(a:b\), the adjusted price is:
+For a split ratio `a:b`, the adjusted price is:
 
-\[
-P*{\text{after}} = P*{\text{before}} \cdot \frac{b}{a}
-\]
+```math
+P_{\text{after}}
+=
+P_{\text{before}}
+\cdot
+\frac{b}{a}
+```
 
 The market value of the position does not mechanically change from the split itself.
 
@@ -447,203 +438,218 @@ A split signal should therefore be treated as an event signal, not as guaranteed
 
 ---
 
-# 14. Options Layer
+## 14. Options Overlay
 
-The options layer is conditional.
+The options overlay is conditional.
 
 It should not always be active. Instead, it should depend on the state of the underlying asset, volatility, and the strategy signal.
 
-A simplified options decision rule may look like:
+A simplified options permission rule may look like:
 
-\[
+```math
 O_t =
 \begin{cases}
 1, & \text{signal strength} > c \text{ and volatility condition is favorable} \\
 0, & \text{otherwise}
 \end{cases}
-\]
+```
 
-where \(O_t = 1\) means the options layer is allowed.
+where `O_t = 1` means the options overlay is allowed.
 
-The options layer can be used to express stronger conviction, hedge risk, or create asymmetric exposure.
+The options overlay can be used to express stronger conviction, hedge risk, or create asymmetric exposure.
 
 Because options introduce nonlinear payoff behavior, they should be treated separately from ordinary equity exposure.
 
 ---
 
-# 15. Signal Normalization
+## 15. Signal Normalization
 
 Different signals may have different scales.
 
-For example:
+Examples:
 
 - momentum may be measured in percent return
 - volatility may be measured as standard deviation
 - entropy may be measured using probabilities
-- correlation may range from -1 to 1
-
-To combine signals, they should often be normalized.
+- correlation may range from `-1` to `1`
 
 Z-score normalization:
 
-\[
-x*{i,t}^{norm} =
-\frac{x*{i,t} - \mu_t(x)}
+```math
+x_{i,t}^{norm}
+=
+\frac{x_{i,t} - \mu_t(x)}
 {\sigma_t(x)}
-\]
+```
 
 Rank normalization:
 
-\[
-x*{i,t}^{rank} =
-\frac{\text{rank}(x*{i,t})}{N}
-\]
+```math
+x_{i,t}^{rank}
+=
+\frac{\text{rank}(x_{i,t})}{N}
+```
 
 Normalization allows different signals to be combined into one score more safely.
 
 ---
 
-# 16. Composite Scoring Model
+## 16. Composite Scoring Model
 
 A composite score combines multiple signals.
 
 Example:
 
-\[
-S*{i,t}
+```math
+S_{i,t}
 =
-\alpha_1 M*{i,t}
-
-- \alpha*2 MR*{i,t}
-- \alpha*3 D*{i,t}
-- \alpha*4 B*{i,t}
-
-* \alpha*5 \sigma*{i,t}
-* \alpha*6 C*{i,t}
-  \]
+\alpha_1 M_{i,t}
++
+\alpha_2 MR_{i,t}
++
+\alpha_3 D_{i,t}
++
+\alpha_4 B_{i,t}
+-
+\alpha_5 \sigma_{i,t}
+-
+\alpha_6 C_{i,t}
+```
 
 where:
 
-- \(S\_{i,t}\) is the total score for asset \(i\)
-- \(M\_{i,t}\) is momentum
-- \(MR\_{i,t}\) is mean reversion
-- \(D\_{i,t}\) is dividend score
-- \(B\_{i,t}\) is buyback score
-- \(\sigma\_{i,t}\) is volatility
-- \(C\_{i,t}\) is concentration or correlation penalty
-- \(\alpha_j\) are signal weights
+- `S_{i,t}` is the total score for asset `i`
+- `M_{i,t}` is momentum
+- `MR_{i,t}` is mean reversion
+- `D_{i,t}` is dividend score
+- `B_{i,t}` is buyback score
+- `sigma_{i,t}` is volatility
+- `C_{i,t}` is concentration or correlation penalty
+- `alpha_j` are signal weights
 
-The scoring model is important because the long-term goal of the project is not only to test isolated strategies, but to build a system that can compare and rotate between opportunities.
+The scoring model is important because the long-term goal is not only to test isolated strategies, but to build a system that can compare and rotate between opportunities.
 
 ---
 
-# 17. Top-K Selection
+## 17. Top-K Selection
 
-A simple allocator may select the top \(k\) assets by score.
+A simple allocator may select the top `k` assets by score.
 
-\[
+```math
 \text{Selected}_t = \text{TopK}(S_{i,t})
-\]
+```
 
 Equal-weight allocation:
 
-\[
-w\_{i,t} =
+```math
+w_{i,t} =
 \begin{cases}
-\frac{1}{k}, & i \in \text{Selected}\_t \\
+\frac{1}{k}, & i \in \text{Selected}_t \\
 0, & \text{otherwise}
 \end{cases}
-\]
+```
 
 This is simple and interpretable, but it may ignore differences in conviction, volatility, and correlation.
 
 ---
 
-# 18. Score-Weighted Allocation
+## 18. Score-Weighted Allocation
 
 A score-weighted allocator assigns more capital to higher-scoring assets.
 
-\[
-w*{i,t} =
-\frac{\max(S*{i,t}, 0)}
-{\sum*{j=1}^{N} \max(S*{j,t}, 0)}
-\]
+```math
+w_{i,t}
+=
+\frac{\max(S_{i,t}, 0)}
+{\sum_{j=1}^{N} \max(S_{j,t}, 0)}
+```
 
 This only gives weight to assets with positive scores.
 
 A more conservative version may apply a maximum position size:
 
-\[
-w*{i,t} \leq w*{\max}
-\]
+```math
+w_{i,t} \leq w_{\max}
+```
 
 ---
 
-# 19. Volatility-Adjusted Allocation
+## 19. Volatility-Adjusted Allocation
 
 A volatility-adjusted allocator gives less weight to more volatile assets.
 
-One simple version:
+Raw volatility-adjusted weight:
 
-\[
-\tilde{w}_{i,t} =
-\frac{S_{i,t}}{\sigma\_{i,t}}
-\]
+```math
+\tilde{w}_{i,t}
+=
+\frac{S_{i,t}}{\sigma_{i,t}}
+```
 
-Then normalize:
+Normalized final weight:
 
-\[
-w*{i,t} =
-\frac{\max(\tilde{w}*{i,t}, 0)}
-{\sum*{j=1}^{N} \max(\tilde{w}*{j,t}, 0)}
-\]
+```math
+w_{i,t}
+=
+\frac{\max(\tilde{w}_{i,t}, 0)}
+{\sum_{j=1}^{N} \max(\tilde{w}_{j,t}, 0)}
+```
 
 This rewards high score but penalizes high risk.
 
 ---
 
-# 20. Correlation-Aware Allocation
+## 20. Correlation-Aware Allocation
 
 A correlation-aware allocator reduces concentration in highly correlated assets.
 
 One possible penalty:
 
-\[
-Penalty*{i,t} =
+```math
+Penalty_{i,t}
+=
 \frac{1}{k}
-\sum*{j \in Portfolio} \rho\_{ij,t}
-\]
+\sum_{j \in Portfolio}
+\rho_{ij,t}
+```
 
 Adjusted score:
 
-\[
-S*{i,t}^{adj} = S*{i,t} - \lambda Penalty\_{i,t}
-\]
+```math
+S_{i,t}^{adj}
+=
+S_{i,t}
+-
+\lambda Penalty_{i,t}
+```
 
-where:
-
-- \(\lambda\) controls how strongly correlation is penalized
-- higher penalty means the asset is too similar to existing holdings
+where `lambda` controls how strongly correlation is penalized.
 
 This helps prevent the portfolio from accidentally becoming concentrated in one theme, sector, or risk factor.
 
 ---
 
-# 21. Threshold Rebalancing
+## 21. Threshold Rebalancing
 
 Threshold rebalancing avoids trading unless portfolio weights drift far enough from target weights.
 
 Let:
 
-- \(w\_{i,t}^{actual}\) be the current actual weight
-- \(w\_{i,t}^{target}\) be the desired target weight
-- \(\theta\) be the rebalance threshold
+- `w_{i,t}^{actual}` be the current actual weight
+- `w_{i,t}^{target}` be the desired target weight
+- `theta` be the rebalance threshold
 
 Rebalance condition:
 
-\[
-|w*{i,t}^{actual} - w*{i,t}^{target}| > \theta
-\]
+```math
+\left|
+w_{i,t}^{actual}
+-
+w_{i,t}^{target}
+\right|
+>
+\theta
+```
 
 If the difference is smaller than the threshold, the portfolio does not trade.
 
@@ -651,13 +657,13 @@ This can reduce turnover, transaction costs, and unnecessary trading.
 
 ---
 
-# 22. Risk Scaling
+## 22. Risk Scaling
 
 Risk scaling changes total exposure based on market conditions.
 
 Example:
 
-\[
+```math
 E_t =
 \begin{cases}
 1.00, & \text{low risk} \\
@@ -665,65 +671,89 @@ E_t =
 0.50, & \text{high risk} \\
 0.25, & \text{extreme risk}
 \end{cases}
-\]
+```
 
 Final weight:
 
-\[
-w*{i,t}^{final} = E_t \cdot w*{i,t}^{target}
-\]
+```math
+w_{i,t}^{final}
+=
+E_t \cdot w_{i,t}^{target}
+```
 
 Cash weight:
 
-\[
-w*{cash,t} = 1 - \sum_i w*{i,t}^{final}
-\]
+```math
+w_{cash,t}
+=
+1
+-
+\sum_i w_{i,t}^{final}
+```
 
 Risk scaling allows the system to stay invested during favorable conditions and reduce exposure during dangerous conditions.
 
 ---
 
-# 23. Transaction Costs
+## 23. Transaction Costs
 
 Transaction costs reduce portfolio value when trades occur.
 
-If turnover at time \(t\) is:
+Turnover:
 
-\[
-TO*t = \sum_i |w*{i,t}^{new} - w\_{i,t}^{old}|
-\]
+```math
+TO_t =
+\sum_i
+\left|
+w_{i,t}^{new}
+-
+w_{i,t}^{old}
+\right|
+```
 
-and the transaction cost rate is \(c\), then cost is:
+Cost:
 
-\[
-Cost_t = c \cdot TO_t \cdot V_t
-\]
+```math
+Cost_t
+=
+c \cdot TO_t \cdot V_t
+```
 
 Portfolio value after costs:
 
-\[
-V_t^{after} = V_t^{before} - Cost_t
-\]
+```math
+V_t^{after}
+=
+V_t^{before}
+-
+Cost_t
+```
 
 Transaction costs are important because a strategy can look good before costs but fail after realistic trading friction.
 
 ---
 
-# 24. Slippage
+## 24. Slippage
 
 Slippage measures the difference between expected execution price and actual execution price.
 
 For a buy order:
 
-\[
-Slippage = \frac{P*{actual} - P*{expected}}{P\_{expected}}
-\]
+```math
+Slippage_{\text{buy}}
+=
+\frac{P_{\text{actual}} - P_{\text{expected}}}
+{P_{\text{expected}}}
+```
 
 For a sell order:
 
-\[
-Slippage = \frac{P*{expected} - P*{actual}}{P\_{expected}}
-\]
+```math
+Slippage_{\text{sell}}
+=
+\frac{P_{\text{expected}} - P_{\text{actual}}}
+{P_{\text{expected}}}
+```
 
 Slippage is especially important for:
 
@@ -735,132 +765,155 @@ Slippage is especially important for:
 
 ---
 
-# 25. CAGR
+## 25. CAGR
 
 Compound annual growth rate measures annualized return.
 
-\[
-CAGR =
+```math
+CAGR
+=
 \left(
 \frac{V_T}{V_0}
 \right)^{1/Y}
-
-- 1
-  \]
+-
+1
+```
 
 where:
 
-- \(V_T\) is final portfolio value
-- \(V_0\) is starting portfolio value
-- \(Y\) is the number of years
+- `V_T` is final portfolio value
+- `V_0` is starting portfolio value
+- `Y` is the number of years
 
 ---
 
-# 26. Volatility of Portfolio Returns
+## 26. Portfolio Volatility
 
 Daily portfolio volatility:
 
-\[
-\sigma*p = std(r*{p,t})
-\]
+```math
+\sigma_p
+=
+std(r_{p,t})
+```
 
 Annualized portfolio volatility:
 
-\[
-\sigma\_{p,ann} = \sqrt{252} \cdot \sigma_p
-\]
+```math
+\sigma_{p,\text{ann}}
+=
+\sqrt{252}
+\cdot
+\sigma_p
+```
 
 ---
 
-# 27. Sharpe Ratio
+## 27. Sharpe Ratio
 
 Sharpe ratio measures return per unit of volatility.
 
-\[
-Sharpe =
-\frac{\mathbb{E}[r_p - r_f]}{\sigma_p}
-\]
+```math
+Sharpe
+=
+\frac{\mathbb{E}[r_p - r_f]}
+{\sigma_p}
+```
 
 Annualized Sharpe using daily returns:
 
-\[
-Sharpe\_{ann} =
-\frac{\bar{r}\_p - \bar{r}\_f}
+```math
+Sharpe_{\text{ann}}
+=
+\frac{\bar{r}_p - \bar{r}_f}
 {\sigma_p}
 \sqrt{252}
-\]
+```
 
 where:
 
-- \(r_p\) is portfolio return
-- \(r_f\) is risk-free return
-- \(\sigma_p\) is volatility of portfolio returns
+- `r_p` is portfolio return
+- `r_f` is risk-free return
+- `sigma_p` is volatility of portfolio returns
 
 ---
 
-# 28. Maximum Drawdown
+## 28. Maximum Drawdown
 
 Drawdown measures decline from a previous peak.
 
 Running peak:
 
-\[
-Peak*t = \max*{\tau \leq t} V\_{\tau}
-\]
+```math
+Peak_t =
+\max_{\tau \leq t}
+V_{\tau}
+```
 
 Drawdown:
 
-\[
-DD_t =
-\frac{V_t - Peak_t}{Peak_t}
-\]
+```math
+DD_t
+=
+\frac{V_t - Peak_t}
+{Peak_t}
+```
 
 Maximum drawdown:
 
-\[
-MDD = \min_t DD_t
-\]
+```math
+MDD =
+\min_t DD_t
+```
 
 Maximum drawdown is one of the most important risk metrics because it shows the worst peak-to-trough loss.
 
 ---
 
-# 29. Win Rate
+## 29. Win Rate
 
 Win rate measures the percentage of profitable trades.
 
-\[
-WinRate =
+```math
+WinRate
+=
 \frac{\text{Number of Winning Trades}}
 {\text{Total Number of Trades}}
-\]
+```
 
 Win rate alone is not enough. A strategy can have a high win rate and still lose money if losses are much larger than wins.
 
 ---
 
-# 30. Profit Factor
+## 30. Profit Factor
 
 Profit factor compares total profits to total losses.
 
-\[
-ProfitFactor =
+```math
+ProfitFactor
+=
 \frac{\text{Gross Profit}}
-{|\text{Gross Loss}|}
-\]
+{\left|\text{Gross Loss}\right|}
+```
 
-A profit factor greater than 1 means total profits exceeded total losses.
+A profit factor greater than `1` means total profits exceeded total losses.
 
 ---
 
-# 31. Turnover
+## 31. Turnover
 
 Turnover measures how much the portfolio changes.
 
-\[
-Turnover*t =
-\sum_i |w*{i,t}^{new} - w\_{i,t}^{old}|
-\]
+```math
+Turnover_t
+=
+\sum_i
+\left|
+w_{i,t}^{new}
+-
+w_{i,t}^{old}
+\right|
+```
 
 High turnover may indicate:
 
@@ -871,19 +924,21 @@ High turnover may indicate:
 
 ---
 
-# 32. Monte Carlo Testing
+## 32. Monte Carlo Testing
 
 Monte Carlo testing runs many simulated versions of a strategy or market path.
 
-If a strategy is tested over \(N\) simulations, then a metric such as final value can be summarized as:
+If a strategy is tested over `N` simulations, then final value can be summarized as:
 
-\[
-\bar{V}_T =
+```math
+\bar{V}_T
+=
 \frac{1}{N}
-\sum_{s=1}^{N} V\_{T}^{(s)}
-\]
+\sum_{s=1}^{N}
+V_T^{(s)}
+```
 
-where \(s\) indexes the simulation.
+where `s` indexes the simulation.
 
 Monte Carlo testing can help estimate:
 
@@ -894,15 +949,15 @@ Monte Carlo testing can help estimate:
 - probability of outperforming a benchmark
 - sensitivity to randomness
 
-However, Monte Carlo outputs must be managed carefully because large simulations can create excessive files and disk usage.
+Large Monte Carlo runs must be handled carefully because they can create excessive output files and disk usage.
 
 ---
 
-# 33. Selection Bias Warning
+## 33. Selection Bias Warning
 
 A strategy can look better than it really is if the stock universe is hand-picked.
 
-If the universe mostly contains stocks that performed well historically or stocks chosen because they are personally interesting, the backtest may suffer from selection bias.
+If the universe mostly contains stocks that performed well historically, or stocks chosen because they are personally interesting, the backtest may suffer from selection bias.
 
 Future validation should include broader universes, such as:
 
@@ -917,33 +972,33 @@ The project should explicitly test whether results survive outside a personally 
 
 ---
 
-# 34. Lookahead Bias Warning
+## 34. Lookahead Bias Warning
 
 Lookahead bias happens when the strategy uses information that would not have been available at the time of the trade.
 
-For example, using future earnings, future index membership, future fundamentals, or future price behavior to make a past decision creates invalid results.
+Every signal should be calculated only using information available at time `t`.
 
-Every signal should be calculated only using information available at time \(t\).
+Correct structure:
 
-The correct structure is:
+```math
+Signal_t \rightarrow Decision_t \rightarrow Return_{t+1}
+```
 
-\[
-Signal*t \rightarrow Decision_t \rightarrow Return*{t+1}
-\]
+Incorrect structure:
 
-not:
+```math
+Return_{t+1} \rightarrow Signal_t
+```
 
-\[
-Return\_{t+1} \rightarrow Signal_t
-\]
+The second structure leaks future information into the signal.
 
 ---
 
-# 35. Project Direction
+## 35. Project Direction
 
 The long-term architecture is:
 
-\[
+```math
 Strategies
 \rightarrow
 Orthogonalization
@@ -953,7 +1008,7 @@ Allocator
 Risk
 \rightarrow
 Execution
-\]
+```
 
 The strategy engines generate signals.
 
@@ -966,3 +1021,19 @@ The risk layer controls exposure, drawdown, volatility, concentration, and cash.
 The execution layer handles trades, transaction costs, slippage, and implementation details.
 
 The current goal is to build enough strong engines so that the allocator eventually has meaningful signals to choose from.
+
+---
+
+## 36. Implementation Status
+
+Some formulas in this document describe currently implemented behavior. Other formulas describe planned or research-direction behavior.
+
+When expanding the system, each strategy or engine should eventually document:
+
+- the exact formula used
+- the lookback window
+- the required input data
+- the rebalance frequency
+- the signal direction
+- the risk controls
+- known limitations
