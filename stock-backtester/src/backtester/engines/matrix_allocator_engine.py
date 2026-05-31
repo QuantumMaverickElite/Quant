@@ -233,27 +233,32 @@ def build_top_n_weights(
     n_tickers: int,
 ) -> np.ndarray:
     """
-    Basic allocator policy: top-N equal-weight by score.
+    Deterministic top-N equal-weight allocator.
 
-    This is intentionally simple. It is not the final allocator.
-    Future allocator policies should plug in at this layer.
+    Avoid np.argpartition here. It is fast, but it is not stable when scores
+    tie. Different NumPy versions can choose different names among tied scores,
+    which changes frequent-rebalance paths.
+
+    Tie break:
+    1. Higher score first.
+    2. Lower ticker index first.
     """
+    weights = np.zeros(n_tickers, dtype=float)
+
     if sample_indices.size == 0:
-        return np.zeros(n_tickers, dtype=float)
+        return weights
 
-    sample_scores = scores[sample_indices]
-    n_hold = min(portfolio_size, sample_indices.size)
+    sample_indices = np.asarray(sample_indices, dtype=int)
+    sample_scores = np.asarray(scores[sample_indices], dtype=float)
 
-    top_local = np.argpartition(-sample_scores, kth=n_hold - 1)[:n_hold]
-    top_indices = sample_indices[top_local]
+    n_hold = min(portfolio_size, int(sample_indices.size))
+    if n_hold <= 0:
+        return weights
 
-    top_scores = scores[top_indices]
-    order = np.argsort(-top_scores)
-    top_indices = top_indices[order]
+    order = np.lexsort((sample_indices, -sample_scores))
+    top_indices = sample_indices[order[:n_hold]]
 
     weight = min(1.0 / n_hold, max_weight)
-
-    weights = np.zeros(n_tickers, dtype=float)
     weights[top_indices] = weight
 
     return weights
