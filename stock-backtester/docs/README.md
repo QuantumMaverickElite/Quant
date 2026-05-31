@@ -23,11 +23,16 @@ The root `README.md` is the project front page. These documents are the deeper r
 
 ## Experiments
 
-- [Feature Matrix Monte Carlo](experiments/feature_matrix_monte_carlo.md)
+-[Feature Matrix Monte Carlo](experiments/feature_matrix_monte_carlo.md)
+
 - [Threshold Rebalance Experiments](experiments/threshold_rebalance.md)
 - [Matrix Allocator Engine](experiments/matrix_allocator_engine.md)
 - [Rebalance Frequency Tests](experiments/rebalance_frequency_tests.md)
 - [Benchmark Scripts](experiments/benchmark_scripts.md)
+
+## Math Reference
+
+- [Strategy Math and Signal Definitions](strategy_math.md)
 
 ## Research Notes
 

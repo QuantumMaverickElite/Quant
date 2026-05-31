@@ -746,6 +746,14 @@ Should the system press risk-on or defend capital?
 
 ---
 
+## Mathematical Documentation
+
+The project includes a dedicated math reference explaining the formulas behind the signals, engines, risk layers, allocation logic, and backtest metrics.
+
+See:
+
+- [Strategy Math and Signal Definitions](docs/strategy_math.md)
+
 ## Philosophy
 
 Build fast.
