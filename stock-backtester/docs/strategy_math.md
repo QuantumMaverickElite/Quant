@@ -290,9 +290,11 @@ Interpretation:
 Average portfolio correlation:
 
 ```math
-\bar{\rho}_t =
+\rho_{\text{avg},t}
+=
 \frac{2}{N(N-1)}
-\sum_{i<j} \rho_{ij,t}
+\sum_{1 \le i < j \le N}
+\rho_{ij,t}
 ```
 
 A high average correlation may indicate that diversification is weakening.
