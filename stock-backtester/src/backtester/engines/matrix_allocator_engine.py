@@ -461,3 +461,190 @@ def summarize_threshold_trials(trials: pd.DataFrame) -> pd.DataFrame:
         )
 
     return pd.DataFrame(rows).sort_values("threshold")
+
+
+@dataclass(frozen=True)
+class MatrixThresholdGridResult:
+    rows: list[dict[str, float]]
+    curves: list[pd.DataFrame]
+
+
+def run_batched_threshold_grid_for_sample(
+    matrices: MarketMatrices,
+    sample_indices: np.ndarray,
+    thresholds: np.ndarray,
+    portfolio_size: int,
+    max_weight: float,
+    capital: float,
+    run_id: int = 1,
+    save_curves: bool = False,
+) -> MatrixThresholdGridResult:
+    """
+    Fast drift-corrected threshold grid for one sampled universe.
+
+    This is the engine-side equivalent of the v3 batched threshold logic:
+    one run sample is simulated across all thresholds at the same time.
+
+    It is still NumPy-first, but the shape is GPU-ready:
+    - equity: thresholds x days
+    - position_values: thresholds x tickers
+    - threshold decisions are vectorized across threshold policies
+    """
+    returns = matrices.returns
+    scores = matrices.scores
+    check_indices = matrices.check_indices
+    price_dates = matrices.price_dates
+
+    n_days, n_tickers = returns.shape
+    thresholds = np.asarray(thresholds, dtype=float)
+    n_thresholds = thresholds.size
+
+    equity = np.empty((n_thresholds, n_days), dtype=float)
+    equity[:, 0] = capital
+
+    position_values = np.zeros((n_thresholds, n_tickers), dtype=float)
+    cash = np.full(n_thresholds, capital, dtype=float)
+
+    n_rebalances = np.zeros(n_thresholds, dtype=float)
+    turnover_sums = np.zeros(n_thresholds, dtype=float)
+    turnover_counts = np.zeros(n_thresholds, dtype=float)
+
+    check_lookup = {
+        int(day_idx): score_row_idx
+        for score_row_idx, day_idx in enumerate(check_indices)
+    }
+
+    def current_equity_vec() -> np.ndarray:
+        return cash + position_values.sum(axis=1)
+
+    def current_weights_matrix() -> np.ndarray:
+        totals = current_equity_vec()
+        out = np.zeros_like(position_values)
+        valid = totals > 0
+
+        if np.any(valid):
+            out[valid] = position_values[valid] / totals[valid, None]
+
+        return out
+
+    def apply_rebalance(mask: np.ndarray, new_weights: np.ndarray) -> None:
+        nonlocal position_values, cash
+
+        if not np.any(mask):
+            return
+
+        totals = current_equity_vec()
+        invested_weight = float(np.sum(new_weights))
+
+        position_values[mask] = totals[mask, None] * new_weights[None, :]
+        cash[mask] = np.maximum(totals[mask] * (1.0 - invested_weight), 0.0)
+
+    if 0 in check_lookup:
+        score_row = scores[check_lookup[0]]
+
+        initial_weights = build_top_n_weights(
+            scores=score_row,
+            sample_indices=sample_indices,
+            portfolio_size=portfolio_size,
+            max_weight=max_weight,
+            n_tickers=n_tickers,
+        )
+
+        all_mask = np.ones(n_thresholds, dtype=bool)
+        apply_rebalance(all_mask, initial_weights)
+
+        n_rebalances += 1.0
+        turnover_sums += 100.0
+        turnover_counts += 1.0
+        equity[:, 0] = current_equity_vec()
+
+    for day in range(1, n_days):
+        position_values *= 1.0 + returns[day][None, :]
+        equity[:, day] = current_equity_vec()
+
+        if day not in check_lookup:
+            continue
+
+        score_row = scores[check_lookup[day]]
+
+        candidate_weights = build_top_n_weights(
+            scores=score_row,
+            sample_indices=sample_indices,
+            portfolio_size=portfolio_size,
+            max_weight=max_weight,
+            n_tickers=n_tickers,
+        )
+
+        candidate_score = average_score_for_weights(score_row, candidate_weights)
+
+        current_scores = np.array(
+            [
+                average_score_for_positions(score_row, position_values[i])
+                for i in range(n_thresholds)
+            ],
+            dtype=float,
+        )
+
+        improvements = candidate_score - current_scores
+        has_positions = (position_values > 0).any(axis=1)
+
+        rebalance_mask = (~has_positions) | (improvements >= thresholds)
+
+        if np.any(rebalance_mask):
+            live_weights = current_weights_matrix()
+
+            turnovers = np.array(
+                [
+                    turnover_pct(live_weights[i], candidate_weights)
+                    for i in range(n_thresholds)
+                ],
+                dtype=float,
+            )
+
+            turnover_sums[rebalance_mask] += turnovers[rebalance_mask]
+            turnover_counts[rebalance_mask] += 1.0
+            n_rebalances[rebalance_mask] += 1.0
+
+            apply_rebalance(rebalance_mask, candidate_weights)
+            equity[:, day] = current_equity_vec()
+
+    rows: list[dict[str, float]] = []
+    curves: list[pd.DataFrame] = []
+
+    for threshold_idx, threshold in enumerate(thresholds):
+        eq = equity[threshold_idx]
+
+        metrics = summarize_equity(
+            equity=eq,
+            dates=price_dates,
+            capital=capital,
+        )
+
+        mean_turnover = (
+            turnover_sums[threshold_idx] / turnover_counts[threshold_idx]
+            if turnover_counts[threshold_idx] > 0
+            else 0.0
+        )
+
+        rows.append(
+            {
+                "threshold": float(threshold),
+                **metrics,
+                "n_rebalances": float(n_rebalances[threshold_idx]),
+                "mean_turnover_pct": float(mean_turnover),
+            }
+        )
+
+        if save_curves:
+            curves.append(
+                pd.DataFrame(
+                    {
+                        "date": price_dates,
+                        "equity": eq,
+                        "threshold": float(threshold),
+                        "run_id": run_id,
+                    }
+                )
+            )
+
+    return MatrixThresholdGridResult(rows=rows, curves=curves)

@@ -12,7 +12,7 @@ from backtester.engines.matrix_allocator_engine import (
     load_feature_matrix,
     load_price_matrix,
     prepare_market_matrices,
-    run_threshold_grid_for_sample,
+    run_batched_threshold_grid_for_sample,
     summarize_threshold_trials,
 )
 
@@ -94,14 +94,18 @@ def main() -> None:
     rows = []
 
     for run_id, sample_indices in enumerate(run_samples, start=1):
-        result_rows = run_threshold_grid_for_sample(
+        result = run_batched_threshold_grid_for_sample(
             matrices=matrices,
             sample_indices=sample_indices,
             thresholds=thresholds,
             portfolio_size=args.portfolio_size,
             max_weight=args.max_weight,
             capital=args.capital,
+            run_id=run_id,
+            save_curves=False,
         )
+
+        result_rows = result.rows
 
         sampled_tickers = [matrices.tickers[i] for i in sample_indices]
         ticker_string = ",".join(sampled_tickers)
