@@ -96,10 +96,10 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--rebalance",
-        choices=["D", "W", "M", "Q"],
+        choices=["D", "W", "B", "3W", "M", "6W", "Q"],
         default="M",
         help=(
-            "Rebalance frequency: D=daily, W=weekly, M=monthly, Q=quarterly. "
+            "Rebalance frequency: D=daily, W=weekly, B=bi-weekly, 3W=every 3 weeks, M=monthly, 6W=every 6 weeks, Q=quarterly. "
             "Default: M"
         ),
     )
@@ -288,11 +288,23 @@ def build_rebalance_dates(
     if freq == "D":
         return [pd.Timestamp(date) for date in eligible]
 
-    if freq == "W":
-        groups = pd.Series(eligible, index=eligible).groupby(
+    if freq in {"W", "B", "3W", "6W"}:
+        weekly_groups = pd.Series(eligible, index=eligible).groupby(
             [eligible.year, eligible.isocalendar().week]
         )
-    elif freq == "M":
+        weekly_dates = [pd.Timestamp(group.iloc[0]) for _, group in weekly_groups]
+
+        step_by_freq = {
+            "W": 1,
+            "B": 2,
+            "3W": 3,
+            "6W": 6,
+        }
+        step = step_by_freq[freq]
+
+        return weekly_dates[::step]
+
+    if freq == "M":
         groups = pd.Series(eligible, index=eligible).groupby(
             [eligible.year, eligible.month]
         )
@@ -303,7 +315,7 @@ def build_rebalance_dates(
     else:
         raise ValueError(f"Unsupported rebalance frequency: {freq}")
 
-    # Rebalance on the first trading day of each period.
+    # Rebalance on the first trading day of each calendar period.
     return [pd.Timestamp(group.iloc[0]) for _, group in groups]
 
 

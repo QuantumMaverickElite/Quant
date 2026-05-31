@@ -143,10 +143,10 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--rebalance",
-        choices=["D", "W", "M", "Q"],
+        choices=["D", "W", "B", "3W", "M", "6W", "Q"],
         default="M",
         help=(
-            "Rebalance frequency: D=daily, W=weekly, M=monthly, Q=quarterly. "
+            "Rebalance frequency: D=daily, W=weekly, B=bi-weekly, 3W=every 3 weeks, M=monthly, 6W=every 6 weeks, Q=quarterly. "
             "Default: M"
         ),
     )
