@@ -96,9 +96,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--rebalance",
-        choices=["W", "M"],
+        choices=["D", "W", "M", "Q"],
         default="M",
-        help="Rebalance frequency: W for weekly, M for monthly. Default: M",
+        help=(
+            "Rebalance frequency: D=daily, W=weekly, M=monthly, Q=quarterly. "
+            "Default: M"
+        ),
     )
 
     parser.add_argument(
@@ -133,6 +136,17 @@ def parse_args() -> argparse.Namespace:
         "--output-dir",
         default="outputs/portfolio_backtest/market_state_v1",
         help="Output directory.",
+    )
+
+    parser.add_argument(
+        "--save-mode",
+        choices=["none", "compact", "curves", "full"],
+        default="full",
+        help=(
+            "Output mode. none=print only, compact=summary only, "
+            "curves=summary+equity curve, full=summary+equity+rebalance log+plot. "
+            "Default: full"
+        ),
     )
 
     return parser.parse_args()
@@ -271,16 +285,25 @@ def build_rebalance_dates(
     if eligible.empty:
         return []
 
+    if freq == "D":
+        return [pd.Timestamp(date) for date in eligible]
+
     if freq == "W":
         groups = pd.Series(eligible, index=eligible).groupby(
             [eligible.year, eligible.isocalendar().week]
         )
-    else:
+    elif freq == "M":
         groups = pd.Series(eligible, index=eligible).groupby(
             [eligible.year, eligible.month]
         )
+    elif freq == "Q":
+        groups = pd.Series(eligible, index=eligible).groupby(
+            [eligible.year, eligible.quarter]
+        )
+    else:
+        raise ValueError(f"Unsupported rebalance frequency: {freq}")
 
-    # Rebalance on the first trading day of each week/month.
+    # Rebalance on the first trading day of each period.
     return [pd.Timestamp(group.iloc[0]) for _, group in groups]
 
 
@@ -547,21 +570,9 @@ def main() -> None:
     print(f"Capital: ${args.capital:,.2f}")
     print(f"Rebalance: {args.rebalance}")
     print(f"Max weight: {args.max_weight:.2%}")
+    print(f"Save mode: {args.save_mode}")
 
     equity_curve, rebalance_log, summary = run_backtest(args)
-
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    equity_path = output_dir / "equity_curve.csv"
-    log_path = output_dir / "rebalance_log.csv"
-    plot_path = output_dir / "equity_curve.png"
-    summary_path = output_dir / "summary.csv"
-
-    equity_curve.to_csv(equity_path)
-    rebalance_log.to_csv(log_path, index=False)
-    pd.DataFrame([summary]).to_csv(summary_path, index=False)
-    plot_equity_curve(equity_curve, plot_path)
 
     print("\nBacktest Summary:")
     print(
@@ -573,11 +584,33 @@ def main() -> None:
         )
     )
 
-    print("\nSaved outputs:")
-    print(f"  Equity curve:   {equity_path}")
-    print(f"  Rebalance log:  {log_path}")
-    print(f"  Summary:        {summary_path}")
-    print(f"  Plot:           {plot_path}")
+    if args.save_mode != "none":
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        summary_path = output_dir / "summary.csv"
+        pd.DataFrame([summary]).to_csv(summary_path, index=False)
+
+        saved = [("Summary", summary_path)]
+
+        if args.save_mode in {"curves", "full"}:
+            equity_path = output_dir / "equity_curve.csv"
+            equity_curve.to_csv(equity_path)
+            saved.append(("Equity curve", equity_path))
+
+        if args.save_mode == "full":
+            log_path = output_dir / "rebalance_log.csv"
+            plot_path = output_dir / "equity_curve.png"
+            rebalance_log.to_csv(log_path, index=False)
+            plot_equity_curve(equity_curve, plot_path)
+            saved.append(("Rebalance log", log_path))
+            saved.append(("Plot", plot_path))
+
+        print("\nSaved outputs:")
+        for label, saved_path in saved:
+            print(f"  {label}: {saved_path}")
+    else:
+        print("\nSave mode is none; no files written.")
 
     print("\nDone.")
 

@@ -68,6 +68,17 @@ def parse_args() -> argparse.Namespace:
         help="Output directory.",
     )
 
+    parser.add_argument(
+        "--save-mode",
+        choices=["none", "compact", "curves", "full"],
+        default="compact",
+        help=(
+            "Output mode. none=print only, compact=summary CSVs only, "
+            "curves=compact+combined equity curves+plots, "
+            "full=curves+per-run folders. Default: compact"
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -708,9 +719,14 @@ def main() -> None:
     runs_dir = output_dir / "runs"
     plots_dir = output_dir / "plots"
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    runs_dir.mkdir(parents=True, exist_ok=True)
-    plots_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_mode != "none":
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.save_mode == "full":
+        runs_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.save_mode in {"curves", "full"}:
+        plots_dir.mkdir(parents=True, exist_ok=True)
 
     print("\nRunning Fast Monte Carlo From Feature Matrix")
     print(f"Feature rows: {len(features)}")
@@ -720,6 +736,7 @@ def main() -> None:
     print(f"Capital: ${args.capital:,.2f}")
     print(f"Max weight: {args.max_weight:.2%}")
     print(f"Seed: {args.seed}")
+    print(f"Save mode: {args.save_mode}")
 
     trial_rows = []
     all_equity_curves = []
@@ -739,17 +756,21 @@ def main() -> None:
 
             trial_rows.append(summary)
 
-            run_dir = runs_dir / f"run_{run_id:04d}"
-            run_dir.mkdir(parents=True, exist_ok=True)
+            if args.save_mode == "full":
+                run_dir = runs_dir / f"run_{run_id:04d}"
+                run_dir.mkdir(parents=True, exist_ok=True)
 
-            rebalance_log.to_csv(run_dir / "rebalance_log.csv", index=False)
+                rebalance_log.to_csv(run_dir / "rebalance_log.csv", index=False)
 
-            equity_curves_out = equity_curves.copy()
-            equity_curves_out.index.name = "date"
-            equity_curves_out.to_csv(run_dir / "equity_curves.csv")
+                equity_curves_out = equity_curves.copy()
+                equity_curves_out.index.name = "date"
+                equity_curves_out.to_csv(run_dir / "equity_curves.csv")
 
-            equity_curves_collect = equity_curves_out.reset_index()
-            all_equity_curves.append(equity_curves_collect)
+            if args.save_mode in {"curves", "full"}:
+                equity_curves_collect = equity_curves.copy()
+                equity_curves_collect.index.name = "date"
+                equity_curves_collect = equity_curves_collect.reset_index()
+                all_equity_curves.append(equity_curves_collect)
 
             print(
                 f"Run {run_id:04d}: "
@@ -787,8 +808,6 @@ def main() -> None:
     risk_path = output_dir / "monte_carlo_risk_stats.csv"
     equity_curves_path = output_dir / "monte_carlo_equity_curves.csv"
 
-    trials.to_csv(trials_path, index=False)
-
     distribution = summarize_distribution(trials)
 
     benchmark_columns = [
@@ -813,82 +832,84 @@ def main() -> None:
     risk = risk_stats(trials)
     risk_df = pd.DataFrame([risk])
 
-    distribution.to_csv(dist_path, index=False)
-    benchmark_distribution.to_csv(benchmark_dist_path, index=False)
-    comparison.to_csv(comparison_path, index=False)
-    risk_df.to_csv(risk_path, index=False)
+    if args.save_mode != "none":
+        trials.to_csv(trials_path, index=False)
+        distribution.to_csv(dist_path, index=False)
+        benchmark_distribution.to_csv(benchmark_dist_path, index=False)
+        comparison.to_csv(comparison_path, index=False)
+        risk_df.to_csv(risk_path, index=False)
 
-    if not equity_curves.empty:
+    if args.save_mode in {"curves", "full"} and not equity_curves.empty:
         equity_curves.to_csv(equity_curves_path, index=False)
 
-    plot_histogram(
-        trials,
-        column="total_return_pct",
-        title="MarketState Total Return Distribution",
-        output_path=plots_dir / "strategy_total_return_hist.png",
-    )
+        plot_histogram(
+            trials,
+            column="total_return_pct",
+            title="MarketState Total Return Distribution",
+            output_path=plots_dir / "strategy_total_return_hist.png",
+        )
 
-    plot_histogram(
-        trials,
-        column="ew_rebalance_total_return_pct",
-        title="Equal-Weight Rebalance Total Return Distribution",
-        output_path=plots_dir / "ew_rebalance_total_return_hist.png",
-    )
+        plot_histogram(
+            trials,
+            column="ew_rebalance_total_return_pct",
+            title="Equal-Weight Rebalance Total Return Distribution",
+            output_path=plots_dir / "ew_rebalance_total_return_hist.png",
+        )
 
-    plot_histogram(
-        trials,
-        column="ew_buy_hold_total_return_pct",
-        title="Equal-Weight Buy-and-Hold Total Return Distribution",
-        output_path=plots_dir / "ew_buy_hold_total_return_hist.png",
-    )
+        plot_histogram(
+            trials,
+            column="ew_buy_hold_total_return_pct",
+            title="Equal-Weight Buy-and-Hold Total Return Distribution",
+            output_path=plots_dir / "ew_buy_hold_total_return_hist.png",
+        )
 
-    plot_histogram(
-        trials,
-        column="max_drawdown_pct",
-        title="MarketState Max Drawdown Distribution",
-        output_path=plots_dir / "strategy_max_drawdown_hist.png",
-    )
+        plot_histogram(
+            trials,
+            column="max_drawdown_pct",
+            title="MarketState Max Drawdown Distribution",
+            output_path=plots_dir / "strategy_max_drawdown_hist.png",
+        )
 
-    plot_histogram(
-        trials,
-        column="sharpe",
-        title="MarketState Sharpe Distribution",
-        output_path=plots_dir / "strategy_sharpe_hist.png",
-    )
+        plot_histogram(
+            trials,
+            column="sharpe",
+            title="MarketState Sharpe Distribution",
+            output_path=plots_dir / "strategy_sharpe_hist.png",
+        )
 
-    plot_histogram(
-        trials,
-        column="excess_return_vs_ew_rebalance_pct",
-        title="Excess Return vs Equal-Weight Rebalance",
-        output_path=plots_dir / "excess_return_vs_ew_rebalance_hist.png",
-    )
+        plot_histogram(
+            trials,
+            column="excess_return_vs_ew_rebalance_pct",
+            title="Excess Return vs Equal-Weight Rebalance",
+            output_path=plots_dir / "excess_return_vs_ew_rebalance_hist.png",
+        )
 
-    plot_monte_carlo_equity_curves(
-        equity_curves=equity_curves,
-        output_path=plots_dir / "strategy_equity_curves_spaghetti.png",
-        capital=args.capital,
-        curve_type="market_state",
-    )
+        plot_monte_carlo_equity_curves(
+            equity_curves=equity_curves,
+            output_path=plots_dir / "strategy_equity_curves_spaghetti.png",
+            capital=args.capital,
+            curve_type="market_state",
+        )
 
-    plot_monte_carlo_equity_curves(
-        equity_curves=equity_curves,
-        output_path=plots_dir / "ew_rebalance_equity_curves_spaghetti.png",
-        capital=args.capital,
-        curve_type="equal_weight_rebalance",
-    )
+        plot_monte_carlo_equity_curves(
+            equity_curves=equity_curves,
+            output_path=plots_dir / "ew_rebalance_equity_curves_spaghetti.png",
+            capital=args.capital,
+            curve_type="equal_weight_rebalance",
+        )
 
-    plot_monte_carlo_equity_curves(
-        equity_curves=equity_curves,
-        output_path=plots_dir / "ew_buy_hold_equity_curves_spaghetti.png",
-        capital=args.capital,
-        curve_type="equal_weight_buy_hold",
-    )
+        plot_monte_carlo_equity_curves(
+            equity_curves=equity_curves,
+            output_path=plots_dir / "ew_buy_hold_equity_curves_spaghetti.png",
+            capital=args.capital,
+            curve_type="equal_weight_buy_hold",
+        )
 
-    plot_median_benchmark_comparison(
-        equity_curves=equity_curves,
-        output_path=plots_dir / "median_strategy_vs_benchmarks.png",
-        capital=args.capital,
-    )
+        plot_median_benchmark_comparison(
+            equity_curves=equity_curves,
+            output_path=plots_dir / "median_strategy_vs_benchmarks.png",
+            capital=args.capital,
+        )
 
     print("\nMonte Carlo Distribution:")
     if distribution.empty:
@@ -939,26 +960,34 @@ def main() -> None:
         )
     )
 
-    print("\nSaved outputs:")
-    print(f"  Trials:                  {trials_path}")
-    print(f"  Distribution:            {dist_path}")
-    print(f"  Benchmark distribution:  {benchmark_dist_path}")
-    print(f"  Benchmark comparison:    {comparison_path}")
-    print(f"  Risk stats:              {risk_path}")
-    print(f"  Equity curves:           {equity_curves_path}")
-    print(f"  Plots dir:               {plots_dir}")
-    print(
-        f"  Strategy spaghetti:      {plots_dir / 'strategy_equity_curves_spaghetti.png'}"
-    )
-    print(
-        f"  EW rebalance spaghetti:  {plots_dir / 'ew_rebalance_equity_curves_spaghetti.png'}"
-    )
-    print(
-        f"  EW buy-hold spaghetti:   {plots_dir / 'ew_buy_hold_equity_curves_spaghetti.png'}"
-    )
-    print(
-        f"  Median comparison:       {plots_dir / 'median_strategy_vs_benchmarks.png'}"
-    )
+    if args.save_mode == "none":
+        print("\nSave mode is none; no files written.")
+    else:
+        print("\nSaved outputs:")
+        print(f"  Trials:                  {trials_path}")
+        print(f"  Distribution:            {dist_path}")
+        print(f"  Benchmark distribution:  {benchmark_dist_path}")
+        print(f"  Benchmark comparison:    {comparison_path}")
+        print(f"  Risk stats:              {risk_path}")
+
+        if args.save_mode in {"curves", "full"}:
+            print(f"  Equity curves:           {equity_curves_path}")
+            print(f"  Plots dir:               {plots_dir}")
+            print(
+                f"  Strategy spaghetti:      {plots_dir / 'strategy_equity_curves_spaghetti.png'}"
+            )
+            print(
+                f"  EW rebalance spaghetti:  {plots_dir / 'ew_rebalance_equity_curves_spaghetti.png'}"
+            )
+            print(
+                f"  EW buy-hold spaghetti:   {plots_dir / 'ew_buy_hold_equity_curves_spaghetti.png'}"
+            )
+            print(
+                f"  Median comparison:       {plots_dir / 'median_strategy_vs_benchmarks.png'}"
+            )
+
+        if args.save_mode == "full":
+            print(f"  Per-run folders:         {runs_dir}")
     print("\nDone.")
 
 

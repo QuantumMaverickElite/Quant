@@ -143,9 +143,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--rebalance",
-        choices=["W", "M"],
+        choices=["D", "W", "M", "Q"],
         default="M",
-        help="Rebalance frequency. Default: M",
+        help=(
+            "Rebalance frequency: D=daily, W=weekly, M=monthly, Q=quarterly. "
+            "Default: M"
+        ),
     )
 
     parser.add_argument(
@@ -182,6 +185,17 @@ def parse_args() -> argparse.Namespace:
         help="Output directory.",
     )
 
+    parser.add_argument(
+        "--save-mode",
+        choices=["none", "compact", "curves", "full"],
+        default="compact",
+        help=(
+            "Output mode. none=print only, compact=summary CSVs only, "
+            "curves=compact+histogram plots, full=curves+per-run folders. "
+            "Default: compact"
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -212,6 +226,7 @@ def make_backtest_args(
         zscore_window=args.zscore_window,
         bins=args.bins,
         output_dir=str(run_output_dir),
+        save_mode="none",
     )
 
 
@@ -326,9 +341,14 @@ def main() -> None:
     runs_dir = output_dir / "runs"
     plots_dir = output_dir / "plots"
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    runs_dir.mkdir(parents=True, exist_ok=True)
-    plots_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_mode != "none":
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.save_mode == "full":
+        runs_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.save_mode in {"curves", "full"}:
+        plots_dir.mkdir(parents=True, exist_ok=True)
 
     print("\nRunning MarketState Universe Monte Carlo")
     print(f"Universe size: {len(universe)}")
@@ -339,6 +359,7 @@ def main() -> None:
     print(f"Rebalance: {args.rebalance}")
     print(f"Max weight: {args.max_weight:.2%}")
     print(f"Seed: {args.seed}")
+    print(f"Save mode: {args.save_mode}")
 
     rows = []
 
@@ -360,14 +381,15 @@ def main() -> None:
         try:
             equity_curve, rebalance_log, summary = run_backtest(bt_args)
 
-            equity_path = run_output_dir / "equity_curve.csv"
-            log_path = run_output_dir / "rebalance_log.csv"
-            summary_path = run_output_dir / "summary.csv"
+            if args.save_mode == "full":
+                equity_path = run_output_dir / "equity_curve.csv"
+                log_path = run_output_dir / "rebalance_log.csv"
+                summary_path = run_output_dir / "summary.csv"
 
-            run_output_dir.mkdir(parents=True, exist_ok=True)
-            equity_curve.to_csv(equity_path)
-            rebalance_log.to_csv(log_path, index=False)
-            pd.DataFrame([summary]).to_csv(summary_path, index=False)
+                run_output_dir.mkdir(parents=True, exist_ok=True)
+                equity_curve.to_csv(equity_path)
+                rebalance_log.to_csv(log_path, index=False)
+                pd.DataFrame([summary]).to_csv(summary_path, index=False)
 
             row = {
                 "run_id": run_id,
@@ -407,35 +429,37 @@ def main() -> None:
     dist_path = output_dir / "monte_carlo_distribution.csv"
     risk_path = output_dir / "monte_carlo_risk_stats.csv"
 
-    trials.to_csv(trials_path, index=False)
-
     distribution = summarize_distribution(trials)
-    distribution.to_csv(dist_path, index=False)
 
     risk = risk_stats(trials)
     risk_df = pd.DataFrame([risk])
-    risk_df.to_csv(risk_path, index=False)
 
-    plot_histogram(
-        trials,
-        column="total_return_pct",
-        title="Monte Carlo Total Return Distribution",
-        output_path=plots_dir / "total_return_hist.png",
-    )
+    if args.save_mode != "none":
+        trials.to_csv(trials_path, index=False)
+        distribution.to_csv(dist_path, index=False)
+        risk_df.to_csv(risk_path, index=False)
 
-    plot_histogram(
-        trials,
-        column="max_drawdown_pct",
-        title="Monte Carlo Max Drawdown Distribution",
-        output_path=plots_dir / "max_drawdown_hist.png",
-    )
+    if args.save_mode in {"curves", "full"}:
+        plot_histogram(
+            trials,
+            column="total_return_pct",
+            title="Monte Carlo Total Return Distribution",
+            output_path=plots_dir / "total_return_hist.png",
+        )
 
-    plot_histogram(
-        trials,
-        column="sharpe",
-        title="Monte Carlo Sharpe Distribution",
-        output_path=plots_dir / "sharpe_hist.png",
-    )
+        plot_histogram(
+            trials,
+            column="max_drawdown_pct",
+            title="Monte Carlo Max Drawdown Distribution",
+            output_path=plots_dir / "max_drawdown_hist.png",
+        )
+
+        plot_histogram(
+            trials,
+            column="sharpe",
+            title="Monte Carlo Sharpe Distribution",
+            output_path=plots_dir / "sharpe_hist.png",
+        )
 
     print("\n" + "=" * 80)
     print("Monte Carlo Distribution:")
@@ -461,11 +485,19 @@ def main() -> None:
         )
     )
 
-    print("\nSaved outputs:")
-    print(f"  Trials:        {trials_path}")
-    print(f"  Distribution:  {dist_path}")
-    print(f"  Risk stats:    {risk_path}")
-    print(f"  Plots dir:     {plots_dir}")
+    if args.save_mode == "none":
+        print("\nSave mode is none; no files written.")
+    else:
+        print("\nSaved outputs:")
+        print(f"  Trials:        {trials_path}")
+        print(f"  Distribution:  {dist_path}")
+        print(f"  Risk stats:    {risk_path}")
+
+        if args.save_mode in {"curves", "full"}:
+            print(f"  Plots dir:     {plots_dir}")
+
+        if args.save_mode == "full":
+            print(f"  Per-run folders: {runs_dir}")
 
     print("\nDone.")
 
