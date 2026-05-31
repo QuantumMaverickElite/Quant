@@ -281,3 +281,183 @@ def average_score_for_positions(
 
 def turnover_pct(old_weights: np.ndarray, new_weights: np.ndarray) -> float:
     return float(np.sum(np.abs(new_weights - old_weights)) / 2.0 * 100.0)
+
+
+@dataclass(frozen=True)
+class MatrixBacktestResult:
+    equity: np.ndarray
+    n_rebalances: float
+    mean_turnover_pct: float
+
+
+def run_threshold_backtest(
+    matrices: MarketMatrices,
+    sample_indices: np.ndarray,
+    threshold: float,
+    portfolio_size: int,
+    max_weight: float,
+    capital: float,
+) -> MatrixBacktestResult:
+    """
+    Drift-corrected threshold rebalance backtest.
+
+    This function tracks position values between rebalance dates, so holdings
+    drift naturally with returns. Target weights are only reset when a rebalance
+    is triggered.
+    """
+    returns = matrices.returns
+    scores = matrices.scores
+    check_indices = matrices.check_indices
+
+    n_days, n_tickers = returns.shape
+
+    equity = np.empty(n_days, dtype=float)
+    equity[0] = capital
+
+    position_values = np.zeros(n_tickers, dtype=float)
+    cash = capital
+
+    check_lookup = {
+        int(day_idx): score_row_idx
+        for score_row_idx, day_idx in enumerate(check_indices)
+    }
+
+    n_rebalances = 0
+    turnovers: list[float] = []
+
+    def current_equity() -> float:
+        return float(cash + np.sum(position_values))
+
+    def current_weights() -> np.ndarray:
+        total = current_equity()
+        if total <= 0:
+            return np.zeros(n_tickers, dtype=float)
+        return position_values / total
+
+    def apply_rebalance(new_weights: np.ndarray) -> None:
+        nonlocal position_values, cash
+
+        total = current_equity()
+        invested_weight = float(np.sum(new_weights))
+
+        position_values = total * new_weights
+        cash = max(total * (1.0 - invested_weight), 0.0)
+
+    if 0 in check_lookup:
+        score_row = scores[check_lookup[0]]
+        initial_weights = build_top_n_weights(
+            scores=score_row,
+            sample_indices=sample_indices,
+            portfolio_size=portfolio_size,
+            max_weight=max_weight,
+            n_tickers=n_tickers,
+        )
+
+        turnovers.append(100.0)
+        apply_rebalance(initial_weights)
+        n_rebalances += 1
+        equity[0] = current_equity()
+
+    for day in range(1, n_days):
+        position_values *= 1.0 + returns[day]
+        equity[day] = current_equity()
+
+        if day not in check_lookup:
+            continue
+
+        score_row = scores[check_lookup[day]]
+
+        candidate_weights = build_top_n_weights(
+            scores=score_row,
+            sample_indices=sample_indices,
+            portfolio_size=portfolio_size,
+            max_weight=max_weight,
+            n_tickers=n_tickers,
+        )
+
+        current_score = average_score_for_positions(score_row, position_values)
+        candidate_score = average_score_for_weights(score_row, candidate_weights)
+        improvement = candidate_score - current_score
+
+        has_positions = np.count_nonzero(position_values > 0) > 0
+
+        if not has_positions or improvement >= threshold:
+            live_weights = current_weights()
+            turnovers.append(turnover_pct(live_weights, candidate_weights))
+            apply_rebalance(candidate_weights)
+            n_rebalances += 1
+            equity[day] = current_equity()
+
+    return MatrixBacktestResult(
+        equity=equity,
+        n_rebalances=float(n_rebalances),
+        mean_turnover_pct=float(np.mean(turnovers)) if turnovers else 0.0,
+    )
+
+
+def run_threshold_grid_for_sample(
+    matrices: MarketMatrices,
+    sample_indices: np.ndarray,
+    thresholds: np.ndarray,
+    portfolio_size: int,
+    max_weight: float,
+    capital: float,
+) -> list[dict[str, float]]:
+    """
+    Run one sampled universe across many thresholds.
+
+    This is the engine-side version of the threshold sweep. It returns metrics
+    only, not curves. Curves can be added later as an optional output mode.
+    """
+    rows: list[dict[str, float]] = []
+
+    for threshold in thresholds:
+        result = run_threshold_backtest(
+            matrices=matrices,
+            sample_indices=sample_indices,
+            threshold=float(threshold),
+            portfolio_size=portfolio_size,
+            max_weight=max_weight,
+            capital=capital,
+        )
+
+        metrics = summarize_equity(
+            equity=result.equity,
+            dates=matrices.price_dates,
+            capital=capital,
+        )
+
+        rows.append(
+            {
+                "threshold": float(threshold),
+                **metrics,
+                "n_rebalances": result.n_rebalances,
+                "mean_turnover_pct": result.mean_turnover_pct,
+            }
+        )
+
+    return rows
+
+
+def summarize_threshold_trials(trials: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+
+    for threshold, group in trials.groupby("threshold"):
+        rows.append(
+            {
+                "threshold": threshold,
+                "mean_return_pct": group["total_return_pct"].mean(),
+                "median_return_pct": group["total_return_pct"].median(),
+                "mean_cagr_pct": group["cagr_pct"].mean(),
+                "mean_sharpe": group["sharpe"].mean(),
+                "median_sharpe": group["sharpe"].median(),
+                "mean_max_drawdown_pct": group["max_drawdown_pct"].mean(),
+                "prob_loss_pct": float((group["total_return_pct"] < 0).mean() * 100.0),
+                "prob_sharpe_below_1_pct": float((group["sharpe"] < 1).mean() * 100.0),
+                "mean_rebalances": group["n_rebalances"].mean(),
+                "median_rebalances": group["n_rebalances"].median(),
+                "mean_turnover_pct": group["mean_turnover_pct"].mean(),
+            }
+        )
+
+    return pd.DataFrame(rows).sort_values("threshold")
