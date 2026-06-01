@@ -5,7 +5,7 @@ mod stats;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use controls::{randomize_tickers_and_dates, randomize_tickers_same_dates};
+use controls::{randomize_tickers_and_dates_one, randomize_tickers_same_dates_one};
 use io::{read_orders, read_prices, read_prices_binary, write_csv};
 use portfolio::{run_daily_portfolio, PortfolioConfig};
 use rayon::prelude::*;
@@ -189,13 +189,12 @@ fn run_monte_carlo_controls(
 
     let actual = run_daily_portfolio(orders, prices, &config, "actual".to_string(), 0);
 
-    let same_date_order_sets =
-        randomize_tickers_same_dates(orders, prices, args.runs, args.seed);
-
-    let same_date_summaries: Vec<PathSummary> = same_date_order_sets
+    let same_date_summaries: Vec<PathSummary> = (0..args.runs)
         .into_par_iter()
-        .enumerate()
-        .map(|(run, randomized_orders)| {
+        .map(|run| {
+            let randomized_orders =
+                randomize_tickers_same_dates_one(orders, prices, args.seed, run);
+
             run_daily_portfolio(
                 &randomized_orders,
                 prices,
@@ -207,13 +206,11 @@ fn run_monte_carlo_controls(
         })
         .collect();
 
-    let random_date_order_sets =
-        randomize_tickers_and_dates(orders, prices, args.runs, args.seed);
-
-    let random_date_summaries: Vec<PathSummary> = random_date_order_sets
+    let random_date_summaries: Vec<PathSummary> = (0..args.runs)
         .into_par_iter()
-        .enumerate()
-        .map(|(run, randomized_orders)| {
+        .map(|run| {
+            let randomized_orders = randomize_tickers_and_dates_one(orders, prices, args.seed, run);
+
             run_daily_portfolio(
                 &randomized_orders,
                 prices,
@@ -224,16 +221,21 @@ fn run_monte_carlo_controls(
             .summary
         })
         .collect();
-
     let mut all_mc = Vec::with_capacity(same_date_summaries.len() + random_date_summaries.len());
     all_mc.extend(same_date_summaries);
     all_mc.extend(random_date_summaries);
 
     let dist = summarize_distribution(&all_mc, actual.summary.total_return);
 
-    write_csv(args.out_dir.join("actual_summary.csv"), &[actual.summary.clone()])?;
+    write_csv(
+        args.out_dir.join("actual_summary.csv"),
+        &[actual.summary.clone()],
+    )?;
     write_csv(args.out_dir.join("actual_equity.csv"), &actual.equity)?;
-    write_csv(args.out_dir.join("actual_closed_trades.csv"), &actual.trades)?;
+    write_csv(
+        args.out_dir.join("actual_closed_trades.csv"),
+        &actual.trades,
+    )?;
     write_csv(args.out_dir.join("monte_carlo_summary.csv"), &dist)?;
 
     if args.save_runs {
@@ -287,11 +289,7 @@ fn run_monte_carlo_controls(
     Ok(())
 }
 
-fn run_parameter_sweep(
-    args: &Args,
-    orders: &[io::Order],
-    prices: &io::PriceMatrix,
-) -> Result<()> {
+fn run_parameter_sweep(args: &Args, orders: &[io::Order], prices: &io::PriceMatrix) -> Result<()> {
     let max_gross_values = parse_float_list(&args.sweep_max_gross)?;
     let basket_exposure_values = parse_float_list(&args.sweep_basket_exposure)?;
     let position_weight_values = parse_float_list(&args.sweep_position_weight)?;
@@ -372,11 +370,7 @@ fn run_parameter_sweep(
     Ok(())
 }
 
-fn run_ticker_exclusion(
-    args: &Args,
-    orders: &[io::Order],
-    prices: &io::PriceMatrix,
-) -> Result<()> {
+fn run_ticker_exclusion(args: &Args, orders: &[io::Order], prices: &io::PriceMatrix) -> Result<()> {
     let config = build_config(args);
 
     let mut tickers: Vec<String> = orders.iter().map(|o| o.ticker.clone()).collect();
@@ -392,8 +386,13 @@ fn run_ticker_exclusion(
                 .cloned()
                 .collect();
 
-            let result =
-                run_daily_portfolio(&filtered, prices, &config, "ticker_exclusion".to_string(), 0);
+            let result = run_daily_portfolio(
+                &filtered,
+                prices,
+                &config,
+                "ticker_exclusion".to_string(),
+                0,
+            );
 
             ExclusionRow {
                 exclusion_type: "ticker".to_string(),
@@ -423,7 +422,10 @@ fn run_ticker_exclusion(
     println!("Rust Ticker Exclusion Stress");
     println!("================================================================================");
     println!("Tickers tested: {}", rows.len());
-    println!("Saved: {:?}", args.out_dir.join("ticker_exclusion_summary.csv"));
+    println!(
+        "Saved: {:?}",
+        args.out_dir.join("ticker_exclusion_summary.csv")
+    );
 
     println!();
     println!("Worst results after excluding ticker:");
@@ -458,11 +460,7 @@ fn run_ticker_exclusion(
     Ok(())
 }
 
-fn run_year_exclusion(
-    args: &Args,
-    orders: &[io::Order],
-    prices: &io::PriceMatrix,
-) -> Result<()> {
+fn run_year_exclusion(args: &Args, orders: &[io::Order], prices: &io::PriceMatrix) -> Result<()> {
     let config = build_config(args);
 
     let mut years: Vec<String> = orders
@@ -513,7 +511,10 @@ fn run_year_exclusion(
     println!("Rust Year Exclusion Stress");
     println!("================================================================================");
     println!("Years tested: {}", rows.len());
-    println!("Saved: {:?}", args.out_dir.join("year_exclusion_summary.csv"));
+    println!(
+        "Saved: {:?}",
+        args.out_dir.join("year_exclusion_summary.csv")
+    );
 
     println!();
     println!("Worst results after excluding year:");
@@ -578,8 +579,7 @@ fn run_top_winner_exclusion(
             let trade_count = vals.len();
             let total_pnl = vals.iter().map(|(pnl, _)| *pnl).sum::<f64>();
             let avg_trade_pnl = total_pnl / trade_count as f64;
-            let avg_trade_return =
-                vals.iter().map(|(_, r)| *r).sum::<f64>() / trade_count as f64;
+            let avg_trade_return = vals.iter().map(|(_, r)| *r).sum::<f64>() / trade_count as f64;
 
             WinnerContributorRow {
                 ticker,
