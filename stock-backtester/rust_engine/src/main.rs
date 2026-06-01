@@ -11,6 +11,7 @@ use portfolio::{run_daily_portfolio, PortfolioConfig};
 use rayon::prelude::*;
 use serde::Serialize;
 use stats::{summarize_distribution, PathSummary};
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::PathBuf;
 
@@ -68,6 +69,12 @@ struct Args {
 
     #[arg(long, default_value_t = false)]
     year_exclusion: bool,
+
+    #[arg(long, default_value_t = false)]
+    top_winner_exclusion: bool,
+
+    #[arg(long, default_value = "1,3,5,10")]
+    top_winner_counts: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -88,6 +95,29 @@ struct SweepRow {
 struct ExclusionRow {
     exclusion_type: String,
     excluded: String,
+    remaining_orders: usize,
+    final_equity: f64,
+    total_return: f64,
+    max_drawdown: f64,
+    win_rate: f64,
+    sharpe_like: f64,
+    avg_daily_return: f64,
+    daily_vol: f64,
+}
+
+#[derive(Debug, Serialize)]
+struct WinnerContributorRow {
+    ticker: String,
+    total_pnl: f64,
+    trade_count: usize,
+    avg_trade_pnl: f64,
+    avg_trade_return: f64,
+}
+
+#[derive(Debug, Serialize)]
+struct TopWinnerExclusionRow {
+    excluded_top_n: usize,
+    excluded_tickers: String,
     remaining_orders: usize,
     final_equity: f64,
     total_return: f64,
@@ -123,7 +153,21 @@ fn main() -> Result<()> {
         return run_year_exclusion(&args, &orders, &prices);
     }
 
+    if args.top_winner_exclusion {
+        return run_top_winner_exclusion(&args, &orders, &prices);
+    }
+
     run_monte_carlo_controls(&args, &orders, &prices)
+}
+
+fn build_config(args: &Args) -> PortfolioConfig {
+    PortfolioConfig {
+        initial_capital: args.initial_capital,
+        max_gross_exposure: args.max_gross_exposure,
+        target_new_basket_exposure: args.target_new_basket_exposure,
+        max_position_weight: args.max_position_weight,
+        fee_bps: args.fee_bps,
+    }
 }
 
 fn run_monte_carlo_controls(
@@ -131,13 +175,7 @@ fn run_monte_carlo_controls(
     orders: &[io::Order],
     prices: &io::PriceMatrix,
 ) -> Result<()> {
-    let config = PortfolioConfig {
-        initial_capital: args.initial_capital,
-        max_gross_exposure: args.max_gross_exposure,
-        target_new_basket_exposure: args.target_new_basket_exposure,
-        max_position_weight: args.max_position_weight,
-        fee_bps: args.fee_bps,
-    };
+    let config = build_config(args);
 
     let actual = run_daily_portfolio(
         orders,
@@ -209,10 +247,10 @@ fn run_monte_carlo_controls(
     println!("Initial capital: {:.2}", args.initial_capital);
     println!("Max gross exposure: {:.2}", args.max_gross_exposure);
     println!(
-        "Target new basket exposure: {:.2}",
+        "Target new basket exposure: {:.3}",
         args.target_new_basket_exposure
     );
-    println!("Max position weight: {:.2}", args.max_position_weight);
+    println!("Max position weight: {:.3}", args.max_position_weight);
     println!("Fee bps one-way: {:.2}", args.fee_bps);
 
     println!();
@@ -341,13 +379,7 @@ fn run_ticker_exclusion(
     orders: &[io::Order],
     prices: &io::PriceMatrix,
 ) -> Result<()> {
-    let config = PortfolioConfig {
-        initial_capital: args.initial_capital,
-        max_gross_exposure: args.max_gross_exposure,
-        target_new_basket_exposure: args.target_new_basket_exposure,
-        max_position_weight: args.max_position_weight,
-        fee_bps: args.fee_bps,
-    };
+    let config = build_config(args);
 
     let mut tickers: Vec<String> = orders.iter().map(|o| o.ticker.clone()).collect();
     tickers.sort();
@@ -438,13 +470,7 @@ fn run_year_exclusion(
     orders: &[io::Order],
     prices: &io::PriceMatrix,
 ) -> Result<()> {
-    let config = PortfolioConfig {
-        initial_capital: args.initial_capital,
-        max_gross_exposure: args.max_gross_exposure,
-        target_new_basket_exposure: args.target_new_basket_exposure,
-        max_position_weight: args.max_position_weight,
-        fee_bps: args.fee_bps,
-    };
+    let config = build_config(args);
 
     let mut years: Vec<String> = orders
         .iter()
@@ -534,6 +560,160 @@ fn run_year_exclusion(
     Ok(())
 }
 
+fn run_top_winner_exclusion(
+    args: &Args,
+    orders: &[io::Order],
+    prices: &io::PriceMatrix,
+) -> Result<()> {
+    let config = build_config(args);
+
+    let actual = run_daily_portfolio(
+        orders,
+        prices,
+        &config,
+        "actual_for_winner_ranking".to_string(),
+        0,
+    );
+
+    let mut by_ticker: HashMap<String, Vec<(f64, f64)>> = HashMap::new();
+
+    for trade in &actual.trades {
+        by_ticker
+            .entry(trade.ticker.clone())
+            .or_default()
+            .push((trade.pnl, trade.trade_return));
+    }
+
+    let mut contributors: Vec<WinnerContributorRow> = by_ticker
+        .into_iter()
+        .map(|(ticker, vals)| {
+            let trade_count = vals.len();
+            let total_pnl = vals.iter().map(|(pnl, _)| *pnl).sum::<f64>();
+            let avg_trade_pnl = total_pnl / trade_count as f64;
+            let avg_trade_return =
+                vals.iter().map(|(_, r)| *r).sum::<f64>() / trade_count as f64;
+
+            WinnerContributorRow {
+                ticker,
+                total_pnl,
+                trade_count,
+                avg_trade_pnl,
+                avg_trade_return,
+            }
+        })
+        .collect();
+
+    contributors.sort_by(|a, b| {
+        b.total_pnl
+            .partial_cmp(&a.total_pnl)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    let counts = parse_usize_list(&args.top_winner_counts)?;
+
+    let rows: Vec<TopWinnerExclusionRow> = counts
+        .into_par_iter()
+        .map(|top_n| {
+            let excluded: Vec<String> = contributors
+                .iter()
+                .take(top_n)
+                .map(|row| row.ticker.clone())
+                .collect();
+
+            let excluded_set: HashSet<String> = excluded.iter().cloned().collect();
+
+            let filtered: Vec<io::Order> = orders
+                .iter()
+                .filter(|order| !excluded_set.contains(&order.ticker))
+                .cloned()
+                .collect();
+
+            let result = run_daily_portfolio(
+                &filtered,
+                prices,
+                &config,
+                "top_winner_exclusion".to_string(),
+                0,
+            );
+
+            TopWinnerExclusionRow {
+                excluded_top_n: top_n,
+                excluded_tickers: excluded.join("|"),
+                remaining_orders: filtered.len(),
+                final_equity: result.summary.final_equity,
+                total_return: result.summary.total_return,
+                max_drawdown: result.summary.max_drawdown,
+                win_rate: result.summary.win_rate,
+                sharpe_like: result.summary.sharpe_like,
+                avg_daily_return: result.summary.avg_daily_return,
+                daily_vol: result.summary.daily_vol,
+            }
+        })
+        .collect();
+
+    let mut sorted_rows = rows;
+    sorted_rows.sort_by(|a, b| a.excluded_top_n.cmp(&b.excluded_top_n));
+
+    write_csv(
+        args.out_dir.join("top_winner_contributors.csv"),
+        &contributors,
+    )?;
+
+    write_csv(
+        args.out_dir.join("top_winner_exclusion_summary.csv"),
+        &sorted_rows,
+    )?;
+
+    println!();
+    println!("================================================================================");
+    println!("Rust Top-Winner Exclusion Stress");
+    println!("================================================================================");
+    println!("Base final equity: {:.2}", actual.summary.final_equity);
+    println!("Base total return: {:.4}", actual.summary.total_return);
+    println!("Base max drawdown: {:.4}", actual.summary.max_drawdown);
+    println!("Base Sharpe-like: {:.4}", actual.summary.sharpe_like);
+    println!("Winner tickers ranked: {}", contributors.len());
+    println!(
+        "Saved: {:?}",
+        args.out_dir.join("top_winner_exclusion_summary.csv")
+    );
+    println!(
+        "Saved: {:?}",
+        args.out_dir.join("top_winner_contributors.csv")
+    );
+
+    println!();
+    println!("Top PnL contributors:");
+    for row in contributors.iter().take(20) {
+        println!(
+            "{} | total_pnl={:.2}, trades={}, avg_pnl={:.2}, avg_return={:.4}",
+            row.ticker,
+            row.total_pnl,
+            row.trade_count,
+            row.avg_trade_pnl,
+            row.avg_trade_return
+        );
+    }
+
+    println!();
+    println!("Top-winner exclusion results:");
+    for row in &sorted_rows {
+        println!(
+            "exclude_top_n={} [{}] | remaining_orders={} | final={:.2}, ret={:.4}, dd={:.4}, win={:.4}, sharpe={:.4}",
+            row.excluded_top_n,
+            row.excluded_tickers,
+            row.remaining_orders,
+            row.final_equity,
+            row.total_return,
+            row.max_drawdown,
+            row.win_rate,
+            row.sharpe_like
+        );
+    }
+
+    Ok(())
+}
+
 fn parse_float_list(raw: &str) -> Result<Vec<f64>> {
     let values: Vec<f64> = raw
         .split(',')
@@ -547,6 +727,24 @@ fn parse_float_list(raw: &str) -> Result<Vec<f64>> {
 
     if values.is_empty() {
         anyhow::bail!("Float list cannot be empty.");
+    }
+
+    Ok(values)
+}
+
+fn parse_usize_list(raw: &str) -> Result<Vec<usize>> {
+    let values: Vec<usize> = raw
+        .split(',')
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .map(|s| {
+            s.parse::<usize>()
+                .with_context(|| format!("Failed to parse usize value: {s}"))
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    if values.is_empty() {
+        anyhow::bail!("usize list cannot be empty.");
     }
 
     Ok(values)
