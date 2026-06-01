@@ -38,7 +38,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-peers", type=int, default=10)
     parser.add_argument("--weighting", choices=["equal", "corr"], default="equal")
     parser.add_argument("--min-abs-z", type=float, default=0.0)
-    parser.add_argument("--long-only-candidates", action="store_true")
+    parser.add_argument(
+        "--side",
+        choices=["long", "short", "both"],
+        default="long",
+        help=(
+            "Which peer-spread tail to export. "
+            "long keeps negative z-scores, short keeps positive z-scores, "
+            "and both keeps both tails."
+        ),
+    )
+    parser.add_argument(
+        "--long-only-candidates",
+        action="store_true",
+        help="Deprecated alias for --side long with --long-z threshold.",
+    )
     parser.add_argument("--long-z", type=float, default=-2.0)
     parser.add_argument("--horizon", type=int, default=100)
 
@@ -244,7 +258,7 @@ def compute_one_ticker(
     )
     peer_spread_z[z_valid] = (spread[z_valid] - spread_mean[z_valid]) / spread_std[z_valid]
 
-    direction = np.where(peer_spread_z < 0, "long", "short_or_avoid")
+    direction = np.where(peer_spread_z < 0, "long", "short")
     raw_confidence = np.abs(peer_spread_z) * avg_peer_corr
 
     out = pd.DataFrame(
@@ -328,6 +342,8 @@ def main() -> None:
     print(f"spread_window={args.spread_window}")
     print(f"min_spread_observations={args.min_spread_observations}")
     print(f"weighting={args.weighting}")
+    print(f"side={args.side}")
+    print(f"min_abs_z={args.min_abs_z:.4f}")
 
     frames: list[pd.DataFrame] = []
 
@@ -361,13 +377,47 @@ def main() -> None:
         result = pd.DataFrame()
 
     if not result.empty:
+        min_abs_z = abs(float(args.min_abs_z))
+
+        if args.long_only_candidates and args.side != "long":
+            raise ValueError("--long-only-candidates is only compatible with --side long.")
+
         if args.long_only_candidates:
-            result = result[result["peer_spread_z"] <= args.long_z].copy()
+            min_abs_z = max(min_abs_z, abs(float(args.long_z)))
 
-        if args.min_abs_z > 0:
-            result = result[np.abs(result["peer_spread_z"]) >= args.min_abs_z].copy()
+        if min_abs_z > 0:
+            if args.side == "long":
+                result = result[result["peer_spread_z"] <= -min_abs_z].copy()
+                result["direction"] = "long"
 
-        result = result.sort_values(["date", "raw_confidence"], ascending=[True, False])
+            elif args.side == "short":
+                result = result[result["peer_spread_z"] >= min_abs_z].copy()
+                result["direction"] = "short"
+
+            elif args.side == "both":
+                long = result[result["peer_spread_z"] <= -min_abs_z].copy()
+                long["direction"] = "long"
+
+                short = result[result["peer_spread_z"] >= min_abs_z].copy()
+                short["direction"] = "short"
+
+                result = pd.concat([long, short], ignore_index=True)
+
+        else:
+            if args.side == "long":
+                result = result[result["peer_spread_z"] < 0].copy()
+                result["direction"] = "long"
+
+            elif args.side == "short":
+                result = result[result["peer_spread_z"] > 0].copy()
+                result["direction"] = "short"
+
+            elif args.side == "both":
+                result = result[result["peer_spread_z"] != 0].copy()
+                result["direction"] = np.where(result["peer_spread_z"] < 0, "long", "short")
+
+        sort_cols = ["date", "raw_confidence"]
+        result = result.sort_values(sort_cols, ascending=[True, False])
         result = result.reset_index(drop=True)
 
     if out_path.suffix.lower() == ".parquet":
