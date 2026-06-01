@@ -41,7 +41,7 @@ def clean_run_name(run_dir: Path) -> str:
     name = run_dir.name
     name = name.removesuffix("_20k")
     name = name.replace("peer_spread_", "")
-    name = name.replace("_h100_v1", "")
+    name = name.replace("_v1", "")
     return name
 
 
