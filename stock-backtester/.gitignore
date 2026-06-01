@@ -47,3 +47,6 @@ requirements.lock.txt
 *.swp
 *.swo
 .DS_Store
+
+# Rust build artifacts
+rust_engine/target/
