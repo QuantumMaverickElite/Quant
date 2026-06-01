@@ -35,7 +35,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--common-only-ish",
         action="store_true",
-        help="Aggressively remove warrants, units, rights, preferreds, notes, and unusual suffixes.",
+        help="Remove obvious warrants, units, rights, preferreds, notes, and unusual suffixes.",
+    )
+
+    parser.add_argument(
+        "--common-stock-only",
+        action="store_true",
+        help="Stricter filter for common-stock-like securities. Removes funds, trusts, notes, income products, preferreds, warrants, units, rights, and many structured products.",
     )
 
     parser.add_argument("--min-symbol-len", type=int, default=1)
@@ -57,7 +63,7 @@ def read_nasdaq_listed() -> pd.DataFrame:
     out = pd.DataFrame(
         {
             "ticker": df["Symbol"].map(clean_symbol),
-            "name": df.get("Security Name", ""),
+            "name": df.get("Security Name", "").astype(str),
             "exchange": "NASDAQ",
             "etf": df.get("ETF", "N"),
             "test_issue": df.get("Test Issue", "N"),
@@ -86,7 +92,7 @@ def read_other_listed() -> pd.DataFrame:
     out = pd.DataFrame(
         {
             "ticker": df["ACT Symbol"].map(clean_symbol),
-            "name": df.get("Security Name", ""),
+            "name": df.get("Security Name", "").astype(str),
             "exchange": exchange_raw.map(exchange_map).fillna(exchange_raw),
             "etf": df.get("ETF", "N"),
             "test_issue": df.get("Test Issue", "N"),
@@ -104,6 +110,7 @@ def load_market_universe() -> pd.DataFrame:
 
     df = df.dropna(subset=["ticker"]).copy()
     df["ticker"] = df["ticker"].map(clean_symbol)
+    df["name"] = df["name"].astype(str)
 
     df = df[df["ticker"] != ""].copy()
     df = df.drop_duplicates(subset=["ticker"], keep="first").copy()
@@ -128,8 +135,11 @@ def apply_filters(df: pd.DataFrame, args: argparse.Namespace) -> pd.DataFrame:
     for marker in bad_markers:
         frame = frame[~frame["ticker"].str.contains(marker, regex=False)].copy()
 
-    if args.common_only_ish:
+    if args.common_only_ish or args.common_stock_only:
         frame = apply_common_only_filter(frame)
+
+    if args.common_stock_only:
+        frame = apply_common_stock_only_filter(frame)
 
     frame = frame.sort_values("ticker").reset_index(drop=True)
 
@@ -142,7 +152,6 @@ def apply_common_only_filter(df: pd.DataFrame) -> pd.DataFrame:
     ticker = frame["ticker"].astype(str)
     name = frame["name"].astype(str).str.upper()
 
-    # Remove Yahoo/Nasdaq suffix-like names and SPAC-related tails.
     bad_ticker_suffixes = (
         "W",  # warrants often end W
         "WS",
@@ -155,14 +164,16 @@ def apply_common_only_filter(df: pd.DataFrame) -> pd.DataFrame:
         "L",  # notes / special securities often end L
     )
 
-    # But do not nuke normal one-letter tickers like F, T, A.
     frame = frame[
         ~((ticker.str.len() >= 4) & ticker.str.endswith(bad_ticker_suffixes))
     ].copy()
 
+    name = frame["name"].astype(str).str.upper()
+
     bad_name_words = [
         "WARRANT",
         "RIGHT",
+        "RIGHTS",
         "UNIT",
         "UNITS",
         "PREFERRED",
@@ -178,12 +189,156 @@ def apply_common_only_filter(df: pd.DataFrame) -> pd.DataFrame:
     ]
 
     mask = pd.Series(False, index=frame.index)
+
+    for word in bad_name_words:
+        mask = mask | name.str.contains(word, regex=False)
+
+    frame = frame[~mask].copy()
+    frame = frame[frame["ticker"].str.match(r"^[A-Z]{1,5}$")].copy()
+
+    return frame
+
+
+def apply_common_stock_only_filter(df: pd.DataFrame) -> pd.DataFrame:
+    frame = df.copy()
+
+    name = frame["name"].astype(str).str.upper()
+
+    bad_name_words = [
+        # Funds / ETFs / ETNs / closed-end funds
+        "FUND",
+        "ETF",
+        "ETN",
+        "EXCHANGE TRADED",
+        "CLOSED END",
+        "CLOSED-END",
+        "CLOSED END FUND",
+        "INDEX FUND",
+        "INCOME FUND",
+        "MUNICIPAL",
+        "MUNI",
+        "BOND",
+        "TREASURY",
+        "HIGH YIELD",
+        "FLOATING RATE",
+        "TERM TRUST",
+        "TRUST",
+        "ROYALTY TRUST",
+        "INVESTMENT TRUST",
+        "UNIT TRUST",
+        "ADVANTAGED",
+        "OPPORTUNITY FUND",
+        "STRATEGIC INCOME",
+        "TAXABLE",
+        "TAX-FREE",
+        "DURATION",
+        "LOAN",
+        "CREDIT",
+        "CLO",
+        "CLO ",
+        "MORTGAGE",
+        "REAL ESTATE INVESTMENT TRUST",
+        # Preferreds / notes / structured products
+        "PREFERRED",
+        "PREFERENCE",
+        "DEPOSITARY",
+        "DEPOSITARY SHARES",
+        "NOTE",
+        "NOTES",
+        "SENIOR NOTE",
+        "SUBORDINATED",
+        "DEBENTURE",
+        "BABY BOND",
+        "REDEEMABLE",
+        "CONVERTIBLE",
+        # SPAC-like / non-operating forms
+        "WARRANT",
+        "RIGHT",
+        "RIGHTS",
+        "UNIT",
+        "UNITS",
+        "ACQUISITION",
+        "SPAC",
+        "BLANK CHECK",
+        # Commodity / crypto / derivative products
+        "GOLD SHARES",
+        "SILVER",
+        "BITCOIN",
+        "ETHER",
+        "2X",
+        "3X",
+        "ULTRA",
+        "INVERSE",
+        "LEVERAGED",
+    ]
+
+    mask = pd.Series(False, index=frame.index)
+
     for word in bad_name_words:
         mask = mask | name.str.contains(word, regex=False)
 
     frame = frame[~mask].copy()
 
-    # Keep simple ticker symbols only after suffix filtering.
+    # Extra ticker-level cleanup for common fund/CEF/ETN names that survive by vague metadata.
+    known_non_common_like = {
+        "ADX",
+        "ASA",
+        "CET",
+        "ETO",
+        "HQH",
+        "HQL",
+        "SOR",
+        "TY",
+        "GLU",
+        "BST",
+        "CSQ",
+        "QQQX",
+        "FFA",
+        "EOI",
+        "NIE",
+        "JCE",
+        "GLQ",
+        "ETG",
+        "ETB",
+        "SPXX",
+        "BCX",
+        "FNGO",
+        "DGP",
+        "BAR",
+        "AMUB",
+        "MLPB",
+        "PDI",
+        "PTY",
+        "PDO",
+        "BME",
+        "BMEZ",
+        "BUI",
+        "UTF",
+        "UTG",
+        "USA",
+        "ASG",
+        "GAM",
+        "RVT",
+        "RMT",
+        "RGT",
+        "CLM",
+        "CRF",
+        "OXLC",
+        "ECC",
+        "OCCI",
+        "PSEC",
+        "MAIN",
+        "ARCC",
+        "OBDC",
+        "FSK",
+        "HTGC",
+    }
+
+    frame = frame[~frame["ticker"].isin(known_non_common_like)].copy()
+    leaked = sorted(set(frame["ticker"]) & known_non_common_like)
+    if leaked:
+        raise RuntimeError(f"Known non-common tickers survived filter: {leaked}")
+    # Keep only simple alphabetic symbols after all name filters.
     frame = frame[frame["ticker"].str.match(r"^[A-Z]{1,5}$")].copy()
 
     return frame
@@ -202,7 +357,13 @@ def load_file_universe(path: str) -> pd.DataFrame:
     ]
 
     return pd.DataFrame(
-        {"ticker": sorted(set(tickers)), "exchange": "FILE", "name": ""}
+        {
+            "ticker": sorted(set(tickers)),
+            "exchange": "FILE",
+            "name": "",
+            "etf": "N",
+            "test_issue": "N",
+        }
     )
 
 
