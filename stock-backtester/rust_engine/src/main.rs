@@ -62,6 +62,12 @@ struct Args {
 
     #[arg(long, default_value = "0.10")]
     sweep_position_weight: String,
+
+    #[arg(long, default_value_t = false)]
+    ticker_exclusion: bool,
+
+    #[arg(long, default_value_t = false)]
+    year_exclusion: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,6 +75,20 @@ struct SweepRow {
     max_gross_exposure: f64,
     target_new_basket_exposure: f64,
     max_position_weight: f64,
+    final_equity: f64,
+    total_return: f64,
+    max_drawdown: f64,
+    win_rate: f64,
+    sharpe_like: f64,
+    avg_daily_return: f64,
+    daily_vol: f64,
+}
+
+#[derive(Debug, Serialize)]
+struct ExclusionRow {
+    exclusion_type: String,
+    excluded: String,
+    remaining_orders: usize,
     final_equity: f64,
     total_return: f64,
     max_drawdown: f64,
@@ -95,6 +115,14 @@ fn main() -> Result<()> {
         return run_parameter_sweep(&args, &orders, &prices);
     }
 
+    if args.ticker_exclusion {
+        return run_ticker_exclusion(&args, &orders, &prices);
+    }
+
+    if args.year_exclusion {
+        return run_year_exclusion(&args, &orders, &prices);
+    }
+
     run_monte_carlo_controls(&args, &orders, &prices)
 }
 
@@ -119,12 +147,8 @@ fn run_monte_carlo_controls(
         0,
     );
 
-    let same_date_order_sets = randomize_tickers_same_dates(
-        orders,
-        prices,
-        args.runs,
-        args.seed,
-    );
+    let same_date_order_sets =
+        randomize_tickers_same_dates(orders, prices, args.runs, args.seed);
 
     let same_date_summaries: Vec<PathSummary> = same_date_order_sets
         .into_par_iter()
@@ -141,12 +165,8 @@ fn run_monte_carlo_controls(
         })
         .collect();
 
-    let random_date_order_sets = randomize_tickers_and_dates(
-        orders,
-        prices,
-        args.runs,
-        args.seed,
-    );
+    let random_date_order_sets =
+        randomize_tickers_and_dates(orders, prices, args.runs, args.seed);
 
     let random_date_summaries: Vec<PathSummary> = random_date_order_sets
         .into_par_iter()
@@ -188,7 +208,10 @@ fn run_monte_carlo_controls(
     println!("Runs per control: {}", args.runs);
     println!("Initial capital: {:.2}", args.initial_capital);
     println!("Max gross exposure: {:.2}", args.max_gross_exposure);
-    println!("Target new basket exposure: {:.2}", args.target_new_basket_exposure);
+    println!(
+        "Target new basket exposure: {:.2}",
+        args.target_new_basket_exposure
+    );
     println!("Max position weight: {:.2}", args.max_position_weight);
     println!("Fee bps one-way: {:.2}", args.fee_bps);
 
@@ -298,10 +321,208 @@ fn run_parameter_sweep(
     println!("Top configs by Sharpe-like score:");
     for row in sorted_rows.iter().take(20) {
         println!(
-            "gross={:.2}, basket={:.2}, pos={:.2} | final={:.2}, ret={:.4}, dd={:.4}, win={:.4}, sharpe={:.4}",
+            "gross={:.2}, basket={:.3}, pos={:.3} | final={:.2}, ret={:.4}, dd={:.4}, win={:.4}, sharpe={:.4}",
             row.max_gross_exposure,
             row.target_new_basket_exposure,
             row.max_position_weight,
+            row.final_equity,
+            row.total_return,
+            row.max_drawdown,
+            row.win_rate,
+            row.sharpe_like
+        );
+    }
+
+    Ok(())
+}
+
+fn run_ticker_exclusion(
+    args: &Args,
+    orders: &[io::Order],
+    prices: &io::PriceMatrix,
+) -> Result<()> {
+    let config = PortfolioConfig {
+        initial_capital: args.initial_capital,
+        max_gross_exposure: args.max_gross_exposure,
+        target_new_basket_exposure: args.target_new_basket_exposure,
+        max_position_weight: args.max_position_weight,
+        fee_bps: args.fee_bps,
+    };
+
+    let mut tickers: Vec<String> = orders.iter().map(|o| o.ticker.clone()).collect();
+    tickers.sort();
+    tickers.dedup();
+
+    let mut rows: Vec<ExclusionRow> = tickers
+        .into_par_iter()
+        .map(|excluded| {
+            let filtered: Vec<io::Order> = orders
+                .iter()
+                .filter(|o| o.ticker != excluded)
+                .cloned()
+                .collect();
+
+            let result = run_daily_portfolio(
+                &filtered,
+                prices,
+                &config,
+                "ticker_exclusion".to_string(),
+                0,
+            );
+
+            ExclusionRow {
+                exclusion_type: "ticker".to_string(),
+                excluded,
+                remaining_orders: filtered.len(),
+                final_equity: result.summary.final_equity,
+                total_return: result.summary.total_return,
+                max_drawdown: result.summary.max_drawdown,
+                win_rate: result.summary.win_rate,
+                sharpe_like: result.summary.sharpe_like,
+                avg_daily_return: result.summary.avg_daily_return,
+                daily_vol: result.summary.daily_vol,
+            }
+        })
+        .collect();
+
+    rows.sort_by(|a, b| {
+        a.total_return
+            .partial_cmp(&b.total_return)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    write_csv(args.out_dir.join("ticker_exclusion_summary.csv"), &rows)?;
+
+    println!();
+    println!("================================================================================");
+    println!("Rust Ticker Exclusion Stress");
+    println!("================================================================================");
+    println!("Tickers tested: {}", rows.len());
+    println!("Saved: {:?}", args.out_dir.join("ticker_exclusion_summary.csv"));
+
+    println!();
+    println!("Worst results after excluding ticker:");
+    for row in rows.iter().take(20) {
+        println!(
+            "exclude={} | remaining_orders={} | final={:.2}, ret={:.4}, dd={:.4}, win={:.4}, sharpe={:.4}",
+            row.excluded,
+            row.remaining_orders,
+            row.final_equity,
+            row.total_return,
+            row.max_drawdown,
+            row.win_rate,
+            row.sharpe_like
+        );
+    }
+
+    println!();
+    println!("Best results after excluding ticker:");
+    for row in rows.iter().rev().take(20) {
+        println!(
+            "exclude={} | remaining_orders={} | final={:.2}, ret={:.4}, dd={:.4}, win={:.4}, sharpe={:.4}",
+            row.excluded,
+            row.remaining_orders,
+            row.final_equity,
+            row.total_return,
+            row.max_drawdown,
+            row.win_rate,
+            row.sharpe_like
+        );
+    }
+
+    Ok(())
+}
+
+fn run_year_exclusion(
+    args: &Args,
+    orders: &[io::Order],
+    prices: &io::PriceMatrix,
+) -> Result<()> {
+    let config = PortfolioConfig {
+        initial_capital: args.initial_capital,
+        max_gross_exposure: args.max_gross_exposure,
+        target_new_basket_exposure: args.target_new_basket_exposure,
+        max_position_weight: args.max_position_weight,
+        fee_bps: args.fee_bps,
+    };
+
+    let mut years: Vec<String> = orders
+        .iter()
+        .filter_map(|o| o.signal_date.get(0..4).map(|s| s.to_string()))
+        .collect();
+
+    years.sort();
+    years.dedup();
+
+    let mut rows: Vec<ExclusionRow> = years
+        .into_par_iter()
+        .map(|excluded_year| {
+            let filtered: Vec<io::Order> = orders
+                .iter()
+                .filter(|o| !o.signal_date.starts_with(&excluded_year))
+                .cloned()
+                .collect();
+
+            let result = run_daily_portfolio(
+                &filtered,
+                prices,
+                &config,
+                "year_exclusion".to_string(),
+                0,
+            );
+
+            ExclusionRow {
+                exclusion_type: "year".to_string(),
+                excluded: excluded_year,
+                remaining_orders: filtered.len(),
+                final_equity: result.summary.final_equity,
+                total_return: result.summary.total_return,
+                max_drawdown: result.summary.max_drawdown,
+                win_rate: result.summary.win_rate,
+                sharpe_like: result.summary.sharpe_like,
+                avg_daily_return: result.summary.avg_daily_return,
+                daily_vol: result.summary.daily_vol,
+            }
+        })
+        .collect();
+
+    rows.sort_by(|a, b| {
+        a.total_return
+            .partial_cmp(&b.total_return)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    write_csv(args.out_dir.join("year_exclusion_summary.csv"), &rows)?;
+
+    println!();
+    println!("================================================================================");
+    println!("Rust Year Exclusion Stress");
+    println!("================================================================================");
+    println!("Years tested: {}", rows.len());
+    println!("Saved: {:?}", args.out_dir.join("year_exclusion_summary.csv"));
+
+    println!();
+    println!("Worst results after excluding year:");
+    for row in rows.iter().take(20) {
+        println!(
+            "exclude={} | remaining_orders={} | final={:.2}, ret={:.4}, dd={:.4}, win={:.4}, sharpe={:.4}",
+            row.excluded,
+            row.remaining_orders,
+            row.final_equity,
+            row.total_return,
+            row.max_drawdown,
+            row.win_rate,
+            row.sharpe_like
+        );
+    }
+
+    println!();
+    println!("Best results after excluding year:");
+    for row in rows.iter().rev().take(20) {
+        println!(
+            "exclude={} | remaining_orders={} | final={:.2}, ret={:.4}, dd={:.4}, win={:.4}, sharpe={:.4}",
+            row.excluded,
+            row.remaining_orders,
             row.final_equity,
             row.total_return,
             row.max_drawdown,
