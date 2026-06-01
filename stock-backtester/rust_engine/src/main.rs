@@ -6,7 +6,7 @@ mod stats;
 use anyhow::{Context, Result};
 use clap::Parser;
 use controls::{randomize_tickers_and_dates, randomize_tickers_same_dates};
-use io::{read_orders, read_prices, write_csv};
+use io::{read_orders, read_prices, read_prices_binary, write_csv};
 use portfolio::{run_daily_portfolio, PortfolioConfig};
 use rayon::prelude::*;
 use serde::Serialize;
@@ -23,7 +23,10 @@ struct Args {
     orders_csv: PathBuf,
 
     #[arg(long)]
-    prices_csv: PathBuf,
+    prices_csv: Option<PathBuf>,
+
+    #[arg(long)]
+    prices_meta: Option<PathBuf>,
 
     #[arg(long)]
     out_dir: PathBuf,
@@ -135,7 +138,14 @@ fn main() -> Result<()> {
         .with_context(|| format!("Failed to create output dir: {:?}", args.out_dir))?;
 
     let orders = read_orders(&args.orders_csv)?;
-    let prices = read_prices(&args.prices_csv)?;
+
+    let prices = if let Some(path) = &args.prices_meta {
+        read_prices_binary(path)?
+    } else if let Some(path) = &args.prices_csv {
+        read_prices(path)?
+    } else {
+        anyhow::bail!("Must provide either --prices-csv or --prices-meta");
+    };
 
     if orders.is_empty() {
         anyhow::bail!("No orders loaded.");
@@ -177,13 +187,7 @@ fn run_monte_carlo_controls(
 ) -> Result<()> {
     let config = build_config(args);
 
-    let actual = run_daily_portfolio(
-        orders,
-        prices,
-        &config,
-        "actual".to_string(),
-        0,
-    );
+    let actual = run_daily_portfolio(orders, prices, &config, "actual".to_string(), 0);
 
     let same_date_order_sets =
         randomize_tickers_same_dates(orders, prices, args.runs, args.seed);
@@ -311,13 +315,7 @@ fn run_parameter_sweep(
     let rows: Vec<SweepRow> = configs
         .into_par_iter()
         .map(|config| {
-            let result = run_daily_portfolio(
-                orders,
-                prices,
-                &config,
-                "sweep".to_string(),
-                0,
-            );
+            let result = run_daily_portfolio(orders, prices, &config, "sweep".to_string(), 0);
 
             SweepRow {
                 max_gross_exposure: config.max_gross_exposure,
@@ -394,13 +392,8 @@ fn run_ticker_exclusion(
                 .cloned()
                 .collect();
 
-            let result = run_daily_portfolio(
-                &filtered,
-                prices,
-                &config,
-                "ticker_exclusion".to_string(),
-                0,
-            );
+            let result =
+                run_daily_portfolio(&filtered, prices, &config, "ticker_exclusion".to_string(), 0);
 
             ExclusionRow {
                 exclusion_type: "ticker".to_string(),
@@ -489,13 +482,8 @@ fn run_year_exclusion(
                 .cloned()
                 .collect();
 
-            let result = run_daily_portfolio(
-                &filtered,
-                prices,
-                &config,
-                "year_exclusion".to_string(),
-                0,
-            );
+            let result =
+                run_daily_portfolio(&filtered, prices, &config, "year_exclusion".to_string(), 0);
 
             ExclusionRow {
                 exclusion_type: "year".to_string(),
@@ -687,11 +675,7 @@ fn run_top_winner_exclusion(
     for row in contributors.iter().take(20) {
         println!(
             "{} | total_pnl={:.2}, trades={}, avg_pnl={:.2}, avg_return={:.4}",
-            row.ticker,
-            row.total_pnl,
-            row.trade_count,
-            row.avg_trade_pnl,
-            row.avg_trade_return
+            row.ticker, row.total_pnl, row.trade_count, row.avg_trade_pnl, row.avg_trade_return
         );
     }
 

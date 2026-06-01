@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -21,6 +22,16 @@ pub struct PriceMatrix {
     pub prices: Vec<Vec<f64>>,
     pub date_to_idx: HashMap<String, usize>,
     pub ticker_to_idx: HashMap<String, usize>,
+}
+
+#[derive(Debug, Deserialize)]
+struct PriceMatrixMeta {
+    dtype: String,
+    rows: usize,
+    cols: usize,
+    dates: Vec<String>,
+    tickers: Vec<String>,
+    binary_file: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -80,12 +91,6 @@ pub fn read_prices(path: &PathBuf) -> Result<PriceMatrix> {
 
     let tickers: Vec<String> = headers.iter().skip(1).map(|s| s.to_string()).collect();
 
-    let ticker_to_idx: HashMap<String, usize> = tickers
-        .iter()
-        .enumerate()
-        .map(|(i, ticker)| (ticker.clone(), i))
-        .collect();
-
     let mut dates = Vec::new();
     let mut prices = Vec::new();
 
@@ -109,6 +114,95 @@ pub fn read_prices(path: &PathBuf) -> Result<PriceMatrix> {
 
         prices.push(vals);
     }
+
+    build_price_matrix(dates, tickers, prices)
+}
+
+pub fn read_prices_binary(meta_path: &PathBuf) -> Result<PriceMatrix> {
+    let meta_text = fs::read_to_string(meta_path)
+        .with_context(|| format!("Failed to read price matrix metadata: {:?}", meta_path))?;
+
+    let meta: PriceMatrixMeta = serde_json::from_str(&meta_text)
+        .with_context(|| format!("Failed to parse price matrix metadata: {:?}", meta_path))?;
+
+    if meta.dates.len() != meta.rows {
+        anyhow::bail!(
+            "Metadata mismatch: dates len {} != rows {}",
+            meta.dates.len(),
+            meta.rows
+        );
+    }
+
+    if meta.tickers.len() != meta.cols {
+        anyhow::bail!(
+            "Metadata mismatch: tickers len {} != cols {}",
+            meta.tickers.len(),
+            meta.cols
+        );
+    }
+
+    let binary_path = meta_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."))
+        .join(&meta.binary_file);
+
+    let bytes = fs::read(&binary_path)
+        .with_context(|| format!("Failed to read price matrix binary: {:?}", binary_path))?;
+
+    let expected_len = match meta.dtype.as_str() {
+        "float32" => meta.rows * meta.cols * 4,
+        "float64" => meta.rows * meta.cols * 8,
+        other => anyhow::bail!("Unsupported matrix dtype: {other}"),
+    };
+
+    if bytes.len() != expected_len {
+        anyhow::bail!(
+            "Binary size mismatch: got {} bytes, expected {} bytes",
+            bytes.len(),
+            expected_len
+        );
+    }
+
+    let mut flat = Vec::with_capacity(meta.rows * meta.cols);
+
+    match meta.dtype.as_str() {
+        "float32" => {
+            for chunk in bytes.chunks_exact(4) {
+                flat.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]) as f64);
+            }
+        }
+        "float64" => {
+            for chunk in bytes.chunks_exact(8) {
+                flat.push(f64::from_le_bytes([
+                    chunk[0], chunk[1], chunk[2], chunk[3],
+                    chunk[4], chunk[5], chunk[6], chunk[7],
+                ]));
+            }
+        }
+        _ => unreachable!(),
+    }
+
+    let mut prices = Vec::with_capacity(meta.rows);
+
+    for row_idx in 0..meta.rows {
+        let start = row_idx * meta.cols;
+        let end = start + meta.cols;
+        prices.push(flat[start..end].to_vec());
+    }
+
+    build_price_matrix(meta.dates, meta.tickers, prices)
+}
+
+fn build_price_matrix(
+    dates: Vec<String>,
+    tickers: Vec<String>,
+    prices: Vec<Vec<f64>>,
+) -> Result<PriceMatrix> {
+    let ticker_to_idx: HashMap<String, usize> = tickers
+        .iter()
+        .enumerate()
+        .map(|(i, ticker)| (ticker.clone(), i))
+        .collect();
 
     let date_to_idx: HashMap<String, usize> = dates
         .iter()
