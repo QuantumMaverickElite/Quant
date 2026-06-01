@@ -21,6 +21,12 @@ def parse_args() -> argparse.Namespace:
         "--signals",
         default="outputs/signals/mean_reversion_signals_context_adjusted.parquet",
     )
+    parser.add_argument(
+        "--signal-format",
+        choices=["auto", "mean-reversion", "peer-spread"],
+        default="auto",
+        help="Signal schema to load. Use peer-spread for large_universe_peer_spread_* files.",
+    )
     parser.add_argument("--out-dir", default="/tmp/quant_rust_matrix/h100")
     parser.add_argument("--start", default="2018-01-01")
     parser.add_argument("--end", default=None)
@@ -118,6 +124,51 @@ def parse_args() -> argparse.Namespace:
 
 def normalize_ticker(ticker: str) -> str:
     return str(ticker).strip().upper().replace(".", "-")
+
+
+def normalize_signal_frame(
+    signals: pd.DataFrame,
+    *,
+    signal_format: str,
+) -> tuple[pd.DataFrame, str]:
+    frame = signals.copy()
+
+    if signal_format == "auto":
+        if {"peer_spread_z", "avg_peer_corr", "peer_count"}.issubset(frame.columns):
+            resolved = "peer-spread"
+        else:
+            resolved = "mean-reversion"
+    else:
+        resolved = signal_format
+
+    required = {"date", "ticker", "horizon", "adjusted_confidence"}
+    missing = required - set(frame.columns)
+
+    if missing:
+        raise RuntimeError(
+            f"Signal file is missing required columns for {resolved}: {sorted(missing)}"
+        )
+
+    frame["ticker"] = frame["ticker"].astype(str).map(normalize_ticker)
+    frame["date"] = pd.to_datetime(frame["date"])
+    frame["horizon"] = frame["horizon"].astype(int)
+    frame["adjusted_confidence"] = pd.to_numeric(
+        frame["adjusted_confidence"],
+        errors="coerce",
+    )
+
+    if "peer_spread_z" not in frame.columns:
+        frame["peer_spread_z"] = np.nan
+
+    if "signal_type" not in frame.columns:
+        frame["signal_type"] = resolved
+
+    if "direction" not in frame.columns and resolved == "peer-spread":
+        frame["direction"] = "long"
+
+    frame = frame.dropna(subset=["date", "ticker", "horizon", "adjusted_confidence"]).copy()
+
+    return frame, resolved
 
 
 def load_universe(path: str) -> list[str]:
@@ -548,8 +599,15 @@ def main() -> None:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    signals = pd.read_parquet(args.signals)
-    signals["ticker"] = signals["ticker"].astype(str).map(normalize_ticker)
+    raw_signals = pd.read_parquet(args.signals)
+    signals, resolved_signal_format = normalize_signal_frame(
+        raw_signals,
+        signal_format=args.signal_format,
+    )
+
+    print(f"Loaded signals: {args.signals}")
+    print(f"Signal format: {resolved_signal_format}")
+    print(f"Signal rows: {len(signals):,}")
 
     required_signal_tickers = required_signal_tickers_for_download(
         signals,
@@ -684,6 +742,12 @@ def main() -> None:
         "download_retries": int(args.download_retries),
         "download_sleep_seconds": float(args.download_sleep_seconds),
         "order_summary": order_summary,
+        "signals_path": str(args.signals),
+        "signal_format": str(resolved_signal_format),
+        "signal_horizon": int(args.signal_horizon),
+        "hold_days": int(args.hold_days),
+        "top_n_per_date": int(args.top_n_per_date),
+        "min_adjusted_confidence": float(args.min_adjusted_confidence),
     }
 
     meta_path.write_text(json.dumps(meta))
