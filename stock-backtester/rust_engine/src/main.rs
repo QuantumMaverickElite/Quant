@@ -5,7 +5,11 @@ mod stats;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use controls::{randomize_tickers_and_dates_one, randomize_tickers_same_dates_one};
+use controls::{
+    randomize_tickers_and_dates_excluding_selected_one, randomize_tickers_and_dates_one,
+    randomize_tickers_same_dates_excluding_selected_one, randomize_tickers_same_dates_one,
+    replacement_universe_excluding_selected,
+};
 use io::{read_orders, read_prices, read_prices_binary, write_csv};
 use portfolio::{run_daily_portfolio, PortfolioConfig};
 use rayon::prelude::*;
@@ -78,6 +82,9 @@ struct Args {
 
     #[arg(long, default_value = "1,3,5,10")]
     top_winner_counts: String,
+
+    #[arg(long, default_value_t = false)]
+    selected_ticker_exclusion: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -167,6 +174,10 @@ fn main() -> Result<()> {
         return run_top_winner_exclusion(&args, &orders, &prices);
     }
 
+    if args.selected_ticker_exclusion {
+        return run_selected_ticker_exclusion_controls(&args, &orders, &prices);
+    }
+
     run_monte_carlo_controls(&args, &orders, &prices)
 }
 
@@ -221,6 +232,7 @@ fn run_monte_carlo_controls(
             .summary
         })
         .collect();
+
     let mut all_mc = Vec::with_capacity(same_date_summaries.len() + random_date_summaries.len());
     all_mc.extend(same_date_summaries);
     all_mc.extend(random_date_summaries);
@@ -242,13 +254,105 @@ fn run_monte_carlo_controls(
         write_csv(args.out_dir.join("monte_carlo_runs.csv"), &all_mc)?;
     }
 
+    print_portfolio_control_report(args, orders, prices, &actual.summary, &dist);
+
+    Ok(())
+}
+
+fn run_selected_ticker_exclusion_controls(
+    args: &Args,
+    orders: &[io::Order],
+    prices: &io::PriceMatrix,
+) -> Result<()> {
+    let config = build_config(args);
+
+    let actual = run_daily_portfolio(orders, prices, &config, "actual".to_string(), 0);
+
+    let selected_count = {
+        let mut selected: Vec<String> = orders.iter().map(|order| order.ticker.clone()).collect();
+        selected.sort();
+        selected.dedup();
+        selected.len()
+    };
+
+    let replacement_universe = replacement_universe_excluding_selected(orders, prices);
+
+    let same_date_summaries: Vec<PathSummary> = (0..args.runs)
+        .into_par_iter()
+        .map(|run| {
+            let randomized_orders =
+                randomize_tickers_same_dates_excluding_selected_one(orders, prices, args.seed, run);
+
+            run_daily_portfolio(
+                &randomized_orders,
+                prices,
+                &config,
+                "same_dates_random_tickers_excluding_selected".to_string(),
+                run,
+            )
+            .summary
+        })
+        .collect();
+
+    let random_date_summaries: Vec<PathSummary> = (0..args.runs)
+        .into_par_iter()
+        .map(|run| {
+            let randomized_orders =
+                randomize_tickers_and_dates_excluding_selected_one(orders, prices, args.seed, run);
+
+            run_daily_portfolio(
+                &randomized_orders,
+                prices,
+                &config,
+                "random_dates_random_tickers_excluding_selected".to_string(),
+                run,
+            )
+            .summary
+        })
+        .collect();
+
+    let mut all_mc = Vec::with_capacity(same_date_summaries.len() + random_date_summaries.len());
+    all_mc.extend(same_date_summaries);
+    all_mc.extend(random_date_summaries);
+
+    let dist = summarize_distribution(&all_mc, actual.summary.total_return);
+
+    write_csv(
+        args.out_dir.join("actual_summary.csv"),
+        &[actual.summary.clone()],
+    )?;
+    write_csv(args.out_dir.join("actual_equity.csv"), &actual.equity)?;
+    write_csv(
+        args.out_dir.join("actual_closed_trades.csv"),
+        &actual.trades,
+    )?;
+    write_csv(
+        args.out_dir.join("selected_ticker_exclusion_summary.csv"),
+        &dist,
+    )?;
+
+    if args.save_runs {
+        write_csv(
+            args.out_dir.join("selected_ticker_exclusion_runs.csv"),
+            &all_mc,
+        )?;
+    }
+
     println!();
     println!("================================================================================");
-    println!("Rust Realistic Daily Portfolio Stress Test");
+    println!("Rust Selected-Ticker Exclusion Random Controls");
     println!("================================================================================");
     println!("Orders: {}", orders.len());
     println!("Price dates: {}", prices.dates.len());
     println!("Universe tickers: {}", prices.tickers.len());
+    println!(
+        "Selected tickers excluded from random controls: {}",
+        selected_count
+    );
+    println!(
+        "Replacement universe tickers: {}",
+        replacement_universe.len()
+    );
     println!("Runs per control: {}", args.runs);
     println!("Initial capital: {:.2}", args.initial_capital);
     println!("Max gross exposure: {:.2}", args.max_gross_exposure);
@@ -271,7 +375,7 @@ fn run_monte_carlo_controls(
     );
 
     println!();
-    println!("Monte Carlo controls:");
+    println!("Selected-ticker exclusion controls:");
     for row in &dist {
         println!(
             "  {} | prob_random_beats_actual={:.4} | actual_percentile={:.4} | mc_median={:.4} | mc_p95={:.4}",
@@ -287,6 +391,58 @@ fn run_monte_carlo_controls(
     println!("Saved outputs to {:?}", args.out_dir);
 
     Ok(())
+}
+
+fn print_portfolio_control_report(
+    args: &Args,
+    orders: &[io::Order],
+    prices: &io::PriceMatrix,
+    actual_summary: &PathSummary,
+    dist: &[stats::DistributionSummary],
+) {
+    println!();
+    println!("================================================================================");
+    println!("Rust Realistic Daily Portfolio Stress Test");
+    println!("================================================================================");
+    println!("Orders: {}", orders.len());
+    println!("Price dates: {}", prices.dates.len());
+    println!("Universe tickers: {}", prices.tickers.len());
+    println!("Runs per control: {}", args.runs);
+    println!("Initial capital: {:.2}", args.initial_capital);
+    println!("Max gross exposure: {:.2}", args.max_gross_exposure);
+    println!(
+        "Target new basket exposure: {:.3}",
+        args.target_new_basket_exposure
+    );
+    println!("Max position weight: {:.3}", args.max_position_weight);
+    println!("Fee bps one-way: {:.2}", args.fee_bps);
+
+    println!();
+    println!("Actual realistic daily portfolio:");
+    println!(
+        "  final_equity={:.2}, total_return={:.4}, max_drawdown={:.4}, win_rate={:.4}, sharpe_like={:.4}",
+        actual_summary.final_equity,
+        actual_summary.total_return,
+        actual_summary.max_drawdown,
+        actual_summary.win_rate,
+        actual_summary.sharpe_like
+    );
+
+    println!();
+    println!("Monte Carlo controls:");
+    for row in dist {
+        println!(
+            "  {} | prob_random_beats_actual={:.4} | actual_percentile={:.4} | mc_median={:.4} | mc_p95={:.4}",
+            row.test,
+            row.prob_random_beats_actual,
+            row.actual_percentile,
+            row.mc_median_total_return,
+            row.mc_p95_total_return
+        );
+    }
+
+    println!();
+    println!("Saved outputs to {:?}", args.out_dir);
 }
 
 fn run_parameter_sweep(args: &Args, orders: &[io::Order], prices: &io::PriceMatrix) -> Result<()> {
