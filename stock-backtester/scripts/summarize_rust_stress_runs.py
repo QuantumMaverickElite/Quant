@@ -177,8 +177,8 @@ def build_display(scorecard: pd.DataFrame) -> pd.DataFrame:
     display = pd.DataFrame()
 
     display["Run"] = scorecard["run"]
-    display["Orders"] = scorecard["orders"].map(num)
-    display["Tickers"] = scorecard["tickers"].map(num)
+    display["Closed Trades"] = scorecard["orders"].map(num)
+    display["Closed Trade Tickers"] = scorecard["tickers"].map(num)
     display["Final Equity"] = scorecard["final_equity"].map(money)
     display["Return"] = scorecard["total_return"].map(xret)
     display["Max DD"] = scorecard["max_drawdown"].map(pct)
