@@ -10,9 +10,15 @@ pub struct Order {
     pub entry_date: String,
     pub exit_date: String,
     pub ticker: String,
+    #[serde(default = "default_direction")]
+    pub direction: String,
     pub adjusted_confidence: f64,
     #[serde(default)]
     pub peer_spread_z: f64,
+}
+
+fn default_direction() -> String {
+    "long".to_string()
 }
 
 #[derive(Debug)]
@@ -61,6 +67,7 @@ pub struct ClosedTradeRow {
     pub entry_date: String,
     pub exit_date: String,
     pub ticker: String,
+    pub direction: String,
     pub entry_price: f64,
     pub exit_price: f64,
     pub entry_value: f64,

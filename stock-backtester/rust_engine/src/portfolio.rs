@@ -8,6 +8,8 @@ struct OpenPosition {
     entry_date: String,
     exit_date: String,
     ticker: String,
+    direction: String,
+    side: f64,
     ticker_idx: usize,
     shares: f64,
     entry_price: f64,
@@ -74,9 +76,13 @@ pub fn run_daily_portfolio(
                 let exit_price = prices.price(date_idx, pos.ticker_idx);
 
                 if exit_price.is_finite() && exit_price > 0.0 {
-                    let exit_value_before_fee = pos.shares * exit_price;
-                    let exit_fee = exit_value_before_fee * fee_rate;
-                    let exit_value = exit_value_before_fee - exit_fee;
+                    let market_value = pos.shares * exit_price;
+                    let exit_fee = market_value * fee_rate;
+
+                    let realized_pnl_before_fee =
+                        pos.side * pos.shares * (exit_price - pos.entry_price);
+
+                    let exit_value = pos.entry_value + realized_pnl_before_fee - exit_fee;
 
                     cash += exit_value;
 
@@ -92,6 +98,7 @@ pub fn run_daily_portfolio(
                         entry_date: pos.entry_date,
                         exit_date: pos.exit_date,
                         ticker: pos.ticker,
+                        direction: pos.direction,
                         entry_price: pos.entry_price,
                         exit_price,
                         entry_value: pos.entry_value,
@@ -109,11 +116,13 @@ pub fn run_daily_portfolio(
 
         open_positions = remaining;
 
-        let open_value_before = mark_to_market(&open_positions, prices, date_idx);
+        let (open_value_before, gross_value_before) =
+            mark_to_market_values(&open_positions, prices, date_idx);
+
         let equity_before_entries = cash + open_value_before;
 
         if equity_before_entries > 0.0 {
-            let current_gross = open_value_before / equity_before_entries;
+            let current_gross = gross_value_before / equity_before_entries;
 
             if let Some(todays_orders) = orders_by_entry.get(date) {
                 let available_exposure = (config.max_gross_exposure - current_gross).max(0.0);
@@ -136,7 +145,7 @@ pub fn run_daily_portfolio(
             }
         }
 
-        let open_value = mark_to_market(&open_positions, prices, date_idx);
+        let (open_value, gross_value) = mark_to_market_values(&open_positions, prices, date_idx);
         let equity = cash + open_value;
 
         if equity > running_max {
@@ -156,7 +165,7 @@ pub fn run_daily_portfolio(
         };
 
         let gross_exposure = if equity > 0.0 {
-            open_value / equity
+            gross_value / equity
         } else {
             0.0
         };
@@ -245,6 +254,8 @@ fn enter_orders(
             continue;
         }
 
+        let direction = normalize_direction(&order.direction);
+        let side = side_from_direction(&direction);
         let shares = desired_value / entry_price;
 
         *cash -= total_required;
@@ -254,6 +265,8 @@ fn enter_orders(
             entry_date: date.to_string(),
             exit_date: order.exit_date.clone(),
             ticker: order.ticker.clone(),
+            direction,
+            side,
             ticker_idx,
             shares,
             entry_price,
@@ -264,18 +277,42 @@ fn enter_orders(
     }
 }
 
-fn mark_to_market(positions: &[OpenPosition], prices: &PriceMatrix, date_idx: usize) -> f64 {
-    let mut total = 0.0;
+fn normalize_direction(raw: &str) -> String {
+    match raw.trim().to_lowercase().as_str() {
+        "short" => "short".to_string(),
+        _ => "long".to_string(),
+    }
+}
+
+fn side_from_direction(direction: &str) -> f64 {
+    match direction {
+        "short" => -1.0,
+        _ => 1.0,
+    }
+}
+
+fn mark_to_market_values(
+    positions: &[OpenPosition],
+    prices: &PriceMatrix,
+    date_idx: usize,
+) -> (f64, f64) {
+    let mut net_open_value = 0.0;
+    let mut gross_value = 0.0;
 
     for pos in positions {
-        let price = prices.price(date_idx, pos.ticker_idx);
-
-        if price.is_finite() && price > 0.0 {
-            total += pos.shares * price;
+        let raw_price = prices.price(date_idx, pos.ticker_idx);
+        let price = if raw_price.is_finite() && raw_price > 0.0 {
+            raw_price
         } else {
-            total += pos.shares * pos.entry_price;
-        }
+            pos.entry_price
+        };
+
+        let market_value = pos.shares * price;
+        let unrealized_pnl = pos.side * pos.shares * (price - pos.entry_price);
+
+        net_open_value += pos.entry_value + unrealized_pnl;
+        gross_value += market_value.abs();
     }
 
-    total
+    (net_open_value, gross_value)
 }
