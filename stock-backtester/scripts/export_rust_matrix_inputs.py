@@ -37,6 +37,30 @@ def parse_args() -> argparse.Namespace:
         help="Matrix dtype. Use float32 for large universes.",
     )
 
+    parser.add_argument(
+        "--drop-bad-price-columns",
+        action="store_true",
+        help="Drop tickers with poor price history after download.",
+    )
+    parser.add_argument(
+        "--min-valid-price-coverage",
+        type=float,
+        default=0.80,
+        help="Minimum fraction of non-missing positive prices required to keep a ticker.",
+    )
+    parser.add_argument(
+        "--max-initial-missing-days",
+        type=int,
+        default=252,
+        help="Maximum allowed missing days from the beginning of the matrix.",
+    )
+    parser.add_argument(
+        "--keep-signal-tickers",
+        action="store_true",
+        default=True,
+        help="Always keep tickers needed by the signal orders if price data exists.",
+    )
+
     return parser.parse_args()
 
 
@@ -94,6 +118,67 @@ def download_adjusted_close(
     return close
 
 
+def filter_price_columns(
+    prices: pd.DataFrame,
+    *,
+    signal_tickers: set[str],
+    min_valid_price_coverage: float,
+    max_initial_missing_days: int,
+    keep_signal_tickers: bool,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    kept = []
+    rows = []
+
+    total_rows = len(prices)
+
+    for ticker in prices.columns:
+        s = prices[ticker]
+        valid = s.notna() & np.isfinite(s.to_numpy(dtype=float, copy=False)) & (s > 0)
+
+        valid_count = int(valid.sum())
+        valid_coverage = valid_count / total_rows if total_rows else 0.0
+
+        first_valid_pos = None
+        if valid_count > 0:
+            first_valid_pos = int(np.argmax(valid.to_numpy()))
+
+        initial_missing_days = (
+            total_rows if first_valid_pos is None else first_valid_pos
+        )
+
+        is_signal_ticker = str(ticker) in signal_tickers
+
+        keep = (
+            valid_coverage >= min_valid_price_coverage
+            and initial_missing_days <= max_initial_missing_days
+        )
+
+        if keep_signal_tickers and is_signal_ticker and valid_count > 0:
+            keep = True
+
+        rows.append(
+            {
+                "ticker": ticker,
+                "valid_count": valid_count,
+                "total_rows": total_rows,
+                "valid_coverage": valid_coverage,
+                "initial_missing_days": initial_missing_days,
+                "is_signal_ticker": is_signal_ticker,
+                "kept": keep,
+            }
+        )
+
+        if keep:
+            kept.append(ticker)
+
+    report = pd.DataFrame(rows).sort_values(
+        ["kept", "valid_coverage", "initial_missing_days"],
+        ascending=[True, True, False],
+    )
+
+    return prices.loc[:, kept].copy(), report
+
+
 def prepare_orders(
     signals: pd.DataFrame,
     prices: pd.DataFrame,
@@ -105,11 +190,17 @@ def prepare_orders(
 ) -> pd.DataFrame:
     frame = signals.copy()
     frame["date"] = pd.to_datetime(frame["date"])
+    frame["ticker"] = (
+        frame["ticker"].astype(str).str.upper().str.replace(".", "-", regex=False)
+    )
 
     frame = frame[
         (frame["horizon"] == signal_horizon)
         & (frame["adjusted_confidence"] >= min_adjusted_confidence)
     ].copy()
+
+    available_tickers = set(map(str, prices.columns))
+    frame = frame[frame["ticker"].isin(available_tickers)].copy()
 
     frame = frame.sort_values(
         ["date", "adjusted_confidence"],
@@ -173,11 +264,15 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     signals = pd.read_parquet(args.signals)
+    signals["ticker"] = (
+        signals["ticker"].astype(str).str.upper().str.replace(".", "-", regex=False)
+    )
 
     universe = load_universe(args.universe_file)
 
-    for ticker in sorted(signals["ticker"].unique()):
-        ticker = str(ticker).upper().replace(".", "-")
+    signal_tickers = set(sorted(signals["ticker"].unique()))
+
+    for ticker in sorted(signal_tickers):
         if ticker not in universe:
             universe.append(ticker)
 
@@ -186,6 +281,29 @@ def main() -> None:
         start=args.start,
         end=args.end,
     )
+
+    prices.columns = [str(c).upper().replace(".", "-") for c in prices.columns]
+
+    prices = prices.loc[:, ~pd.Index(prices.columns).duplicated()].copy()
+
+    filter_report = None
+
+    if args.drop_bad_price_columns:
+        before_cols = len(prices.columns)
+
+        prices, filter_report = filter_price_columns(
+            prices,
+            signal_tickers=signal_tickers,
+            min_valid_price_coverage=args.min_valid_price_coverage,
+            max_initial_missing_days=args.max_initial_missing_days,
+            keep_signal_tickers=args.keep_signal_tickers,
+        )
+
+        after_cols = len(prices.columns)
+        print(
+            f"Filtered price columns: kept {after_cols:,} of {before_cols:,} "
+            f"tickers using min_valid_price_coverage={args.min_valid_price_coverage:.2f}"
+        )
 
     orders = prepare_orders(
         signals,
@@ -203,6 +321,7 @@ def main() -> None:
     prices_bin_path = out_dir / "prices.bin"
     meta_path = out_dir / "prices_meta.json"
     orders_path = out_dir / "orders.csv"
+    filter_report_path = out_dir / "price_filter_report.csv"
 
     matrix.tofile(prices_bin_path)
 
@@ -214,18 +333,34 @@ def main() -> None:
         "dates": [pd.Timestamp(d).strftime("%Y-%m-%d") for d in prices.index],
         "tickers": [str(c) for c in prices.columns],
         "binary_file": prices_bin_path.name,
+        "drop_bad_price_columns": bool(args.drop_bad_price_columns),
+        "min_valid_price_coverage": float(args.min_valid_price_coverage),
+        "max_initial_missing_days": int(args.max_initial_missing_days),
     }
 
     meta_path.write_text(json.dumps(meta))
 
     orders.to_csv(orders_path, index=False)
 
+    if filter_report is not None:
+        filter_report.to_csv(filter_report_path, index=False)
+
     print(f"Saved orders: {orders_path} ({len(orders):,} rows)")
     print(f"Saved prices binary: {prices_bin_path}")
     print(f"Saved prices metadata: {meta_path}")
+
+    if filter_report is not None:
+        print(f"Saved price filter report: {filter_report_path}")
+
     print(f"Matrix shape: {matrix.shape[0]:,} rows × {matrix.shape[1]:,} tickers")
     print(f"Matrix dtype: {args.dtype}")
     print(f"Approx binary size: {prices_bin_path.stat().st_size / 1024 / 1024:.2f} MB")
+
+    if len(orders) == 0:
+        print()
+        print(
+            "WARNING: No orders survived filtering. Check signal horizon, confidence, dates, and price coverage."
+        )
 
 
 if __name__ == "__main__":
