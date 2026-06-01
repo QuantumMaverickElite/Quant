@@ -177,12 +177,7 @@ pub fn run_daily_portfolio(
 
     let daily_returns: Vec<f64> = equity_rows.iter().map(|r| r.daily_return).collect();
 
-    let summary = summarize_daily_returns(
-        test_name,
-        run,
-        &daily_returns,
-        config.initial_capital,
-    );
+    let summary = summarize_daily_returns(test_name, run, &daily_returns, config.initial_capital);
 
     PortfolioResult {
         summary,
@@ -203,10 +198,7 @@ fn enter_orders(
     cash: &mut f64,
     open_positions: &mut Vec<OpenPosition>,
 ) {
-    let raw_sum: f64 = orders
-        .iter()
-        .map(|o| o.adjusted_confidence.max(0.0))
-        .sum();
+    let raw_sum: f64 = orders.iter().map(|o| o.adjusted_confidence.max(0.0)).sum();
 
     if raw_sum <= 0.0 {
         return;
