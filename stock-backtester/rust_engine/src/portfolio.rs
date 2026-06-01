@@ -60,7 +60,7 @@ pub fn run_daily_portfolio(
     let mut cash = config.initial_capital;
     let mut open_positions: Vec<OpenPosition> = Vec::new();
 
-    let mut equity_rows = Vec::with_capacity(prices.dates.len());
+    let mut equity_rows = Vec::with_capacity(prices.rows);
     let mut trade_rows = Vec::new();
 
     let mut prev_equity = config.initial_capital;
@@ -71,7 +71,7 @@ pub fn run_daily_portfolio(
 
         for pos in open_positions.drain(..) {
             if pos.exit_date == *date {
-                let exit_price = prices.prices[date_idx][pos.ticker_idx];
+                let exit_price = prices.price(date_idx, pos.ticker_idx);
 
                 if exit_price.is_finite() && exit_price > 0.0 {
                     let exit_value_before_fee = pos.shares * exit_price;
@@ -233,7 +233,7 @@ fn enter_orders(
             continue;
         };
 
-        let entry_price = prices.prices[date_idx][ticker_idx];
+        let entry_price = prices.price(date_idx, ticker_idx);
 
         if !entry_price.is_finite() || entry_price <= 0.0 {
             continue;
@@ -276,7 +276,7 @@ fn mark_to_market(positions: &[OpenPosition], prices: &PriceMatrix, date_idx: us
     let mut total = 0.0;
 
     for pos in positions {
-        let price = prices.prices[date_idx][pos.ticker_idx];
+        let price = prices.price(date_idx, pos.ticker_idx);
 
         if price.is_finite() && price > 0.0 {
             total += pos.shares * price;

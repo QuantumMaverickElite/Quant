@@ -19,9 +19,18 @@ pub struct Order {
 pub struct PriceMatrix {
     pub dates: Vec<String>,
     pub tickers: Vec<String>,
-    pub prices: Vec<Vec<f64>>,
+    pub prices: Vec<f64>,
+    pub rows: usize,
+    pub cols: usize,
     pub date_to_idx: HashMap<String, usize>,
     pub ticker_to_idx: HashMap<String, usize>,
+}
+
+impl PriceMatrix {
+    #[inline]
+    pub fn price(&self, date_idx: usize, ticker_idx: usize) -> f64 {
+        self.prices[date_idx * self.cols + ticker_idx]
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -90,6 +99,7 @@ pub fn read_prices(path: &PathBuf) -> Result<PriceMatrix> {
     }
 
     let tickers: Vec<String> = headers.iter().skip(1).map(|s| s.to_string()).collect();
+    let cols = tickers.len();
 
     let mut dates = Vec::new();
     let mut prices = Vec::new();
@@ -100,22 +110,20 @@ pub fn read_prices(path: &PathBuf) -> Result<PriceMatrix> {
         let date = record.get(0).context("Missing date")?.to_string();
         dates.push(date);
 
-        let mut vals = Vec::with_capacity(tickers.len());
-
         for i in 1..record.len() {
             let raw = record.get(i).unwrap_or("");
             let value = raw.parse::<f64>().unwrap_or(f64::NAN);
-            vals.push(value);
+            prices.push(value);
         }
 
-        while vals.len() < tickers.len() {
-            vals.push(f64::NAN);
+        while prices.len() < dates.len() * cols {
+            prices.push(f64::NAN);
         }
-
-        prices.push(vals);
     }
 
-    build_price_matrix(dates, tickers, prices)
+    let rows = dates.len();
+
+    build_price_matrix(dates, tickers, prices, rows, cols)
 }
 
 pub fn read_prices_binary(meta_path: &PathBuf) -> Result<PriceMatrix> {
@@ -163,17 +171,17 @@ pub fn read_prices_binary(meta_path: &PathBuf) -> Result<PriceMatrix> {
         );
     }
 
-    let mut flat = Vec::with_capacity(meta.rows * meta.cols);
+    let mut prices = Vec::with_capacity(meta.rows * meta.cols);
 
     match meta.dtype.as_str() {
         "float32" => {
             for chunk in bytes.chunks_exact(4) {
-                flat.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]) as f64);
+                prices.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]) as f64);
             }
         }
         "float64" => {
             for chunk in bytes.chunks_exact(8) {
-                flat.push(f64::from_le_bytes([
+                prices.push(f64::from_le_bytes([
                     chunk[0], chunk[1], chunk[2], chunk[3],
                     chunk[4], chunk[5], chunk[6], chunk[7],
                 ]));
@@ -182,22 +190,32 @@ pub fn read_prices_binary(meta_path: &PathBuf) -> Result<PriceMatrix> {
         _ => unreachable!(),
     }
 
-    let mut prices = Vec::with_capacity(meta.rows);
-
-    for row_idx in 0..meta.rows {
-        let start = row_idx * meta.cols;
-        let end = start + meta.cols;
-        prices.push(flat[start..end].to_vec());
-    }
-
-    build_price_matrix(meta.dates, meta.tickers, prices)
+    build_price_matrix(meta.dates, meta.tickers, prices, meta.rows, meta.cols)
 }
 
 fn build_price_matrix(
     dates: Vec<String>,
     tickers: Vec<String>,
-    prices: Vec<Vec<f64>>,
+    prices: Vec<f64>,
+    rows: usize,
+    cols: usize,
 ) -> Result<PriceMatrix> {
+    if dates.len() != rows {
+        anyhow::bail!("dates len {} does not match rows {}", dates.len(), rows);
+    }
+
+    if tickers.len() != cols {
+        anyhow::bail!("tickers len {} does not match cols {}", tickers.len(), cols);
+    }
+
+    if prices.len() != rows * cols {
+        anyhow::bail!(
+            "prices len {} does not match rows*cols {}",
+            prices.len(),
+            rows * cols
+        );
+    }
+
     let ticker_to_idx: HashMap<String, usize> = tickers
         .iter()
         .enumerate()
@@ -214,6 +232,8 @@ fn build_price_matrix(
         dates,
         tickers,
         prices,
+        rows,
+        cols,
         date_to_idx,
         ticker_to_idx,
     })
