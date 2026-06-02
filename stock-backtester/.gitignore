@@ -50,3 +50,20 @@ requirements.lock.txt
 
 # Rust build artifacts
 rust_engine/target/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Rust build output
+rust_engine/target/
+
+# Local generated visual frames and reports
+outputs/reports/plots/market_graph_fabric_*/
+outputs/reports/plots/market_fabric_vispy_*/
+outputs/reports/plots/market_manifold_snapshots/
+
+# Local smoke/temporary outputs
+outputs/reports/plots/*smoke*/
+outputs/reports/plots/*test*/
