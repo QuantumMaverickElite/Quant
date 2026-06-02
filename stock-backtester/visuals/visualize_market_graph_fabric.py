@@ -46,6 +46,8 @@ def parse_args() -> argparse.Namespace:
         help="Convenience preset for visual style.",
     )
     p.add_argument("--ticker-labels", action="store_true")
+    p.add_argument("--cluster-labels", action="store_true")
+    p.add_argument("--max-cluster-labels", type=int, default=16)
     p.add_argument("--fps", type=int, default=4)
     p.add_argument("--speed", type=int, default=1)
     p.add_argument("--max-labels", type=int, default=10)
@@ -247,16 +249,25 @@ class MarketGraphFabric:
         self.axis_nodes: list = []
         self.hud_nodes: list[Text] = []
         self.label_nodes: list[Text] = []
+        self.cluster_label_nodes: list[Text] = []
 
         self._create_axes(first)
         self._create_hud()
         if args.ticker_labels:
-            max_labels = min(args.max_labels, 6 if self.safe_mode else args.max_labels)
+            max_labels = min(args.max_labels, 12 if self.safe_mode else args.max_labels)
             for _ in range(max_labels):
                 t = Text("", color=(0.0, 0.94, 1.0, 1.0), font_size=10, bold=True)
                 self.view.add(t)
                 self.label_nodes.append(t)
 
+        if args.cluster_labels:
+            max_clusters = min(args.max_cluster_labels, 12 if self.safe_mode else args.max_cluster_labels)
+            for _ in range(max_clusters):
+                t = Text("", color=(1.0, 0.86, 0.18, 0.95), font_size=11, bold=True)
+                self.view.add(t)
+                self.cluster_label_nodes.append(t)
+
+        # CLUSTER_LABEL_PATCH_DONE
         self._set_axes_visible(self.axes_visible)
         self._set_hud_visible(self.hud_visible)
         self._update(first)
@@ -275,7 +286,7 @@ class MarketGraphFabric:
         print(f" z/color      : {self.params.get('z_mode')} / {self.params.get('color_mode')}")
         print(f" fps/speed    : {self.fps} / {self.speed}")
         print(f" safe mode    : {self.safe_mode}")
-        print(" controls     : Space pause | +/- speed | E edges | H HUD | T axes | 1/2/3 camera | V record | Q quit")
+        print(" controls     : Space pause | +/- speed | E edges | H HUD | T axes | C clusters | 1/2/3 camera | V record | Q quit")
         print("─" * 78 + "\n")
 
     def _load(self, idx: int) -> dict:
@@ -449,6 +460,7 @@ class MarketGraphFabric:
         )
 
         self._update_labels(frame, pos)
+        self._update_cluster_labels(frame, pos)
         self._update_hud(frame)
 
     def _create_axes(self, frame: dict) -> None:
@@ -504,6 +516,49 @@ class MarketGraphFabric:
         for n in self.hud_nodes:
             n.visible = visible
 
+    def _update_cluster_labels(self, frame: dict, pos: np.ndarray) -> None:
+        if not self.cluster_label_nodes:
+            return
+
+        if "cluster_id" not in frame:
+            for node in self.cluster_label_nodes:
+                node.text = ""
+            return
+
+        cluster_id = np.asarray(frame["cluster_id"], dtype=np.int32)
+        valid = cluster_id >= 0
+
+        if not valid.any():
+            for node in self.cluster_label_nodes:
+                node.text = ""
+            return
+
+        z_lift = 0.055
+        clusters = []
+        for cid in sorted(np.unique(cluster_id[valid]).tolist()):
+            mask = cluster_id == cid
+            count = int(mask.sum())
+            if count < 5:
+                continue
+
+            center = np.nanmean(pos[mask], axis=0)
+            # Use top z node to lift label above the cluster.
+            top_z = float(np.nanpercentile(pos[mask, 2], 90))
+            center[2] = top_z + z_lift
+            clusters.append((count, int(cid), center))
+
+        clusters.sort(reverse=True, key=lambda x: x[0])
+
+        for k, node in enumerate(self.cluster_label_nodes):
+            if k >= len(clusters):
+                node.text = ""
+                continue
+
+            count, cid, center = clusters[k]
+            node.text = f"C{cid} ({count})"
+            node.pos = tuple(center.astype(np.float32))
+            node.color = (1.0, 0.86, 0.18, 0.95)
+
     def _update_hud(self, frame: dict) -> None:
         tickers = str_array(frame["tickers"])
         is_long = frame["is_long"].astype(bool)
@@ -548,23 +603,57 @@ class MarketGraphFabric:
         if not self.label_nodes:
             return
 
-        tickers = str_array(frame["tickers"])
+        tickers = np.array([str(t) for t in frame["tickers"].tolist()])
+        conf = frame["confidence"].astype(np.float32) if "confidence" in frame else np.zeros(len(tickers), dtype=np.float32)
         is_long = frame["is_long"].astype(bool)
         is_short = frame["is_short"].astype(bool)
-        conf = frame["confidence"].astype(np.float32)
 
-        idx = np.where(is_long | is_short)[0]
-        if len(idx):
-            idx = idx[np.argsort(conf[idx])[::-1]]
+        long_idx = np.where(is_long)[0]
+        short_idx = np.where(is_short)[0]
+
+        if len(long_idx):
+            long_idx = long_idx[np.argsort(conf[long_idx])[::-1]]
+        if len(short_idx):
+            short_idx = short_idx[np.argsort(conf[short_idx])[::-1]]
+
+        # Balanced long/short display:
+        # In combined mode, do not let one side consume all label slots.
+        max_total = len(self.label_nodes)
+        half = max(1, max_total // 2)
+
+        order: list[tuple[int, str]] = []
+        order.extend([(int(i), "L") for i in long_idx[:half]])
+        order.extend([(int(i), "S") for i in short_idx[:half]])
+
+        # Fill any leftover slots with strongest remaining signals.
+        used = {i for i, _side in order}
+        both = np.concatenate([long_idx, short_idx]) if len(long_idx) or len(short_idx) else np.array([], dtype=int)
+        remaining = np.array([int(i) for i in both if int(i) not in used], dtype=int)
+
+        if len(remaining):
+            remaining = remaining[np.argsort(conf[remaining])[::-1]]
+            for i in remaining:
+                if len(order) >= max_total:
+                    break
+                order.append((int(i), "L" if is_long[int(i)] else "S"))
+
+        z_span = float(np.nanmax(pos[:, 2]) - np.nanmin(pos[:, 2])) if np.isfinite(pos[:, 2]).any() else 1.0
+        dz = max(0.025, 0.045 * z_span)
+
         for k, node in enumerate(self.label_nodes):
-            if k >= len(idx):
+            if k >= len(order):
                 node.text = ""
                 continue
-            i = int(idx[k])
-            node.text = ("L:" if is_long[i] else "S:") + tickers[i]
-            node.pos = tuple(pos[i] + np.array([0, 0, 0.035], dtype=np.float32))
-            node.color = tuple(LONG if is_long[i] else SHORT)
 
+            i, side = order[k]
+            node.text = f"{side}:{tickers[i]}"
+            node.pos = (float(pos[i, 0]), float(pos[i, 1]), float(pos[i, 2] + dz))
+
+            if side == "L":
+                node.color = (0.0, 0.94, 1.0, 1.0)
+            else:
+                # Magenta makes shorts visible against orange/red entropy heat.
+                node.color = (1.0, 0.18, 0.95, 1.0)
     def _step(self, event) -> None:
         if not self.playing:
             return
@@ -637,6 +726,11 @@ class MarketGraphFabric:
 
         elif key == "H":
             self._set_hud_visible(not self.hud_visible)
+            self.canvas.update()
+
+        elif key == "C":
+            for node in self.cluster_label_nodes:
+                node.visible = not node.visible
             self.canvas.update()
 
         elif key == "T":
