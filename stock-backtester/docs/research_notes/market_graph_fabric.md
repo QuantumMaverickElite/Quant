@@ -26,19 +26,16 @@ The final working system uses:
 3. Added corr-pca-fast layout to avoid slow O(n^3)-style scaling from classical MDS.
 4. Added cluster-ring layout.
 5. Added KMeans cluster-ring support through scikit-learn.
-6. Added scikit-learn to requirements.txt.
-7. Added long/short combined signal support.
-8. Added balanced long/short ticker labels so combined mode shows both sides.
-9. Changed short labels to magenta so they stand out against entropy heat.
-10. Added cluster labels with C toggle.
-11. Added frame_summary.csv.
-12. Added cluster_summary.csv.
-13. Added duplicate snap-date skipping for long historical runs.
-14. Added CUDA/CuPy smoke tests.
-15. Confirmed CUDA works, but CPU is faster for small graph builds.
-16. Archived older visual experiment scripts.
-17. Documented the visual workflow in visuals/README.md.
-18. Cleaned duplicate generated visual output folders.
+6. Added long/short combined signal support.
+7. Added balanced long/short ticker labels so combined mode shows both sides.
+8. Changed short labels to magenta so they stand out against entropy heat.
+9. Added cluster labels with C toggle.
+10. Added frame_summary.csv.
+11. Added cluster_summary.csv.
+12. Added duplicate snap-date skipping for long historical runs.
+13. Added CUDA/CuPy smoke tests.
+14. Confirmed CUDA works, but CPU is faster for small graph builds.
+15. Documented the visual workflow in visuals/README.md.
 
 ## Final preserved visual run
 
@@ -154,13 +151,13 @@ Future split:
 
 ## What to do next
 
-First priority is not adding random new features. First priority is cleanup and compact outputs.
+First priority is cleanup and compact outputs.
 
-Next coding steps:
+Next steps:
 
 1. Add visuals/summarize_market_fabric_clusters.py.
 2. Generate cluster_identity_summary.csv from cluster_summary.csv.
-3. Add human-readable cluster names.
+3. Add readable cluster names.
 4. Patch visualizer so cluster labels can display names.
 5. Split stress into stress_ex_ante and stress_realized.
 6. Improve MP4/export workflow.
