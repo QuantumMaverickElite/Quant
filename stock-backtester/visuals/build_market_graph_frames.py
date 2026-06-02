@@ -622,6 +622,7 @@ def main() -> None:
     prev_corr: np.ndarray | None = None
 
     frames: list[dict] = []
+    frame_summaries: list[dict] = []
     all_x: list[float] = []
     all_y: list[float] = []
     all_z: list[float] = []
@@ -630,6 +631,7 @@ def main() -> None:
 
     t0 = time.time()
     frame_id = 0
+    seen_snap_dates: set[pd.Timestamp] = set()
     print(f"\nDate range: {args.start_date} → {args.end_date} ({len(requested_dates)} candidate frames)")
 
     for requested_date in requested_dates:
@@ -637,6 +639,11 @@ def main() -> None:
         if snap_date is None:
             print(f"  [skip] {requested_date.date()} no prior signal date")
             continue
+
+        if snap_date in seen_snap_dates:
+            print(f"  [skip] {requested_date.date()} duplicate snap_date {snap_date.date()}")
+            continue
+        seen_snap_dates.add(snap_date)
 
         ret_date = nearest_prior_date(pd.Series(all_dates), snap_date)
         if ret_date is None:
@@ -805,6 +812,23 @@ def main() -> None:
             "short": int(metrics["is_short"].sum()),
         })
 
+        frame_summaries.append({
+            "frame": frame_id,
+            "date": str(snap_date.date()),
+            "return_date": str(ret_date.date()),
+            "nodes": len(tickers),
+            "edges": int(len(edge_src)),
+            "long": int(metrics["is_long"].sum()),
+            "short": int(metrics["is_short"].sum()),
+            "avg_edge_corr": float(np.nanmean(edge_corr)) if len(edge_corr) else 0.0,
+            "avg_abs_edge_corr_delta": float(np.nanmean(np.abs(edge_corr_delta))) if len(edge_corr_delta) else 0.0,
+            "avg_edge_corr_delta": float(np.nanmean(edge_corr_delta)) if len(edge_corr_delta) else 0.0,
+            "stress_mean": float(np.nanmean(metrics.get("stress", np.array([0.0])))),
+            "stress_p95": float(np.nanpercentile(metrics.get("stress", np.array([0.0])), 95)),
+            "entropy_z_mean": float(np.nanmean(metrics.get("entropy_z", np.array([0.0])))),
+            "realized_vol_z_mean": float(np.nanmean(metrics.get("realized_vol_z", np.array([0.0])))),
+        })
+
         all_x.extend(coords[:, 0].astype(float).tolist())
         all_y.extend(coords[:, 1].astype(float).tolist())
         all_z.extend(metrics["z"][np.isfinite(metrics["z"])].astype(float).tolist())
@@ -852,9 +876,11 @@ def main() -> None:
         },
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str))
+    pd.DataFrame(frame_summaries).to_csv(out_dir / "frame_summary.csv", index=False)
 
     print(f"\nDone in {time.time() - t0:.1f}s")
     print(f"✓ manifest: {out_dir / 'manifest.json'}")
+    print(f"✓ summary:  {out_dir / 'frame_summary.csv'}")
     print(f"✓ frames:   {frames_dir}")
     print(f"✓ built:    {len(frames)} frames")
     print(f"  x_lim:    [{x_min:.4f}, {x_max:.4f}]")
