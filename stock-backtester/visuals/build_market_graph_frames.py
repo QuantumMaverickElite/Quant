@@ -45,6 +45,14 @@ except Exception:
     HAS_SCIPY_EIGSH = False
 
 
+try:
+    from sklearn.cluster import KMeans  # type: ignore
+    HAS_SKLEARN_CLUSTER = True
+except Exception:
+    KMeans = None
+    HAS_SKLEARN_CLUSTER = False
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Build whole-market rolling-correlation graph/fabric frames.",
@@ -79,9 +87,17 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--layout-engine",
-        choices=["mds", "corr-pca-fast"],
+        choices=["mds", "corr-pca-fast", "cluster-ring"],
         default="corr-pca-fast",
-        help="mds is prettier but O(n^3); corr-pca-fast is better for large market graphs.",
+        help="mds is prettier but O(n^3); corr-pca-fast is scalable; cluster-ring creates sector-like continents.",
+    )
+
+    p.add_argument("--cluster-count", type=int, default=12)
+    p.add_argument(
+        "--cluster-anchor-strength",
+        type=float,
+        default=0.65,
+        help="How strongly cluster-ring pulls stocks into cluster continents.",
     )
 
     p.add_argument(
@@ -254,6 +270,87 @@ def corr_pca_fast_layout(corr: np.ndarray) -> np.ndarray:
         coords = coords / scale * 0.45
 
     return coords.astype(np.float32)
+
+
+
+def cluster_ring_layout(
+    corr: np.ndarray,
+    cluster_count: int = 12,
+    anchor_strength: float = 0.65,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Cluster-aware market fabric layout.
+
+    This creates sector-like continents without needing official sector data:
+      1. compute fast correlation PCA coords
+      2. cluster stocks in that geometry
+      3. place clusters around a ring
+      4. keep local within-cluster geometry
+
+    Returns:
+      coords: (n, 2)
+      cluster_id: (n,)
+    """
+    base = corr_pca_fast_layout(corr)
+    n = base.shape[0]
+
+    k = int(max(2, min(cluster_count, max(2, n // 20))))
+
+    if HAS_SKLEARN_CLUSTER and KMeans is not None and n >= k:
+        try:
+            labels = KMeans(n_clusters=k, n_init=5, random_state=42).fit_predict(base)
+        except Exception:
+            labels = np.arange(n) % k
+    else:
+        # Fallback: sort by polar angle and split into k groups.
+        ang = np.arctan2(base[:, 1], base[:, 0])
+        order = np.argsort(ang)
+        labels = np.zeros(n, dtype=np.int32)
+        chunks = np.array_split(order, k)
+        for cid, idx in enumerate(chunks):
+            labels[idx] = cid
+
+    labels = labels.astype(np.int32)
+
+    # Order clusters by centroid angle for stable ring placement.
+    centroids = np.zeros((k, 2), dtype=np.float32)
+    sizes = np.zeros(k, dtype=np.int32)
+    for cid in range(k):
+        mask = labels == cid
+        sizes[cid] = int(mask.sum())
+        if mask.any():
+            centroids[cid] = base[mask].mean(axis=0)
+
+    order = np.argsort(np.arctan2(centroids[:, 1], centroids[:, 0]))
+    rank = {int(cid): i for i, cid in enumerate(order)}
+
+    out = np.zeros_like(base, dtype=np.float32)
+    radius = 0.55
+    local_scale = 0.28
+
+    for cid in range(k):
+        mask = labels == cid
+        if not mask.any():
+            continue
+
+        r = rank[int(cid)]
+        theta = 2.0 * np.pi * r / k
+        anchor = np.array([np.cos(theta), np.sin(theta)], dtype=np.float32) * radius
+
+        local = base[mask] - base[mask].mean(axis=0, keepdims=True)
+        local_norm = np.nanpercentile(np.abs(local), 95)
+        if np.isfinite(local_norm) and local_norm > 1e-8:
+            local = local / local_norm * local_scale
+
+        target = anchor + local
+        out[mask] = (1.0 - anchor_strength) * base[mask] + anchor_strength * target
+
+    out -= out.mean(axis=0, keepdims=True)
+    scale = np.nanpercentile(np.abs(out), 99)
+    if np.isfinite(scale) and scale > 1e-8:
+        out = out / scale * 0.65
+
+    return out.astype(np.float32), labels.astype(np.int32)
 
 
 def procrustes_align(coords: np.ndarray, prev: np.ndarray | None) -> np.ndarray:
@@ -588,6 +685,71 @@ def pct_limits(vals: list[float], lo=1, hi=99) -> tuple[float, float]:
     return float(a), float(b)
 
 
+def summarize_clusters(
+    *,
+    frame_id: int,
+    snap_date,
+    ret_date,
+    tickers: list[str],
+    cluster_id: np.ndarray,
+    metrics: dict[str, np.ndarray],
+    max_names: int = 8,
+) -> list[dict]:
+    rows: list[dict] = []
+
+    if cluster_id is None or len(cluster_id) == 0:
+        return rows
+
+    tickers_arr = np.array(tickers, dtype=object)
+    conf = metrics.get("confidence", np.zeros(len(tickers), dtype=np.float32))
+    stress = metrics.get("stress", np.zeros(len(tickers), dtype=np.float32))
+    entropy_z = metrics.get("entropy_z", np.zeros(len(tickers), dtype=np.float32))
+    realized_vol_z = metrics.get("realized_vol_z", np.zeros(len(tickers), dtype=np.float32))
+    forward_return = metrics.get("forward_return", np.zeros(len(tickers), dtype=np.float32))
+    is_long = metrics.get("is_long", np.zeros(len(tickers), dtype=bool)).astype(bool)
+    is_short = metrics.get("is_short", np.zeros(len(tickers), dtype=bool)).astype(bool)
+
+    valid_clusters = sorted(int(c) for c in np.unique(cluster_id) if int(c) >= 0)
+
+    for cid in valid_clusters:
+        mask = cluster_id == cid
+        idx = np.where(mask)[0]
+
+        if len(idx) == 0:
+            continue
+
+        # Top tickers by stress are usually more informative than arbitrary order.
+        top_stress_idx = idx[np.argsort(stress[idx])[::-1]][:max_names]
+        top_longs_idx = idx[is_long[idx]]
+        top_shorts_idx = idx[is_short[idx]]
+
+        if len(top_longs_idx):
+            top_longs_idx = top_longs_idx[np.argsort(conf[top_longs_idx])[::-1]][:max_names]
+        if len(top_shorts_idx):
+            top_shorts_idx = top_shorts_idx[np.argsort(conf[top_shorts_idx])[::-1]][:max_names]
+
+        rows.append({
+            "frame": frame_id,
+            "date": str(snap_date.date()),
+            "return_date": str(ret_date.date()),
+            "cluster_id": cid,
+            "node_count": int(len(idx)),
+            "long_count": int(is_long[idx].sum()),
+            "short_count": int(is_short[idx].sum()),
+            "top_tickers_by_stress": "|".join(tickers_arr[top_stress_idx].astype(str).tolist()),
+            "top_longs": "|".join(tickers_arr[top_longs_idx].astype(str).tolist()) if len(top_longs_idx) else "",
+            "top_shorts": "|".join(tickers_arr[top_shorts_idx].astype(str).tolist()) if len(top_shorts_idx) else "",
+            "stress_mean": float(np.nanmean(stress[idx])),
+            "stress_p95": float(np.nanpercentile(stress[idx], 95)),
+            "entropy_z_mean": float(np.nanmean(entropy_z[idx])),
+            "realized_vol_z_mean": float(np.nanmean(realized_vol_z[idx])),
+            "forward_return_mean": float(np.nanmean(forward_return[idx])),
+        })
+
+    return rows
+
+
+
 def main() -> None:
     args = parse_args()
     out_dir = Path(args.out_dir)
@@ -605,6 +767,7 @@ def main() -> None:
     print(f"  max_edges:      {args.max_edges}")
     print(f"  layout_engine:  {args.layout_engine}")
     print(f"  scipy eigsh:    {HAS_SCIPY_EIGSH}")
+    print(f"  sklearn kmeans: {HAS_SKLEARN_CLUSTER}")
 
     returns_meta = Path(args.returns_meta)
     returns, meta = load_returns(returns_meta)
@@ -623,6 +786,7 @@ def main() -> None:
 
     frames: list[dict] = []
     frame_summaries: list[dict] = []
+    cluster_summaries: list[dict] = []
     all_x: list[float] = []
     all_y: list[float] = []
     all_z: list[float] = []
@@ -696,8 +860,16 @@ def main() -> None:
 
         corr = corrcoef_fast(window, use_cupy=args.use_cupy)
 
+        cluster_id = np.full(len(tickers), -1, dtype=np.int32)
+
         if args.layout_engine == "mds":
             coords = classical_mds(corr)
+        elif args.layout_engine == "cluster-ring":
+            coords, cluster_id = cluster_ring_layout(
+                corr,
+                cluster_count=args.cluster_count,
+                anchor_strength=args.cluster_anchor_strength,
+            )
         else:
             coords = corr_pca_fast_layout(corr)
 
@@ -778,6 +950,7 @@ def main() -> None:
             return_date=np.array(str(ret_date.date())),
             tickers=np.array(tickers, dtype=object),
             node_idx=node_idx.astype(np.int32),
+            cluster_id=cluster_id.astype(np.int32),
             x=coords[:, 0].astype(np.float32),
             y=coords[:, 1].astype(np.float32),
             z=metrics["z"].astype(np.float32),
@@ -829,6 +1002,17 @@ def main() -> None:
             "realized_vol_z_mean": float(np.nanmean(metrics.get("realized_vol_z", np.array([0.0])))),
         })
 
+        cluster_summaries.extend(
+            summarize_clusters(
+                frame_id=frame_id,
+                snap_date=snap_date,
+                ret_date=ret_date,
+                tickers=tickers,
+                cluster_id=cluster_id,
+                metrics=metrics,
+            )
+        )
+
         all_x.extend(coords[:, 0].astype(float).tolist())
         all_y.extend(coords[:, 1].astype(float).tolist())
         all_z.extend(metrics["z"][np.isfinite(metrics["z"])].astype(float).tolist())
@@ -877,10 +1061,12 @@ def main() -> None:
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str))
     pd.DataFrame(frame_summaries).to_csv(out_dir / "frame_summary.csv", index=False)
+    pd.DataFrame(cluster_summaries).to_csv(out_dir / "cluster_summary.csv", index=False)
 
     print(f"\nDone in {time.time() - t0:.1f}s")
     print(f"✓ manifest: {out_dir / 'manifest.json'}")
     print(f"✓ summary:  {out_dir / 'frame_summary.csv'}")
+    print(f"✓ clusters: {out_dir / 'cluster_summary.csv'}")
     print(f"✓ frames:   {frames_dir}")
     print(f"✓ built:    {len(frames)} frames")
     print(f"  x_lim:    [{x_min:.4f}, {x_max:.4f}]")
