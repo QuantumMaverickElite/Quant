@@ -345,7 +345,6 @@ def monte_carlo_same_dates_random_tickers(
     rng = np.random.default_rng(seed)
 
     universe = list(fwd_returns.columns)
-    ticker_to_idx = {ticker: i for i, ticker in enumerate(universe)}
 
     signal_dates = []
     counts = []

@@ -268,7 +268,6 @@ def build_full_surface(t, z_scaled, v_scaled, res_y=SURFACE_RES_Y):
 
     X resolution equals len(t), so each time column corresponds to one trading bar.
     """
-    res_x = len(t)
 
     ti = np.asarray(t, dtype=np.float32)
     zi = np.linspace(-3, 3, res_y, dtype=np.float32) * REGIME_AXIS_SCALE
@@ -595,7 +594,7 @@ class GarchFieldVisualizer:
         print(f"  Z-score               : {self.z_raw[-1]:+.2f} sigma")
         print(f"  Regime                : {regime}")
         print(
-            f"  Controls              : Space pause/play | +/- speed | V record | Shift+S screenshot"
+            "  Controls              : Space pause/play | +/- speed | V record | Shift+S screenshot"
         )
         print(f"{'─' * 72}\n")
 

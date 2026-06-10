@@ -247,9 +247,7 @@ def assign_target_weights(
         valid_mask = pd.Series(True, index=out.index)
 
     allowed_mask = (
-        valid_mask
-        & (out["allow_new_equity_positions"] == True)
-        & (out["adjusted_score"] > 0)
+        valid_mask & out["allow_new_equity_positions"] & (out["adjusted_score"] > 0)
     )
 
     allowed = out.loc[allowed_mask].copy()

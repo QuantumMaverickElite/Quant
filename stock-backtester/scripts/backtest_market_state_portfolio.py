@@ -244,7 +244,7 @@ def assign_weights(
 
     df["target_weight"] = 0.0
 
-    allowed = (df["allow_new_equity_positions"] == True) & (df["adjusted_score"] > 0)
+    allowed = df["allow_new_equity_positions"] & (df["adjusted_score"] > 0)
 
     allowed_df = df.loc[allowed].copy()
 

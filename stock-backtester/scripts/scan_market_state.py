@@ -194,11 +194,6 @@ def _yn(value) -> str:
 def build_terminal_summary(result: pd.DataFrame) -> pd.DataFrame:
     summary = result.copy()
 
-    if "error" in summary.columns:
-        ok_rows = summary["error"].isna()
-    else:
-        ok_rows = pd.Series(True, index=summary.index)
-
     if "close" in summary.columns:
         summary["close"] = pd.to_numeric(summary["close"], errors="coerce").round(2)
 

@@ -90,7 +90,7 @@ def assign_weights(
 
     out["target_weight"] = 0.0
 
-    allowed = (out["allow_new_equity_positions"] == True) & (out["adjusted_score"] > 0)
+    allowed = out["allow_new_equity_positions"] & (out["adjusted_score"] > 0)
 
     allowed_df = out.loc[allowed].copy()
 

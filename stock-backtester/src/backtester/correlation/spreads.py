@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 
-from backtester.correlation.io import prices_to_return_matrix
 
 
 def compute_forward_or_trailing_returns(
