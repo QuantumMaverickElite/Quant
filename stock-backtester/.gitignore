@@ -67,3 +67,11 @@ outputs/reports/plots/market_manifold_snapshots/
 # Local smoke/temporary outputs
 outputs/reports/plots/*smoke*/
 outputs/reports/plots/*test*/
+
+# Market intelligence local overlays
+market_intelligence_*_overlay/
+market_intelligence_*.zip
+
+# Market intelligence local/raw data
+data/intelligence/raw/live_sources_*.jsonl
+data/intelligence/raw/latest_intelligence_queries.txt
