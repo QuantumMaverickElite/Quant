@@ -1,0 +1,30 @@
+{
+  "description": "Commands that must continue to work during the reorganization. Edit this file before moving code.",
+  "default_timeout_seconds": 120,
+  "commands": [
+    {
+      "name": "mean_reversion_signals_help",
+      "enabled": true,
+      "command": "python scripts/run_mean_reversion_signals.py --help",
+      "timeout_seconds": 60
+    },
+    {
+      "name": "market_intelligence_live_help",
+      "enabled": true,
+      "command": "python scripts/run_market_intelligence_live.py --help",
+      "timeout_seconds": 60
+    },
+    {
+      "name": "rust_export_help",
+      "enabled": true,
+      "command": "python scripts/export_rust_matrix_inputs.py --help",
+      "timeout_seconds": 60
+    },
+    {
+      "name": "threshold_rebalance_help",
+      "enabled": true,
+      "command": "python scripts/threshold_rebalance_fast_v3.py --help",
+      "timeout_seconds": 60
+    }
+  ]
+}
