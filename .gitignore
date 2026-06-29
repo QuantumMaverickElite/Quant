@@ -18,7 +18,7 @@ stock-backtester/assets/results/
 # Generated quant research artifacts
 stock-backtester/outputs/
 stock-backtester/data/intelligence/historical/
-market_intelligence__overlay/
-.jsonl
+market_intelligence_*_overlay/
+*.jsonl
 *.jsonl.gz
 *.tar.gz
