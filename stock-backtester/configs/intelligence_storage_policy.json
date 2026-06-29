@@ -1,0 +1,45 @@
+{
+  "version": "v5.9",
+  "philosophy": "Keep compact, reproducible summaries locally; archive only high-value artifacts; delete or regenerate bulky intermediate curves, raw duplicated provider dumps, and failed smoke outputs.",
+  "local_budget": {
+    "outputs_max_gb_default": 20,
+    "intelligence_cache_max_mb_default": 2048,
+    "raw_live_news_ttl_days_default": 14,
+    "raw_research_news_ttl_days_default": 30,
+    "feature_retention_days_default": 730
+  },
+  "always_keep_patterns": [
+    "all_monte_carlo_ranked.csv",
+    "stress_manifest.csv",
+    "manifest.csv",
+    "status.txt",
+    "run_long_training.sh",
+    "*_summary.csv",
+    "equity_simulation_summary.csv",
+    "policy_strength_sweep_summary.csv",
+    "ml_policy_permutation_summary.csv",
+    "README.md",
+    "*.md",
+    "*.json"
+  ],
+  "archive_patterns": [
+    "*.parquet",
+    "*.jsonl",
+    "*.log",
+    "*.png",
+    "*.html"
+  ],
+  "delete_candidates_patterns": [
+    "*bootstrap_equity_paths*.csv",
+    "*spaghetti*paths*.csv",
+    "*curve*.csv",
+    "*curves*.csv",
+    "*trial*.csv",
+    "*trials*.csv",
+    "frame_*.csv",
+    "frame_*.json",
+    "frame_*.parquet",
+    "*.mp4"
+  ],
+  "top_prediction_configs_to_keep_default": 10
+}
