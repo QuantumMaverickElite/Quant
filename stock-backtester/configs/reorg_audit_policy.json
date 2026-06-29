@@ -1,0 +1,47 @@
+{
+  "description": "Repo reorganization audit policy. Controls which directories are treated as generated, archived, or overlay material during reorg audits.",
+  "ignore_dirs": [
+    ".git",
+    ".venv",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    "outputs",
+    "data",
+    "target",
+    "node_modules"
+  ],
+  "generated_extensions": [
+    ".csv",
+    ".json",
+    ".jsonl",
+    ".parquet",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".gif",
+    ".mp4",
+    ".npz",
+    ".npy",
+    ".zarr",
+    ".bin",
+    ".lock"
+  ],
+  "code_extensions": [
+    ".py",
+    ".rs",
+    ".sh",
+    ".fish",
+    ".ps1",
+    ".toml"
+  ],
+  "doc_extensions": [
+    ".md",
+    ".rst",
+    ".txt"
+  ],
+  "overlay_dir_pattern": "market_intelligence_*_overlay",
+  "active_package_prefix": "src/backtester",
+  "script_dir": "scripts"
+}
