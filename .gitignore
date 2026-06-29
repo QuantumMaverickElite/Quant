@@ -14,3 +14,11 @@ stock-backtester/pyproject.toml
 
 !stock-backtester/results/
 stock-backtester/assets/results/
+
+# Generated quant research artifacts
+stock-backtester/outputs/
+stock-backtester/data/intelligence/historical/
+market_intelligence__overlay/
+.jsonl
+*.jsonl.gz
+*.tar.gz

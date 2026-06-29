@@ -75,3 +75,11 @@ market_intelligence_*.zip
 # Market intelligence local/raw data
 data/intelligence/raw/live_sources_*.jsonl
 data/intelligence/raw/latest_intelligence_queries.txt
+
+# Generated research outputs
+outputs/
+data/intelligence/historical/
+*.jsonl
+*.jsonl.gz
+*.tar.gz
+market_intelligence_*_overlay/
