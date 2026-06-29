@@ -18,12 +18,21 @@ TRUSTED_SOURCE_WEIGHTS = {
     "bls": 0.95,
     "bea": 0.95,
     "fred": 0.90,
+    "gdelt": 0.60,
+    "finnhub": 0.65,
+    "alpha vantage": 0.65,
     "cnbc": 0.70,
+    "cnn": 0.65,
+    "fox news": 0.60,
     "marketwatch": 0.65,
+    "yahoo finance": 0.60,
     "seeking alpha": 0.55,
+    "local": 0.45,
     "reddit": 0.25,
+    "stocktwits": 0.25,
     "x": 0.20,
     "twitter": 0.20,
+    "instagram": 0.20,
 }
 
 

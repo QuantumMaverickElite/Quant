@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import pandas as pd
 
@@ -20,6 +21,29 @@ def latest_per_query(features: pd.DataFrame) -> pd.DataFrame:
     return out.drop_duplicates("query", keep="last")
 
 
+def add_derived_targets(df: pd.DataFrame) -> pd.DataFrame:
+    """Create binary success targets from forward return labels.
+
+    Example: next_10d_return -> success_10d.
+    Missing forward returns stay missing so calibration cannot train on rows
+    whose outcome is not yet observable.
+    """
+    out = df.copy()
+    pattern = re.compile(r"^next_(\d+)d_return$")
+    for col in out.columns:
+        match = pattern.match(str(col))
+        if not match:
+            continue
+        horizon = match.group(1)
+        target_col = f"success_{horizon}d"
+        if target_col in out.columns:
+            continue
+        returns = pd.to_numeric(out[col], errors="coerce")
+        out[target_col] = returns.gt(0).astype(float)
+        out.loc[returns.isna(), target_col] = pd.NA
+    return out
+
+
 def build_calibration_dataset(
     *,
     labeled_signals_path: str | Path,
@@ -29,7 +53,7 @@ def build_calibration_dataset(
     ticker_col: str | None = None,
     date_col: str | None = None,
 ) -> pd.DataFrame:
-    df = read_table(labeled_signals_path).copy()
+    df = add_derived_targets(read_table(labeled_signals_path).copy())
     ticker = detect_ticker_column(df, ticker_col)
     date = detect_date_column(df, date_col)
     if date is None:
@@ -65,6 +89,9 @@ def feature_columns(df: pd.DataFrame) -> list[str]:
     prefixes = (
         "intelligence_",
         "event_",
+        "sec_",
+        "news_",
+        "analyst_",
     )
     explicit = {
         "adjusted_confidence",

@@ -41,6 +41,11 @@ BEARISH_TERMS = {
     "competition": 0.35,
     "investigation": 0.65,
     "lawsuit": 0.45,
+    "false": 0.55,
+    "not real": 0.55,
+    "no contract": 0.50,
+    "unconfirmed": 0.40,
+    "denied": 0.45,
     "bearish": 0.25,
     "selloff": 0.25,
     "tumbled": 0.30,
@@ -137,6 +142,8 @@ def extract_claims(query: str, docs: Iterable[SourceDocument]) -> list[EvidenceC
                     time_horizon=classify_horizon(sentence),
                     source=doc.source,
                     source_title=doc.title,
+                    source_url=doc.url,
+                    published_at=doc.published_at,
                 )
             )
 

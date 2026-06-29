@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from .claim_extractor import extract_claims
+from .evidence_graph import evidence_graph_features, orthogonalize_claims
 from .evidence_scorer import aggregate_sentiment, confidence_score, dominant_pressure, pressure_features
-from .regime_break_scorer import price_action_risk_score, regime_action, regime_break_score
+from .regime_break_scorer import regime_action, regime_break_score
 from .schemas import IntelligenceReport, SourceDocument
 
 
@@ -16,17 +17,14 @@ class MarketIntelligenceEngine:
         volume_shock: float = 0.0,
         trend_damage: float = 0.0,
     ) -> IntelligenceReport:
-        claims = extract_claims(query, documents)
+        raw_claims = extract_claims(query, documents)
+        claims, events = orthogonalize_claims(raw_claims)
         sentiment = aggregate_sentiment(claims)
         features = pressure_features(claims)
+        graph_features = evidence_graph_features(events, raw_claim_count=len(raw_claims))
         break_score = regime_break_score(
             claims,
             features,
-            peer_divergence=peer_divergence,
-            volume_shock=volume_shock,
-            trend_damage=trend_damage,
-        )
-        price_risk = price_action_risk_score(
             peer_divergence=peer_divergence,
             volume_shock=volume_shock,
             trend_damage=trend_damage,
@@ -40,13 +38,13 @@ class MarketIntelligenceEngine:
         action = regime_action(break_score)
         pressure = dominant_pressure(features)
         horizon = self._dominant_horizon(claims)
-        summary = self._build_summary(query, sentiment, break_score, pressure, action, len(claims))
+        summary = self._build_summary(query, sentiment, break_score, pressure, action, len(claims), len(events))
 
         model_features = {
             **features,
+            **graph_features,
             "sentiment_score": sentiment,
             "regime_break_score": break_score,
-            "price_action_risk": price_risk,
             "confidence": confidence,
             "peer_divergence": peer_divergence,
             "volume_shock": volume_shock,
@@ -78,8 +76,16 @@ class MarketIntelligenceEngine:
         return max(counts, key=counts.get)
 
     @staticmethod
-    def _build_summary(query: str, sentiment: float, break_score: float, pressure: str, action: str, n: int) -> str:
-        if n == 0:
+    def _build_summary(
+        query: str,
+        sentiment: float,
+        break_score: float,
+        pressure: str,
+        action: str,
+        n_claims: int,
+        n_events: int,
+    ) -> str:
+        if n_claims == 0:
             return f"No usable evidence found for {query.upper()}."
 
         tone = "bullish" if sentiment > 0.15 else "bearish" if sentiment < -0.15 else "mixed/neutral"
@@ -94,5 +100,5 @@ class MarketIntelligenceEngine:
 
         return (
             f"{query.upper()} evidence is {tone}, with dominant pressure from {pressure}. "
-            f"{regime} Action label: {action}. Evidence count: {n}."
+            f"{regime} Action label: {action}. Evidence: {n_claims} claims collapsed into {n_events} events."
         )

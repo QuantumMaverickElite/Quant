@@ -23,7 +23,15 @@ def aggregate_sentiment(claims: list[EvidenceClaim]) -> float:
     if not claims:
         return 0.0
     weighted = [claim.weighted_impact() for claim in claims]
-    denom = sum(claim.reliability * (0.50 + 0.50 * claim.novelty) for claim in claims) or 1.0
+    denom = (
+        sum(
+            (claim.trust_score if claim.trust_score is not None else claim.reliability)
+            * (0.50 + 0.50 * claim.novelty)
+            * claim.orthogonal_weight
+            for claim in claims
+        )
+        or 1.0
+    )
     return clamp(sum(weighted) / denom)
 
 
@@ -55,10 +63,15 @@ def pressure_features(claims: list[EvidenceClaim]) -> dict[str, float]:
 def confidence_score(claims: list[EvidenceClaim]) -> float:
     if not claims:
         return 0.0
-    reliability = mean(claim.reliability for claim in claims)
-    evidence_count = min(1.0, len(claims) / 12.0)
+    reliability = mean((claim.trust_score if claim.trust_score is not None else claim.reliability) for claim in claims)
+    event_count = len({claim.event_id or id(claim) for claim in claims})
+    evidence_count = min(1.0, event_count / 8.0)
+    source_diversity = mean(claim.source_diversity for claim in claims)
     direction_strength = abs(aggregate_sentiment(claims))
-    return max(0.0, min(1.0, 0.45 * reliability + 0.35 * evidence_count + 0.20 * direction_strength))
+    return max(
+        0.0,
+        min(1.0, 0.40 * reliability + 0.25 * evidence_count + 0.20 * direction_strength + 0.15 * source_diversity),
+    )
 
 
 def dominant_pressure(features: dict[str, float]) -> str:

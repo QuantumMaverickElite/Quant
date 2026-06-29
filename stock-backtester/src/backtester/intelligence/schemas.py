@@ -40,10 +40,20 @@ class EvidenceClaim:
     time_horizon: Horizon
     source: str
     source_title: str | None = None
+    source_url: str | None = None
+    published_at: str | None = None
+    event_id: str | None = None
+    duplicate_count: int = 1
+    independent_source_count: int = 1
+    contradiction_count: int = 0
+    trust_score: float | None = None
+    source_diversity: float = 0.0
+    orthogonal_weight: float = 1.0
 
     def weighted_impact(self) -> float:
         sign = 1.0 if self.direction == "bullish" else -1.0 if self.direction == "bearish" else 0.0
-        return sign * self.magnitude * self.reliability * (0.50 + 0.50 * self.novelty)
+        trust = self.reliability if self.trust_score is None else self.trust_score
+        return sign * self.magnitude * trust * (0.50 + 0.50 * self.novelty) * self.orthogonal_weight
 
 
 @dataclass(slots=True)

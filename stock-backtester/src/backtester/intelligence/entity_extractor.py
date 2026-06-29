@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import re
+from .entity_resolver import aliases_for_query, text_mentions_entity
 
 
 COMMON_INDEX_ALIASES = {
@@ -12,14 +12,12 @@ COMMON_INDEX_ALIASES = {
 
 
 def normalize_query_entities(query: str) -> list[str]:
-    parts = [p.strip().upper() for p in re.split(r"[, ]+", query) if p.strip()]
     out: list[str] = []
-    for part in parts:
-        out.append(part)
-        out.extend(COMMON_INDEX_ALIASES.get(part, []))
+    for alias in aliases_for_query(query):
+        out.append(alias)
+        out.extend(COMMON_INDEX_ALIASES.get(alias.upper(), []))
     return sorted(set(out), key=len, reverse=True)
 
 
 def document_mentions_query(text: str, query: str) -> bool:
-    haystack = text.lower()
-    return any(entity.lower() in haystack for entity in normalize_query_entities(query))
+    return text_mentions_entity(text, query)
