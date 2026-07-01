@@ -42,7 +42,7 @@ echo "limit=$LIMIT"
 echo "job_id=$JOB_ID"
 
 ssh "$REMOTE" \
-  "JOB_ID='$JOB_ID' MODE='$MODE' MAX_HTTP_REQUESTS='$MAX_HTTP_REQUESTS' MAX_QUERIES='$MAX_QUERIES' LIMIT='$LIMIT' bash -s" <<'REMOTE_SCRIPT'
+  "JOB_ID='$JOB_ID' MODE='$MODE' MAX_HTTP_REQUESTS='$MAX_HTTP_REQUESTS' MAX_QUERIES='$MAX_QUERIES' LIMIT='$LIMIT' bash -s" <<'REMOTE_SCRIPT' 2>&1 | python scripts/workers/redact_stream.py
 set -euo pipefail
 
 cd ~/quant-worker/stock-backtester
@@ -189,7 +189,7 @@ PYTHONPATH=src python scripts/fetch_historical_news_sources.py \
   --usage storage \
   --ignore-provider-policy \
   --allow-rss-body-only \
-  --out "$OUTDIR/source_fetch.jsonl"
+  --out "$OUTDIR/source_fetch.jsonl" 2>&1 | python scripts/workers/redact_stream.py
 
 mkdir -p ~/quant-worker/jobs/$JOB_ID
 cp "$OUTDIR"/source_fetch.jsonl* ~/quant-worker/jobs/$JOB_ID/ 2>/dev/null || true

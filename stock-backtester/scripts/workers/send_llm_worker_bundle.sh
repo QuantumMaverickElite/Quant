@@ -42,6 +42,7 @@ tar -czf "$BUNDLE" \
   src/backtester/intelligence/entity_resolver.py \
   src/backtester/intelligence/provider_policy.py \
   scripts/fetch_historical_news_sources.py \
+  scripts/workers/redact_stream.py \
   outputs/intelligence/llm_benchmark_mixed_50.parquet \
   outputs/intelligence/llm_benchmark_mixed_50.csv
 
@@ -161,6 +162,7 @@ if [ "$MODE" = "source-rss-smoke" ]; then
 
     PYTHONPATH=src python -m py_compile \
       scripts/fetch_historical_news_sources.py \
+  scripts/workers/redact_stream.py \
       src/backtester/intelligence/historical_news_collector.py \
       src/backtester/intelligence/historical_source_collector.py \
       src/backtester/intelligence/entity_resolver.py \
