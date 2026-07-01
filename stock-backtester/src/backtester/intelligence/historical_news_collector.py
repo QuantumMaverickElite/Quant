@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -33,6 +34,38 @@ POLYGON_TICKER_NEWS_URL = "https://api.polygon.io/v2/reference/news"
 MASSIVE_TICKER_NEWS_URL = "https://api.massive.com/v2/reference/news"
 YAHOO_FINANCE_RSS_URL = "https://feeds.finance.yahoo.com/rss/2.0/headline"
 GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss/search"
+
+SECRET_ENV_NAMES = (
+    "ALPHA_VANTAGE_API_KEY",
+    "FINNHUB_API_KEY",
+    "NEWSAPI_KEY",
+    "NEWS_API_KEY",
+    "POLYGON_API_KEY",
+    "MASSIVE_API_KEY",
+    "OPENAI_COMPAT_API_KEY",
+)
+
+
+def redact_secret_text(value: object, known_secrets: list[str] | tuple[str, ...] | None = None) -> str:
+    text = str(value)
+
+    for secret in known_secrets or ():
+        secret = str(secret or "").strip()
+        if len(secret) >= 6:
+            text = text.replace(secret, "<redacted>")
+
+    text = re.sub(
+        r"(?i)(api\s*key\s*(?:as|is|=|:)?\s*)[A-Za-z0-9_\-]{8,}",
+        r"\1<redacted>",
+        text,
+    )
+    text = re.sub(
+        r"(?i)((?:apikey|api_key|token|secret|access_key|apiKey)=)[^&\s]+",
+        r"\1<redacted>",
+        text,
+    )
+    return text
+
 
 
 @dataclass(frozen=True)
@@ -712,7 +745,7 @@ def fetch_alpha_vantage_news(
             feed = payload.get("feed", [])
             records.extend(alpha_vantage_record(query, item) for item in feed if isinstance(item, dict))
             if payload.get("Note") or payload.get("Information"):
-                print(f"Alpha Vantage message for {query}: {payload.get('Note') or payload.get('Information')}")
+                print(f"Alpha Vantage message for {query}: {redact_secret_text(payload.get('Note') or payload.get('Information'), [api_key])}")
     return dedupe_records(records)
 
 
