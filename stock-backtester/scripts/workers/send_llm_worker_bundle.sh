@@ -99,6 +99,17 @@ fi
 
 if [ "$MODE" = "real-one" ]; then
   echo
+  echo "== seeding worker with cumulative output if available =="
+
+  LOCAL_CUMULATIVE="outputs/intelligence/worker_results/chromebook_cumulative"
+
+  if [ -f "$LOCAL_CUMULATIVE/llm_event_classifications_mixed50_batch.parquet" ]; then
+    ssh "$REMOTE" 'mkdir -p ~/quant-worker/stock-backtester/outputs/intelligence'
+    scp "$LOCAL_CUMULATIVE"/llm_event_classifications_mixed50_batch.* \
+      "$REMOTE:~/quant-worker/stock-backtester/outputs/intelligence/" 2>/dev/null || true
+  fi
+
+  echo
   echo "== running one real API row on worker =="
 
   ssh "$REMOTE" '
@@ -135,8 +146,15 @@ if [ "$MODE" = "real-one" ]; then
 
   scp "$REMOTE:~/quant-worker/jobs/$JOB_ID/*" "$LOCAL_RESULTS/" 2>/dev/null || true
 
+  LOCAL_CUMULATIVE="outputs/intelligence/worker_results/chromebook_cumulative"
+  mkdir -p "$LOCAL_CUMULATIVE"
+
+  cp "$LOCAL_RESULTS"/llm_event_classifications_mixed50_batch.* \
+    "$LOCAL_CUMULATIVE"/ 2>/dev/null || true
+
   echo
   echo "pulled results to $LOCAL_RESULTS"
+  echo "updated cumulative results at $LOCAL_CUMULATIVE"
 fi
 
 echo
