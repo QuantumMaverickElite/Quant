@@ -114,9 +114,50 @@ if [ "$MODE" = "source-rss-smoke" ]; then
     cd ~/quant-worker/stock-backtester
     . .venv/bin/activate
 
-    set -a
-    [ -f ~/.config/quant/worker.env ] && . ~/.config/quant/worker.env
-    set +a
+    load_worker_env() {
+      local file="$HOME/.config/quant/worker.env"
+      [ -f "$file" ] || return 0
+
+      while IFS= read -r line || [ -n "$line" ]; do
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+
+        [ -z "$line" ] && continue
+        case "$line" in \#*) continue ;; esac
+
+        line="${line#export }"
+
+        case "$line" in
+          *=*)
+            key="${line%%=*}"
+            val="${line#*=}"
+
+            key="${key#"${key%%[![:space:]]*}"}"
+            key="${key%"${key##*[![:space:]]}"}"
+
+            case "$key" in
+              ''|*[!A-Za-z0-9_]*|[0-9]*)
+                continue
+                ;;
+            esac
+
+            if [ "${val#\"}" != "$val" ] && [ "${val%\"}" != "$val" ]; then
+              val="${val#\"}"
+              val="${val%\"}"
+            fi
+
+            if [ "${val#\'}" != "$val" ] && [ "${val%\'}" != "$val" ]; then
+              val="${val#\'}"
+              val="${val%\'}"
+            fi
+
+            export "$key=$val"
+            ;;
+        esac
+      done < "$file"
+    }
+
+    load_worker_env
 
     PYTHONPATH=src python -m py_compile \
       scripts/fetch_historical_news_sources.py \
