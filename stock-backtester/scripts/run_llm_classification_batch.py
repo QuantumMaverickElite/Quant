@@ -124,12 +124,17 @@ def classify_chunk(events_chunk: pd.DataFrame, model_name: str, chunk_id: int, a
     print(f"== chunk {chunk_id} using {model_name}: {cfg['model']} ==")
     print(" ".join(shlex.quote(x) for x in cmd))
 
-    proc = subprocess.run(cmd, env=env, text=True, capture_output=True)
-
-    if proc.stdout:
-        print(proc.stdout, end="")
-    if proc.stderr:
-        print(proc.stderr, end="", file=sys.stderr)
+    try:
+        proc = subprocess.run(
+            cmd,
+            env=env,
+            text=True,
+            timeout=args.chunk_timeout,
+        )
+        ok = proc.returncode == 0
+    except subprocess.TimeoutExpired:
+        print(f"chunk timed out after {args.chunk_timeout:.1f}s")
+        ok = False
 
     frames = []
 
@@ -142,7 +147,7 @@ def classify_chunk(events_chunk: pd.DataFrame, model_name: str, chunk_id: int, a
         frames.append(pd.read_parquet(partial_p))
 
     got = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
-    return proc.returncode == 0, got
+    return ok, got
 
 
 def main() -> None:
@@ -155,6 +160,7 @@ def main() -> None:
     parser.add_argument("--text-limit", type=int, default=3500)
     parser.add_argument("--models", default="github_gpt41,github_deepseek_v3,github_llama33_70b,github_gpt4o")
     parser.add_argument("--no-response-format", action="store_true")
+    parser.add_argument("--chunk-timeout", type=float, default=600)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
