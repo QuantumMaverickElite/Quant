@@ -83,3 +83,21 @@ data/intelligence/historical/
 *.jsonl.gz
 *.tar.gz
 market_intelligence_*_overlay/
+
+# Generated intelligence outputs
+outputs/intelligence/
+outputs/worker_ingest/
+../worker_ingest/
+
+# Local worker/API secrets
+.env
+*.env
+worker.env
+
+# Large generated data artifacts
+*.jsonl
+*.jsonl.zst
+*.parquet.tmp
+
+# Generated reference data
+data/reference/
