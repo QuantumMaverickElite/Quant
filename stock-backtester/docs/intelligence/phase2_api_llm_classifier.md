@@ -104,3 +104,22 @@ Interpretation:
 - Gemini Flash-Lite is likely good for low-cost bulk classification.
 - GitHub GPT-4.1 is likely better for higher-quality validation and ambiguous articles.
 - Both should be benchmarked on 25 to 100 mixed articles before selecting a default production classifier.
+
+## Mixed 50 Benchmark Attempt
+
+A mixed 50-row benchmark sample was created to avoid first-row ticker/event bias.
+
+Initial GitHub Models GPT-4.1 mixed benchmark behavior:
+
+- mixed sample rows: 50
+- successful partial classifications before throttling: 20
+- provider throttling: HTTP 429 after repeated requests
+- partial-save behavior worked and preserved progress
+- conclusion: production classification needs resume-safe chunking and provider-aware cooldowns
+
+Operational policy:
+
+- Do not run large LLM classification batches as one continuous command.
+- Prefer small chunks with long cooldowns.
+- Treat HTTP 429 from GitHub Models as a hard cooldown signal.
+- Preserve partial outputs and resume from unclassified event IDs.

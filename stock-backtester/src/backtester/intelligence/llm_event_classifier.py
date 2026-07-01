@@ -295,13 +295,20 @@ def call_openai_compatible(
     last_error = None
 
     for attempt in range(max_retries + 1):
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "User-Agent": "quant-stock-backtester-llm-classifier",
+        }
+
+        if "models.github.ai" in api_base:
+            headers["Accept"] = "application/vnd.github+json"
+            headers["X-GitHub-Api-Version"] = "2022-11-28"
+
         req = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
-            },
+            headers=headers,
             method="POST",
         )
 
@@ -316,7 +323,21 @@ def call_openai_compatible(
 
             # Retry transient provider pressure/rate/server issues.
             if e.code in {408, 409, 429, 500, 502, 503, 504} and attempt < max_retries:
-                sleep_for = retry_base_seconds * (2 ** attempt)
+                retry_after = e.headers.get("Retry-After") if e.headers else None
+
+                if retry_after:
+                    try:
+                        sleep_for = float(retry_after)
+                    except ValueError:
+                        sleep_for = retry_base_seconds * (2 ** attempt)
+                else:
+                    sleep_for = retry_base_seconds * (2 ** attempt)
+
+                    # GitHub Models can trip account/IP anti-abuse throttles.
+                    # When no Retry-After header is provided, use a slower 429 cooldown.
+                    if e.code == 429 and "models.github.ai" in api_base:
+                        sleep_for = max(sleep_for, 60.0 * (attempt + 1))
+
                 print(f"LLM API transient HTTP {e.code}; retrying in {sleep_for:.1f}s...")
                 time.sleep(sleep_for)
                 continue
