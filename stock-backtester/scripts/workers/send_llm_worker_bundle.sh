@@ -56,6 +56,11 @@ rm -rf ~/quant-worker/stock-backtester
 mkdir -p ~/quant-worker/stock-backtester
 tar -xzf ~/quant-worker/inbox/quant_llm_worker_bundle.tar.gz -C ~/quant-worker/stock-backtester
 cd ~/quant-worker/stock-backtester
+
+# The worker bundle is intentionally minimal. Avoid importing the full
+# intelligence package dependency tree from __init__.py.
+: > src/backtester/intelligence/__init__.py
+
 find . -maxdepth 4 -type f | sort
 '
 
