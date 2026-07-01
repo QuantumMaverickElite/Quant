@@ -272,6 +272,8 @@ def call_openai_compatible(
     prompt: str,
     timeout: float = 45.0,
     use_response_format: bool = True,
+    max_retries: int = 4,
+    retry_base_seconds: float = 2.0,
 ) -> str:
     url = api_base.rstrip("/") + "/chat/completions"
 
@@ -290,24 +292,47 @@ def call_openai_compatible(
     if use_response_format:
         payload["response_format"] = {"type": "json_object"}
 
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST",
-    )
+    last_error = None
 
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"LLM API HTTP {e.code}: {body[:500]}") from e
+    for attempt in range(max_retries + 1):
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            },
+            method="POST",
+        )
 
-    return data["choices"][0]["message"]["content"]
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            return data["choices"][0]["message"]["content"]
+
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            last_error = RuntimeError(f"LLM API HTTP {e.code}: {body[:500]}")
+
+            # Retry transient provider pressure/rate/server issues.
+            if e.code in {408, 409, 429, 500, 502, 503, 504} and attempt < max_retries:
+                sleep_for = retry_base_seconds * (2 ** attempt)
+                print(f"LLM API transient HTTP {e.code}; retrying in {sleep_for:.1f}s...")
+                time.sleep(sleep_for)
+                continue
+
+            raise last_error from e
+
+        except urllib.error.URLError as e:
+            last_error = RuntimeError(f"LLM API URL error: {e}")
+            if attempt < max_retries:
+                sleep_for = retry_base_seconds * (2 ** attempt)
+                print(f"LLM API URL error; retrying in {sleep_for:.1f}s...")
+                time.sleep(sleep_for)
+                continue
+            raise last_error from e
+
+    raise last_error or RuntimeError("LLM API failed without a captured error")
 
 
 def load_existing_event_ids(path: str | Path) -> set[str]:
@@ -408,40 +433,51 @@ def classify_event_facts(
                 "API mode requires OPENAI_COMPAT_API_BASE, OPENAI_COMPAT_API_KEY, and OPENAI_COMPAT_MODEL."
             )
 
-    for _, row in events.iterrows():
-        event_id = str(row["event_id"])
-        prompt = build_prompt(row, text_limit=text_limit)
+    try:
+        for _, row in events.iterrows():
+            event_id = str(row["event_id"])
+            prompt = build_prompt(row, text_limit=text_limit)
 
-        if mode == "mock":
-            parsed = mock_classify(row)
-            raw_hash = text_hash(prompt)
-        elif mode == "api":
-            raw = call_openai_compatible(
-                api_base=str(api_base),
-                api_key=str(api_key),
-                model=str(model),
-                prompt=prompt,
-                use_response_format=use_response_format,
-            )
-            parsed = validate_classification(extract_json_object(raw), event_id=event_id)
-            raw_hash = text_hash(raw)
-            if sleep_seconds > 0:
-                time.sleep(sleep_seconds)
-        else:
-            raise ValueError(f"Unsupported mode: {mode}")
+            if mode == "mock":
+                parsed = mock_classify(row)
+                raw_hash = text_hash(prompt)
+            elif mode == "api":
+                raw = call_openai_compatible(
+                    api_base=str(api_base),
+                    api_key=str(api_key),
+                    model=str(model),
+                    prompt=prompt,
+                    use_response_format=use_response_format,
+                )
+                parsed = validate_classification(extract_json_object(raw), event_id=event_id)
+                raw_hash = text_hash(raw)
+                if sleep_seconds > 0:
+                    time.sleep(sleep_seconds)
+            else:
+                raise ValueError(f"Unsupported mode: {mode}")
 
-        record = {
-            "event_id": event_id,
-            "ticker": row.get("ticker"),
-            "event_time": str(row.get("event_time")),
-            "provider": row.get("provider"),
-            "title_hash": text_hash(clean_text(row.get("title"), 300)),
-            "classifier_mode": mode,
-            "classifier_model": model if mode == "api" else "mock-keyword-scaffold",
-            "response_hash": raw_hash,
-            **parsed,
-        }
-        rows.append(record)
+            record = {
+                "event_id": event_id,
+                "ticker": row.get("ticker"),
+                "event_time": str(row.get("event_time")),
+                "provider": row.get("provider"),
+                "title_hash": text_hash(clean_text(row.get("title"), 300)),
+                "classifier_mode": mode,
+                "classifier_model": model if mode == "api" else "mock-keyword-scaffold",
+                "response_hash": raw_hash,
+                **parsed,
+            }
+            rows.append(record)
+
+    except Exception:
+        # Preserve partial progress from quota/rate-limit failures.
+        if rows:
+            partial = pd.DataFrame(rows)
+            partial_path = Path(out_path).with_name(Path(out_path).stem + "_partial.parquet")
+            partial.to_parquet(partial_path, index=False)
+            partial.to_csv(partial_path.with_suffix(".csv"), index=False)
+            print(f"wrote partial progress: {partial_path} rows={len(partial)}")
+        raise
 
     out = pd.DataFrame(rows)
 
