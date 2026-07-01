@@ -102,6 +102,63 @@ if [ "$MODE" = "dry-run" ]; then
   '
 fi
 
+
+if [ "$MODE" = "source-rss-smoke" ]; then
+  echo
+  echo "== running RSS source smoke on worker =="
+
+  JOB_ID="$(date -u +%Y%m%dT%H%M%SZ)"
+  LOCAL_RESULTS="outputs/intelligence/worker_results/source_rss_smoke_$JOB_ID"
+
+  ssh "$REMOTE" "
+    cd ~/quant-worker/stock-backtester
+    . .venv/bin/activate
+
+    set -a
+    [ -f ~/.config/quant/worker.env ] && . ~/.config/quant/worker.env
+    set +a
+
+    PYTHONPATH=src python -m py_compile \
+      scripts/fetch_historical_news_sources.py \
+      src/backtester/intelligence/historical_news_collector.py \
+      src/backtester/intelligence/historical_source_collector.py \
+      src/backtester/intelligence/entity_resolver.py \
+      src/backtester/intelligence/provider_policy.py
+
+    rm -rf outputs/intelligence/worker_source_smoke
+    mkdir -p outputs/intelligence/worker_source_smoke
+
+    PYTHONPATH=src python scripts/fetch_historical_news_sources.py \
+      --providers rss_yahoo rss_google \
+      --queries AMPH MSFT \
+      --start 2026-06-01 \
+      --end 2026-07-01 \
+      --limit 5 \
+      --sleep-seconds 2 \
+      --max-http-requests 4 \
+      --usage storage \
+      --ignore-provider-policy \
+      --allow-rss-body-only \
+      --out outputs/intelligence/worker_source_smoke/rss_smoke.jsonl
+
+    mkdir -p ~/quant-worker/jobs/$JOB_ID
+    cp outputs/intelligence/worker_source_smoke/rss_smoke.jsonl* \
+      ~/quant-worker/jobs/$JOB_ID/ 2>/dev/null || true
+  "
+
+  mkdir -p "$LOCAL_RESULTS"
+
+  scp "$REMOTE:~/quant-worker/jobs/$JOB_ID/*" "$LOCAL_RESULTS/" 2>/dev/null || true
+
+  rm -rf outputs/intelligence/worker_results/source_smoke_latest
+  mkdir -p outputs/intelligence/worker_results/source_smoke_latest
+  cp "$LOCAL_RESULTS"/* outputs/intelligence/worker_results/source_smoke_latest/ 2>/dev/null || true
+
+  echo
+  echo "pulled source RSS smoke to $LOCAL_RESULTS"
+  echo "updated latest source smoke at outputs/intelligence/worker_results/source_smoke_latest"
+fi
+
 if [ "$MODE" = "real-one" ]; then
   echo
   echo "== seeding worker with cumulative output if available =="
