@@ -105,6 +105,43 @@ def build_event_day_impact_dataset(
     for col in provider_cols:
         named_aggs[f"{col}_count"] = (col, "sum")
 
+    # Optional API/mock LLM features.
+    # These are still just features; they do not directly control allocation.
+    llm_numeric_cols = [
+        "llm_sentiment_score",
+        "llm_materiality_score",
+        "llm_novelty_score",
+        "llm_catalyst_strength",
+        "llm_confidence",
+    ]
+    for col in llm_numeric_cols:
+        if col in train.columns:
+            train[col] = pd.to_numeric(train[col], errors="coerce")
+            named_aggs[f"{col}_mean"] = (col, "mean")
+            named_aggs[f"{col}_max"] = (col, "max")
+            named_aggs[f"{col}_min"] = (col, "min")
+
+    if "has_llm_classification" in train.columns:
+        train["has_llm_classification"] = pd.to_numeric(
+            train["has_llm_classification"], errors="coerce"
+        ).fillna(0).astype(int)
+        named_aggs["llm_classified_event_count"] = ("has_llm_classification", "sum")
+
+    llm_dummy_prefixes = (
+        "llm_event_type_",
+        "llm_event_direction_",
+        "llm_event_scope_",
+        "llm_time_horizon_",
+        "llm_risk_flag_",
+    )
+    llm_dummy_cols = [
+        c for c in train.columns
+        if c.startswith(llm_dummy_prefixes)
+    ]
+    for col in llm_dummy_cols:
+        train[col] = pd.to_numeric(train[col], errors="coerce").fillna(0).astype(int)
+        named_aggs[f"{col}_count"] = (col, "sum")
+
     out = train.groupby(group_cols, as_index=False).agg(**named_aggs)
     out = out.rename(columns={base_col: "event_base_date"})
 
