@@ -1,6 +1,5 @@
 # Regime-Conditioned Dislocation Strategy
 
-_Status: deferred research idea. Preserve for later; do not prioritize over POS._
 
 ## Core Idea
 
