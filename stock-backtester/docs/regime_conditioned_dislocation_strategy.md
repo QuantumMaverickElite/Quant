@@ -413,10 +413,4 @@ These components should communicate through explicit numerical state rather than
 
 The strategy should be judged by whether it generalizes to unknown stocks and unseen regimes, not by whether it reproduces a few memorable winning trades.
 
-## Current Priority
 
-Do **not** implement this now.
-
-The Personal Operating System (POS) remains the higher-priority research and coding project because completing it can save time across future work, including quant research.
-
-This note exists so the idea is preserved for later.
