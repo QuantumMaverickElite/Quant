@@ -99,6 +99,15 @@ Completed on `reorg/phase0-authority-inventory`:
 - Intelligence topology cleanup should pause after this repair; the next
   physical forensics target is a coherent family under `scripts/`.
 
+## Phase 10 status — first scripts research extraction
+
+- The user-performed move placed three allocator-comparison research programs
+  under `research/combined_signals/`.
+- Their repository-root execution behavior and output paths are preserved.
+- `scripts/` remains the home for stable commands and pipeline entry points;
+  further combined-signal research moves require their own path/subprocess
+  review.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.

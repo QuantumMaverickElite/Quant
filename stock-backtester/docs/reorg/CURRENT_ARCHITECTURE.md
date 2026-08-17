@@ -74,6 +74,10 @@ The current implementation is physically grouped as:
   research transformation layer between source acquisition and learning;
   it is not the `events/` schema layer, the `llm/` runtime layer, or allocator
   authority.
+
+Combined-signal comparison research is physically grouped under
+`research/combined_signals/`; it consumes existing allocator/intelligence
+artifacts and does not own reusable implementation.
 - `src/backtester/intelligence/calibration/` — calibration dataset assembly,
   fitted intelligence weights, and time-safe walk-forward calibration. It
   consumes research feature tables and preserves the existing calibration
