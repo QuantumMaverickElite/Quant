@@ -10,14 +10,15 @@ This repository is structured as a growing research environment rather than a si
 
 If you're new to this repository:
 
-1. Start with the main active system:
-   stock-backtester/
+1. Start with the [stock-backtester](stock-backtester/README.md) operational map.
 
 2. Inside that project, the most important layers are:
 
-- `src/backtester/strategies/`
-- `src/backtester/engines/`
-- `src/backtester/backtests/`
+- `stock-backtester/src/backtester/` contains the packaged research system.
+- `stock-backtester/scripts/` contains runnable pipelines and historical research tools.
+- `stock-backtester/tests/` is the intended home for offline validation (the first
+  clearly identified tests remain under `scripts/` until the next writable move).
+- `stock-backtester/configs/` contains audit, storage, and sacred-workflow policy.
 
 1. Example research modules include:
 
@@ -26,6 +27,17 @@ If you're new to this repository:
 - volatility strategy research
 
 This repository is designed as a research workspace, so multiple ideas exist in parallel. Not every component is production-ready. The goal is exploration, iteration, and refinement.
+
+### Other root projects
+
+- `dividend-capture/` is a separate exploratory dividend-capture research project.
+- `worker_ingest/` contains worker/ingestion support and has its own operational assumptions.
+- Root `market_intelligence_*_overlay/` directories are ignored historical bundles. Do
+  not move or delete them casually; see the overlay lineage notes in
+  [stock-backtester/docs/reorg/OVERLAY_LINEAGE.md](stock-backtester/docs/reorg/OVERLAY_LINEAGE.md).
+
+For current-vs-historical distinctions and subsystem links, read
+[stock-backtester/README.md](stock-backtester/README.md) next.
 
 ---
 

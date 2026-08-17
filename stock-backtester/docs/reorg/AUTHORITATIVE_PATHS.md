@@ -10,6 +10,7 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 |---|---|---|---|
 | Shared tabular I/O | `src/backtester/utils/tables.py` | REUSABLE INFRASTRUCTURE | First Phase 1 extraction; CSV/Parquet dispatch only, with compatibility imports retained through `backtester.intelligence.candidates`. |
 | ML-policy research family | `src/backtester/intelligence/ml_policy_*.py` | ACTIVE RESEARCH / HISTORICAL | v4/v5 research tooling; top-level script paths remain compatibility wrappers and are not event-learning or operational authority. |
+| Repository navigation spine | `README.md`, subsystem `README.md` files, `docs/README.md`, `scripts/README.md` | DOCUMENTATION / TOOLING | Phase 5 entry points; descriptive only and not an execution authority. |
 | Experiment registry | `src/backtester/experiments.py` | REUSABLE INFRASTRUCTURE | Read-only typed discovery metadata for a small pilot; no execution authority. |
 | Parameter/configuration registry | `src/backtester/experiments.py` (`ParameterSpec`, `ExperimentConfig`) | REUSABLE INFRASTRUCTURE | Typed defaults, provenance, modes, JSON serialization, and validation only; existing command defaults remain authoritative. |
 

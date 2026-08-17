@@ -1,5 +1,27 @@
 # Stock Backtester — Modular Quant Research Framework
 
+## Start here
+
+This is the main active quant research system. Use this map before opening a
+script:
+
+| Need | Start here |
+| --- | --- |
+| Mean reversion and peer spreads | [`src/backtester/signals/`](src/backtester/signals/README.md) and [`docs/large_universe_pipline.md`](docs/large_universe_pipline.md) |
+| Volatility, entropy, and regime decisions | [`src/backtester/analytics/`](src/backtester/analytics/README.md) and [`src/backtester/context/`](src/backtester/context/README.md) |
+| Correlation/deformation | [`src/backtester/correlation/`](src/backtester/correlation/README.md) |
+| Allocators and backtest engines | [`src/backtester/engines/`](src/backtester/engines/README.md) |
+| Intelligence | [`src/backtester/intelligence/`](src/backtester/intelligence/README.md) |
+| Rust stress/matrix path | [`rust_engine/README.md`](rust_engine/README.md) |
+| Combined signal research | [`docs/research_notes/COMBINED_SIGNAL_RESEARCH.md`](docs/research_notes/COMBINED_SIGNAL_RESEARCH.md) |
+| Commands and pipelines | [`scripts/README.md`](scripts/README.md) |
+| Offline validation | [`scripts/README.md`](scripts/README.md#tests) and the Phase 5 move note |
+| Config and policies | [`configs/README.md`](configs/README.md) |
+| Current/historical architecture | [`docs/README.md`](docs/README.md) and [`docs/reorg/CURRENT_ARCHITECTURE.md`](docs/reorg/CURRENT_ARCHITECTURE.md) |
+
+Generated results remain under `outputs/`; data and cached matrices remain under
+their existing contracts. This phase does not move either tree.
+
 A modular Python research framework for testing trading strategies, market regimes, volatility and entropy features, Monte Carlo simulations, allocator rules, and CPU/GPU matrix-based portfolio experiments.
 
 The project started as a simple stock backtester. It has grown into a research system for studying how strategies behave across tickers, regimes, sampled universes, rebalance rules, allocator logic, and experimental risk overlays.

@@ -32,6 +32,12 @@ The Phase 0 control documents are:
 
 The compact machine-readable manifests are the CSV/JSON files in this directory. They are deliberately source-control friendly and do not contain raw output trees.
 
+## Current navigation
+
+For the physical repository map, start with [`../../README.md`](../../README.md),
+then use the subsystem READMEs and [`../research_notes/COMBINED_SIGNAL_RESEARCH.md`](../research_notes/COMBINED_SIGNAL_RESEARCH.md).
+The Phase 5 topology record is [`PHASE5_TOPOLOGY.md`](PHASE5_TOPOLOGY.md).
+
 ## Later-phase checklist
 
 After the audit report looks reasonable:

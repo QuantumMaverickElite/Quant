@@ -36,6 +36,22 @@ Completed on `reorg/phase0-authority-inventory`:
 - Added read-only `config` discovery output; no experiment command is invoked and no existing CLI default was changed.
 - Added stdlib-only configuration tests covering type errors, choices, sweep validation, random distribution metadata, overrides, and JSON round trips.
 
+## Phase 5 status — repository topology
+
+- Added a repository-root and `stock-backtester/` navigation spine with direct
+  links to major subsystem homes, tests, configs, outputs, and runbooks.
+- Added compact READMEs for signals, analytics, context, correlation/deformation,
+  engines, intelligence, Rust, configs, and scripts.
+- Added a current/research/history documentation index and a combined-signal
+  research map covering baseline, context, deformation, risk, and intelligence
+  adjustment layers.
+- Classified the 15 `scripts/test_*.py` files. Five are clearly offline
+  control-plane/contract tests; no test was moved because the managed workspace
+  is read-only and could not create the requested `tests/` directory. This is a
+  documented follow-up, not a silent path change.
+- No production or research executable was moved, renamed, or behaviorally
+  changed. Root and `stock-backtester` overlay bundles remain untouched.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.
@@ -55,8 +71,10 @@ No production algorithms, strategy behavior, signal formulas, allocators, intell
 4. Phase 2: additional shared infrastructure extraction behind compatibility interfaces.
 5. Phase 3: gradual command/pipeline/experiment separation.
 6. Phase 4: historical and overlay archival after preservation verification.
-7. Phase 5: domain-oriented package restructuring.
-8. Phase 6: compatibility, reproducibility, and deprecation validation.
+7. Phase 5: repository topology/navigation — documentation completed; physical
+   test move remains blocked by workspace permissions.
+8. Phase 6: domain-oriented package restructuring.
+9. Phase 7: compatibility, reproducibility, and deprecation validation.
 
 ## Candidate cheap wins
 

@@ -4,6 +4,31 @@ This folder contains modular documentation for the stock backtester and allocato
 
 The root `README.md` is the project front page. These documents are the deeper reference modules.
 
+## Documentation map
+
+### Current
+
+- [Architecture](architecture.md)
+- [Output policy](output_policy.md)
+- [Artifact policy](artifact_policy.md)
+- [Reproducibility](reproducibility.md)
+- [Subsystem READMEs](../src/backtester/)
+- [Reorganization status](reorg/REORG_STATUS.md)
+
+### Research
+
+- [Combined signal research](research_notes/COMBINED_SIGNAL_RESEARCH.md)
+- [Allocator findings](research_notes/allocator_findings.md)
+- [Known limitations](research_notes/known_limitations.md)
+- [Experiment notes](experiments/)
+
+### History
+
+The many `market_intelligence_v*.md` files document version history and are not
+the current authority map. Start with [CURRENT_ARCHITECTURE](reorg/CURRENT_ARCHITECTURE.md)
+and the intelligence README instead. Reorganization evidence is indexed under
+[docs/reorg](reorg/README.md).
+
 ## Core Docs
 
 - [Architecture](architecture.md)
