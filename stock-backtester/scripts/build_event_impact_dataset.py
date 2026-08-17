@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 
-from backtester.intelligence.event_impact_dataset import (
+from backtester.intelligence.events.event_impact_dataset import (
     build_event_impact_dataset,
     write_event_impact_dataset,
 )

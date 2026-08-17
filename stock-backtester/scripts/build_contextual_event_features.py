@@ -9,7 +9,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from backtester.intelligence.event_feature_builder import build_event_features, load_events_jsonl, merge_event_features
+from backtester.intelligence.events.event_feature_builder import build_event_features, load_events_jsonl, merge_event_features
 
 
 def parse_args() -> argparse.Namespace:

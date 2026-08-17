@@ -10,9 +10,9 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from backtester.intelligence.contextual_event_extractor import extract_contextual_events_fast, make_sentiment_backend
-from backtester.intelligence.semantic_event_classifier import make_event_classifier
-from backtester.intelligence.semantic_event_clusterer import cluster_events, cluster_summary
+from backtester.intelligence.llm.contextual_event_extractor import extract_contextual_events_fast, make_sentiment_backend
+from backtester.intelligence.llm.semantic_event_classifier import make_event_classifier
+from backtester.intelligence.llm.semantic_event_clusterer import cluster_events, cluster_summary
 from backtester.intelligence.source_loader import load_jsonl
 
 

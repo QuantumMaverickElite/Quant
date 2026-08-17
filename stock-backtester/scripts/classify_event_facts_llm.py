@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import os
 
-from backtester.intelligence.llm_event_classifier import classify_event_facts
+from backtester.intelligence.llm.llm_event_classifier import classify_event_facts
 
 
 def main() -> None:

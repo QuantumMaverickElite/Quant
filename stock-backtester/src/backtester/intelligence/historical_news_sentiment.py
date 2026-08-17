@@ -70,7 +70,7 @@ def make_historical_sentiment_backend(name: str):
     if name == "heuristic":
         return HistoricalHeuristicSentimentBackend()
     try:
-        from .contextual_event_extractor import make_sentiment_backend
+        from .llm.contextual_event_extractor import make_sentiment_backend
 
         return make_sentiment_backend(name)
     except Exception:

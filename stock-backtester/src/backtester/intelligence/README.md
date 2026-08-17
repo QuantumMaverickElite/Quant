@@ -16,10 +16,18 @@ Current implementation and authority
   logic plus application, validation, sweep, and permutation modules. The old
   commands remain in `scripts/` as wrappers;
   this line is research tooling, not current event-learning authority.
-- **Current event-learning/LLM research:** event schemas/fact tables,
-  `llm_event_classifier.py`, `llm_feature_join.py`, NLP runtime and feature
-  builders. This is the current research direction, not automatically an
+- **Events:** [`events/`](events/) contains event schemas/facts, time-safe
+  outcome labels, impact datasets, event-day aggregation, and event features.
+- **LLM / event extraction:** [`llm/`](llm/) contains contextual extraction,
+  semantic classification/clustering, LLM classification joins, and NLP
+  runtime support. This is the current research direction, not automatically an
   allocator replacement.
+- **Operational/evaluation:** remaining allocator-facing and heuristic/fallback
+  modules stay at this root until their compatibility contracts are mapped.
+- **Provider/ingestion:** historical source collectors and provider policy stay
+  at this root for now.
+- **Learning/calibration:** calibration and walk-forward modules stay at this
+  root for now.
 
 Connects to
 -----------
@@ -46,6 +54,15 @@ authority from versioned filenames.
 The ML-policy files are now grouped in the compact `intelligence/ml_policy/`
 subpackage. The four historical command wrappers remain the compatibility
 boundary.
+
+Current event-learning flow
+---------------------------
+
+provider/source payloads → normalized source rows → `events/event_fact_table.py`
+→ time-safe outcome labels → event-impact dataset → structured/LLM event
+features → event-day aggregation → baseline or walk-forward learning → future
+bounded allocator overlay. The pipeline is research-only and is not promoted to
+allocator authority.
 
 See also
 --------

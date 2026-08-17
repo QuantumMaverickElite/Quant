@@ -10,6 +10,8 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 |---|---|---|---|
 | Shared tabular I/O | `src/backtester/utils/tables.py` | REUSABLE INFRASTRUCTURE | First Phase 1 extraction; CSV/Parquet dispatch only, with compatibility imports retained through `backtester.intelligence.candidates`. |
 | ML-policy research package | `src/backtester/intelligence/ml_policy/` | ACTIVE RESEARCH / HISTORICAL | v4/v5 research tooling grouped in Phase 6; top-level script paths remain compatibility wrappers and are not event-learning or operational authority. |
+| Event-learning package | `src/backtester/intelligence/events/` | ACTIVE RESEARCH | Facts, labels, impact datasets, event-day aggregation, and event features; not allocator authority. |
+| LLM/event-extraction package | `src/backtester/intelligence/llm/` | ACTIVE RESEARCH | Contextual extraction, semantic classification, LLM joins, and NLP runtime; structured features only. |
 | Repository navigation spine | `README.md`, subsystem `README.md` files, `docs/README.md`, `scripts/README.md` | DOCUMENTATION / TOOLING | Phase 5 entry points; descriptive only and not an execution authority. |
 | Dividend-capture future ownership | `src/backtester/strategies/dividend_capture/` (future), `research/strategies/dividend_capture/` (future) | ACTIVE RESEARCH / PLANNED | Explicitly no longer a long-term root peer; forensics required before movement. |
 | Experiment registry | `src/backtester/experiments.py` | REUSABLE INFRASTRUCTURE | Read-only typed discovery metadata for a small pilot; no execution authority. |
@@ -29,8 +31,8 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 | Rust stress engine | `rust_engine/src/`, `stress_mc` | REUSABLE INFRASTRUCTURE | HIGH | HIGH |
 | Market fabric | `visuals/`, overlay augmentation scripts | ACTIVE RESEARCH | HIGH | HIGH |
 | Operational intelligence | `src/backtester/intelligence/intelligence_engine.py` and live runner | OPERATIONAL FALLBACK | HIGH | HIGH |
-| Event-learning intelligence | event fact/label/impact modules | ACTIVE RESEARCH | HIGH | HIGH |
-| NLP/LLM features | `llm_event_classifier.py`, `llm_feature_join.py` | ACTIVE RESEARCH | HIGH | HIGH |
+| Event-learning intelligence | `src/backtester/intelligence/events/` | ACTIVE RESEARCH | HIGH | HIGH |
+| NLP/LLM features | `src/backtester/intelligence/llm/` | ACTIVE RESEARCH | HIGH | HIGH |
 | Training | walk-forward and event-day runners | ACTIVE RESEARCH | MEDIUM | HIGH |
 | Dividend capture | `dividend-capture/src/` plus event engine | ACTIVE RESEARCH | HIGH | MEDIUM |
 | Survivable volatility | `src/features/survivable_volatility.py` | ACTIVE RESEARCH | MEDIUM | MEDIUM |

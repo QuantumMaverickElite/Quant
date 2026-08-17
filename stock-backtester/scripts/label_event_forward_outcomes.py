@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 
-from backtester.intelligence.event_outcome_labels import (
+from backtester.intelligence.events.event_outcome_labels import (
     label_event_outcomes,
     write_labeled_events,
 )

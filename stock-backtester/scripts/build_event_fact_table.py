@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 
-from backtester.intelligence.event_fact_table import (
+from backtester.intelligence.events.event_fact_table import (
     build_event_fact_table,
     write_event_fact_table,
 )

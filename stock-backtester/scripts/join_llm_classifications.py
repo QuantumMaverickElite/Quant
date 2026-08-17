@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 
-from backtester.intelligence.llm_feature_join import (
+from backtester.intelligence.llm.llm_feature_join import (
     join_llm_features,
     write_joined_llm_features,
 )

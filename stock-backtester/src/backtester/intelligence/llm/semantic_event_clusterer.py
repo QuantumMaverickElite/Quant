@@ -8,7 +8,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from .event_schemas import MarketEvent
+from ..events.event_schemas import MarketEvent
 
 
 def tokenize(text: str) -> set[str]:

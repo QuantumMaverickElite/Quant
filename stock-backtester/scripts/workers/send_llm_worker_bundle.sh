@@ -36,7 +36,7 @@ tar -czf "$BUNDLE" \
   scripts/build_llm_benchmark_sample.py \
   src/backtester/__init__.py \
   src/backtester/intelligence/__init__.py \
-  src/backtester/intelligence/llm_event_classifier.py \
+  src/backtester/intelligence/llm/llm_event_classifier.py \
   src/backtester/intelligence/historical_news_collector.py \
   src/backtester/intelligence/historical_source_collector.py \
   src/backtester/intelligence/entity_resolver.py \

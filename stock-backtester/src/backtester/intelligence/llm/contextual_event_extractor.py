@@ -5,9 +5,9 @@ import os
 import re
 from dataclasses import dataclass
 
-from .event_schemas import EventDirection, EventHorizon, EventScope, MarketEvent
+from ..events.event_schemas import EventDirection, EventHorizon, EventScope, MarketEvent
 from .semantic_event_classifier import HeuristicEventClassifier
-from .schemas import SourceDocument
+from ..schemas import SourceDocument
 
 
 EVENT_TERMS = {

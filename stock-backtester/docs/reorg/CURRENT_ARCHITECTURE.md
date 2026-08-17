@@ -63,6 +63,13 @@ worker/provider payloads
 
 The event-learning documentation explicitly requires `event_time <= signal_time` and says LLM output must not directly control allocation. This path is active research and is not yet promoted to allocator authority.
 
+The current implementation is physically grouped as:
+
+- `src/backtester/intelligence/events/` — event facts, schemas, labels, impact
+  datasets, event-day aggregation, and event features.
+- `src/backtester/intelligence/llm/` — contextual extraction, semantic
+  classification/clustering, LLM classification joins, and NLP runtime.
+
 ## Computational regimes
 
 ### Package-oriented Python

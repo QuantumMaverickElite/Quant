@@ -10,7 +10,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from backtester.intelligence.nlp_runtime import check_nlp_runtime
+from backtester.intelligence.llm.nlp_runtime import check_nlp_runtime
 
 
 def parse_args() -> argparse.Namespace:

@@ -65,6 +65,17 @@ Completed on `reorg/phase0-authority-inventory`:
 - Root overlays and `worker_ingest/` remain untouched; future ownership and
   preservation work is separate from tracked topology cleanup.
 
+## Phase 7 status — intelligence topology
+
+- User-performed moves grouped the current event-learning implementation under
+  `src/backtester/intelligence/events/` and the LLM/event-extraction
+  implementation under `src/backtester/intelligence/llm/`.
+- This repair updates cross-package imports, command callers, worker packaging
+  references, inventories, and documentation. No event, labeling, NLP, or LLM
+  behavior changed.
+- Remaining provider/ingestion, learning/calibration, and operational/evaluation
+  files remain at the intelligence root for later batches.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.
