@@ -22,7 +22,7 @@ the commands most likely to be useful on re-entry.
 | `run_market_intelligence_batch.py` | intelligence batch research | research / intelligence |
 
 Historical ML-policy commands remain at their old paths and are compatibility
-wrappers over `src/backtester/intelligence/ml_policy_*.py`:
+wrappers over `src/backtester/intelligence/ml_policy/`:
 
 - `apply_ml_policy_strength.py`
 - `validate_ml_policy_candidate.py`
@@ -47,15 +47,12 @@ They are historical ML-policy research tooling, not event-learning authority.
 - **Maintenance/audit:** `reorg_audit.py`, `reorg_sacred_smoke.py`, and related
   inventory helpers.
 
-## Tests
+## Tests and maintenance
 
-The directory still contains 15 historical `test_*.py` files. Five are clearly
-offline control-plane/contract tests: `test_table_io.py`,
-`test_ml_policy_family.py`, `test_experiment_registry.py`,
-`test_parameter_config_registry.py`, and `test_reorg_phase0_inventory.py`.
-They are the first candidates for a conventional `tests/` home, but the managed
-workspace did not permit creating that directory during this phase, so their
-paths remain unchanged. Their role is documented rather than silently changed.
+Offline validation tests now live in [`../tests/README.md`](../tests/README.md).
+Repository-maintenance tools now live in
+[`../tools/reorg/README.md`](../tools/reorg/README.md). Neither category belongs
+in this research-command directory.
 
 The remaining test-named programs are not interchangeable: several use
 `yfinance` or real data, while others are synthetic smoke executables. Inspect

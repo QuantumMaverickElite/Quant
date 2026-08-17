@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from backtester.utils.tables import read_table, write_table
-from .ml_policy_common import detect_col, detect_date_col, detect_ticker_col
+from .common import detect_col, detect_date_col, detect_ticker_col
 
 
 BASELINE_CONFIDENCE_CANDIDATES = (

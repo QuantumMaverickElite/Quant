@@ -45,12 +45,25 @@ Completed on `reorg/phase0-authority-inventory`:
 - Added a current/research/history documentation index and a combined-signal
   research map covering baseline, context, deformation, risk, and intelligence
   adjustment layers.
-- Classified the 15 `scripts/test_*.py` files. Five are clearly offline
-  control-plane/contract tests; no test was moved because the managed workspace
-  is read-only and could not create the requested `tests/` directory. This is a
-  documented follow-up, not a silent path change.
+- Classified the 15 historical `scripts/test_*.py` files. The five clearly
+  offline control-plane/contract tests now live in `tests/`; the remaining
+  data-dependent and synthetic smoke programs remain under `scripts/`.
 - No production or research executable was moved, renamed, or behaviorally
   changed. Root and `stock-backtester` overlay bundles remain untouched.
+
+## Phase 6 status — physical topology
+
+- Five offline validation tests now live in `tests/`.
+- Six repository-maintenance tools now live in `tools/reorg/`.
+- The six-file historical ML-policy family now lives in
+  `src/backtester/intelligence/ml_policy/`; the four historical command paths
+  remain compatibility entry points.
+- Tracked imports, registry metadata, output-contract references, and docs were
+  repaired. No quantitative implementation or output tree changed.
+- The long-term ownership decision for `dividend-capture/` is settled: it is a
+  strategy/research lane within the main quant system, not a permanent root peer.
+- Root overlays and `worker_ingest/` remain untouched; future ownership and
+  preservation work is separate from tracked topology cleanup.
 
 ## Preservation blockers
 

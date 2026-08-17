@@ -12,9 +12,9 @@ Current implementation and authority
 - **Operational heuristic/fallback:** `intelligence_engine.py`,
   `allocator_adjustment.py`, and related scoring modules. This is the legacy
   allocator-facing path; its operational status remains a user decision.
-- **Historical ML-policy research:** `ml_policy_common.py` and
-  `ml_policy_application.py`, `ml_policy_validation.py`, `ml_policy_sweep.py`,
-  `ml_policy_permutation.py`. The old commands remain in `scripts/` as wrappers;
+- **Historical ML-policy research:** [`ml_policy/`](ml_policy/) contains common
+  logic plus application, validation, sweep, and permutation modules. The old
+  commands remain in `scripts/` as wrappers;
   this line is research tooling, not current event-learning authority.
 - **Current event-learning/LLM research:** event schemas/fact tables,
   `llm_event_classifier.py`, `llm_feature_join.py`, NLP runtime and feature
@@ -39,9 +39,13 @@ Important commands
 Tests
 -----
 
-`scripts/test_ml_policy_family.py` is an offline contract test. Other
+`tests/test_ml_policy_family.py` is an offline contract test. Other
 intelligence checks may require data or providers; do not infer current
 authority from versioned filenames.
+
+The ML-policy files are now grouped in the compact `intelligence/ml_policy/`
+subpackage. The four historical command wrappers remain the compatibility
+boundary.
 
 See also
 --------

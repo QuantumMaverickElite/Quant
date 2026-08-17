@@ -15,9 +15,9 @@ The reorganization rule is simple:
 Run from the repository root:
 
 ```bash
-python scripts/reorg_audit.py --out outputs/reorg_audit/latest
-python scripts/reorg_sacred_smoke.py --manifest configs/sacred_scripts.json --dry-run
-python scripts/reorg_phase0_inventory.py --root .
+python tools/reorg/reorg_audit.py --out outputs/reorg_audit/latest
+python tools/reorg/reorg_sacred_smoke.py --manifest configs/sacred_scripts.json --dry-run
+python tools/reorg/reorg_phase0_inventory.py --root .
 ```
 
 The Phase 0 control documents are:

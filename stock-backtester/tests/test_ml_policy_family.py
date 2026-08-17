@@ -26,10 +26,10 @@ except ImportError:  # pragma: no cover - dependency-light environments
 class MLPolicyFamilyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from backtester.intelligence import ml_policy_application as application
-        from backtester.intelligence import ml_policy_permutation as permutation
-        from backtester.intelligence import ml_policy_sweep as sweep
-        from backtester.intelligence import ml_policy_validation as validation
+        from backtester.intelligence.ml_policy import application
+        from backtester.intelligence.ml_policy import permutation
+        from backtester.intelligence.ml_policy import sweep
+        from backtester.intelligence.ml_policy import validation
 
         cls.application = application
         cls.permutation = permutation
@@ -50,7 +50,7 @@ class MLPolicyFamilyTests(unittest.TestCase):
 
     @staticmethod
     def load_compatibility_script(script_name: str):
-        path = Path(__file__).with_name(script_name)
+        path = Path(__file__).resolve().parents[1] / "scripts" / script_name
         spec = importlib.util.spec_from_file_location(f"compat_{path.stem}", path)
         module = importlib.util.module_from_spec(spec)
         assert spec.loader is not None

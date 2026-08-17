@@ -6,7 +6,7 @@ Machine-readable source: [scripts.csv](scripts.csv).
 
 Classification is evidence-assisted static analysis of imports, references, documentation, path contracts, and directory role. UNCERTAIN means the repository did not provide enough evidence for a safe semantic decision.
 
-Phase 1/2 migration note: the four ML-policy scripts now remain as compatibility wrappers around `src/backtester/intelligence/ml_policy_*.py`; their policy calculations, CLI contracts, and output schemas were not changed. See [ML_POLICY_SCRIPT_FAMILY.md](ML_POLICY_SCRIPT_FAMILY.md).
+Phase 1/2/6 migration note: the four ML-policy scripts remain compatibility wrappers around `src/backtester/intelligence/ml_policy/`; their policy calculations, CLI contracts, and output schemas were not changed. See [ML_POLICY_SCRIPT_FAMILY.md](ML_POLICY_SCRIPT_FAMILY.md).
 
 Phase 3 note: the registry pilot describes those four commands and a small number of mean-reversion/large-universe workflows without reclassifying the remaining 186-script inventory.
 
@@ -134,11 +134,11 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/plot_regime_deformation_diagnostics.py | VISUALIZATION | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/plot_rust_stress_report.py | VISUALIZATION | rust_stress | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/prune_intelligence_training_runs.py | MAINTENANCE TOOL | intelligence | ACTIVE RESEARCH | no | HIGH | HIGH | src/quant_research or research/experiments |
-| scripts/reorg_audit.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
-| scripts/reorg_file_inventory.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
-| scripts/reorg_import_graph.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
-| scripts/reorg_overlay_inventory.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
-| scripts/reorg_sacred_smoke.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
+| tools/reorg/reorg_audit.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | tools/reorg |
+| tools/reorg/reorg_file_inventory.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | tools/reorg |
+| tools/reorg/reorg_import_graph.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | tools/reorg |
+| tools/reorg/reorg_overlay_inventory.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | tools/reorg |
+| tools/reorg/reorg_sacred_smoke.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | tools/reorg |
 | scripts/resolve_entities.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/run_allocator_market_fabric_latest.sh | VISUALIZATION | market_fabric | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/run_combined_allocator_market_fabric.sh | VISUALIZATION | market_fabric | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |

@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).with_name("reorg_phase0_inventory.py")
+SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "reorg" / "reorg_phase0_inventory.py"
 SPEC = importlib.util.spec_from_file_location("reorg_phase0_inventory", SCRIPT)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)

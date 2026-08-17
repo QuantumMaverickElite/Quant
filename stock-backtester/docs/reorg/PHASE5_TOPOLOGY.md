@@ -12,6 +12,11 @@ They therefore remain in place until a writable topology slice can use `git mv`.
 The remaining test-named programs are data-dependent or synthetic smoke tools
 and require separate classification before movement.
 
+Phase 6 physically moved the five offline tests, six maintenance tools, and the
+historical ML-policy family. See
+[`PHASE6_PHYSICAL_TOPOLOGY.md`](PHASE6_PHYSICAL_TOPOLOGY.md) for counts,
+compatibility, and the next physical targets.
+
 Root overlay directories are ignored/untracked and cannot be protected by Git.
 No overlay was touched. A future, explicitly approved archival operation should
 verify the lineage manifest and preserve bundles under a dedicated archive such
