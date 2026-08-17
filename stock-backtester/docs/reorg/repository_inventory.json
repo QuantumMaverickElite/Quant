@@ -1,0 +1,21 @@
+{
+  "classification_policy": "bounded source/doc scan; bulk trees represented by directory metadata only",
+  "excluded_bulk_trees": [
+    "stock-backtester/.venv",
+    "stock-backtester/.vnev",
+    "stock-backtester/outputs",
+    "stock-backtester/data",
+    "stock-backtester/rust_engine/target",
+    "stock-backtester/archive",
+    "worker_ingest"
+  ],
+  "overlay_directory_count": 66,
+  "overlay_file_count": 289,
+  "project_root": "stock-backtester",
+  "tracked_config_count": 3,
+  "tracked_doc_count": 116,
+  "tracked_file_count": 443,
+  "tracked_python_count": 295,
+  "tracked_script_count": 186
+}
+

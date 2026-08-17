@@ -22,8 +22,15 @@ def load_policy(root: Path) -> dict[str, Any]:
     return {"ignore_dirs": [".git", ".venv", "__pycache__", "outputs", "data", "target"]}
 
 
-def is_ignored(rel: PurePosixPath, ignore_dirs: set[str]) -> bool:
-    return any(part in ignore_dirs for part in rel.parts)
+def is_ignored(rel: PurePosixPath, ignore_dirs: set[str], include_overlays: bool = False) -> bool:
+    if any(part in ignore_dirs for part in rel.parts):
+        return True
+    if not include_overlays and any(
+        part.startswith("market_intelligence_") and part.endswith("_overlay")
+        for part in rel.parts
+    ):
+        return True
+    return False
 
 
 def module_name_for_file(rel: PurePosixPath) -> str:
@@ -73,7 +80,7 @@ def main() -> int:
     py_files: list[Path] = []
     for path in sorted(root.rglob("*.py")):
         rel = PurePosixPath(path.relative_to(root).as_posix())
-        if is_ignored(rel, ignore_dirs):
+        if is_ignored(rel, ignore_dirs, args.include_overlays):
             continue
         py_files.append(path)
 

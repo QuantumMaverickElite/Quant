@@ -3,6 +3,7 @@
   "ignore_dirs": [
     ".git",
     ".venv",
+    ".vnev",
     "__pycache__",
     ".mypy_cache",
     ".pytest_cache",

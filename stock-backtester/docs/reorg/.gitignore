@@ -1,0 +1,3 @@
+# Phase 0 manifests are source-controlled evidence, even though bulk CSV
+# artifacts are ignored elsewhere in the repository.
+!*.csv
