@@ -108,6 +108,17 @@ Completed on `reorg/phase0-authority-inventory`:
   further combined-signal research moves require their own path/subprocess
   review.
 
+## Phase 11 status — combined-signal research expansion
+
+- Four additional allocator/signal research programs now live under
+  `research/combined_signals/`: the two allocator-signal builders and the two
+  Monte Carlo analyses.
+- Their repository-root discovery, CLI defaults, seeds, iteration defaults,
+  and output paths are preserved.
+- The v1/v2 builder authority boundary remains unresolved; both are retained.
+- `simulate_intelligence_equity_curves.py` remains in `scripts/` because a
+  historical stress runner invokes its exact module path.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.

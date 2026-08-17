@@ -39,8 +39,8 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/benchmark_array_backend.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/benchmark_matrix_batch_ops.py | EVALUATION / BENCHMARK | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/benchmark_same_universe_buy_hold.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/build_allocator_intelligence_signals.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/build_allocator_intelligence_signals_v2.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/combined_signals/build_allocator_intelligence_signals.py | DATA TRANSFORMATION | combined_signals | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/combined_signals |
+| research/combined_signals/build_allocator_intelligence_signals_v2.py | DATA TRANSFORMATION | combined_signals | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/combined_signals |
 | scripts/build_combined_market_signal_state.py | DATA TRANSFORMATION | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/build_contextual_event_features.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/build_entity_master.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
@@ -121,10 +121,10 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/merge_regime_deformation_into_context.py | DATA TRANSFORMATION | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/monitor_intelligence_training.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/monitor_long_intelligence_training.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/monte_carlo_allocator_intelligence.py | EVALUATION / BENCHMARK | intelligence | ACTIVE RESEARCH | no | HIGH | MEDIUM | src/quant_research or research/experiments |
+| research/combined_signals/monte_carlo_allocator_intelligence.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | HIGH | MEDIUM | research/combined_signals |
 | scripts/monte_carlo_from_feature_matrix.py | EVALUATION / BENCHMARK | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/monte_carlo_market_state.py | EVALUATION / BENCHMARK | market_state | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/monte_carlo_strategy_grid.py | EVALUATION / BENCHMARK | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/combined_signals/monte_carlo_strategy_grid.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/combined_signals |
 | scripts/monte_carlo_walk_forward_predictions.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/normalize_worker_sources.py | DATA INGESTION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/parse_cbworker_news_sources.py | DATA INGESTION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |

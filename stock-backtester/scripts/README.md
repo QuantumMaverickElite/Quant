@@ -40,8 +40,9 @@ They are historical ML-policy research tooling, not event-learning authority.
 - **Intelligence and training:** `run_market_intelligence_*`, `build_*intelligence*`,
   `run_*training*`, and `scripts/legacy/intelligence_heuristics/`.
 - **Combined-signal research:** allocator comparisons and diagnostics now live
-  in [`../research/combined_signals/`](../research/combined_signals/); this is
-  research analysis, not the stable command surface.
+  in [`../research/combined_signals/`](../research/combined_signals/), along
+  with allocator-signal builders and Monte Carlo comparisons; this is research
+  analysis, not the stable command surface.
 - **Rust and matrix acceleration:** `export_rust_*`, `run_*market_fabric*.sh`,
   and Rust stress summarizers.
 - **Visualization:** `visuals/` and `build_market_fabric_*` helpers.
