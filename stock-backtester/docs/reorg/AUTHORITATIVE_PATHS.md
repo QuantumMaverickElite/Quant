@@ -9,6 +9,7 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 | Subsystem | Canonical path | Status | Evidence / boundary |
 |---|---|---|---|
 | Shared tabular I/O | `src/backtester/utils/tables.py` | REUSABLE INFRASTRUCTURE | First Phase 1 extraction; CSV/Parquet dispatch only, with compatibility imports retained through `backtester.intelligence.candidates`. |
+| ML-policy research family | `src/backtester/intelligence/ml_policy_*.py` | ACTIVE RESEARCH / HISTORICAL | v4/v5 research tooling; top-level script paths remain compatibility wrappers and are not event-learning or operational authority. |
 
 | Subsystem | Canonical path | Status | Confidence | Migration risk |
 |---|---|---|---|---|

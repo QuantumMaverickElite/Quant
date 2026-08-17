@@ -16,6 +16,13 @@ Completed on `reorg/phase0-authority-inventory`:
 - Migrated four representative ML-policy research scripts and preserved the existing `backtester.intelligence.candidates.read_table` / `write_table` import paths as compatibility aliases.
 - Remaining table-I/O helpers were intentionally not mass-migrated; their semantics and ownership require separate review.
 
+## Phase 2 status
+
+- Completed the first script-family extraction for the historical ML-policy research line.
+- The four original top-level paths remain compatibility wrappers with symbol re-exports and unchanged CLI parsers/defaults.
+- Shared column detection now has one family-owned helper; workflow-specific statistical and policy logic remains separate.
+- No event-learning, operational intelligence, allocator, or production behavior was changed.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.
