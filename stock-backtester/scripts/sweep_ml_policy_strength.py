@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from backtester.utils.tables import read_table, write_table
+
 
 BASELINE_CONFIDENCE_CANDIDATES = (
     "allocator_confidence_pre_intelligence",
@@ -49,26 +51,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--focus-return-col", default="next_10d_return")
     parser.add_argument("--focus-top-n", type=int, default=10)
     return parser.parse_args()
-
-
-def read_table(path: Path) -> pd.DataFrame:
-    suffix = path.suffix.lower()
-    if suffix == ".csv":
-        return pd.read_csv(path)
-    if suffix in {".parquet", ".pq"}:
-        return pd.read_parquet(path)
-    raise ValueError(f"Unsupported file type: {path}")
-
-
-def write_table(df: pd.DataFrame, path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    suffix = path.suffix.lower()
-    if suffix == ".csv":
-        df.to_csv(path, index=False)
-    elif suffix in {".parquet", ".pq"}:
-        df.to_parquet(path, index=False)
-    else:
-        raise ValueError(f"Unsupported file type: {path}")
 
 
 def detect_col(df: pd.DataFrame, requested: str | None, candidates: tuple[str, ...], label: str) -> str:

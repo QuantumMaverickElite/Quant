@@ -6,6 +6,8 @@ Machine-readable source: [scripts.csv](scripts.csv).
 
 Classification is evidence-assisted static analysis of imports, references, documentation, path contracts, and directory role. UNCERTAIN means the repository did not provide enough evidence for a safe semantic decision.
 
+Phase 1 migration note: `permutation_test_ml_policy.py`, `validate_ml_policy_candidate.py`, `apply_ml_policy_strength.py`, and `sweep_ml_policy_strength.py` now import the shared table utility. Their policy calculations and output schemas were not changed.
+
 | path | classification | subsystem | status | sacred | migration_risk | confidence | likely_destination |
 |---|---|---|---|---|---|---|---|
 | scripts/__init__.py | UNCERTAIN | general | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |

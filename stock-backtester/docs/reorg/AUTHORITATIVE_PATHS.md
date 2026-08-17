@@ -6,6 +6,10 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 
 ## Authority summary
 
+| Subsystem | Canonical path | Status | Evidence / boundary |
+|---|---|---|---|
+| Shared tabular I/O | `src/backtester/utils/tables.py` | REUSABLE INFRASTRUCTURE | First Phase 1 extraction; CSV/Parquet dispatch only, with compatibility imports retained through `backtester.intelligence.candidates`. |
+
 | Subsystem | Canonical path | Status | Confidence | Migration risk |
 |---|---|---|---|---|
 | Packaged backtester | `src/backtester/cli.py`, `src/backtester/engines/` | ACTIVE CORE | HIGH | MEDIUM |

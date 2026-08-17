@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from ..utils.tables import read_table, write_table
+
 
 TICKER_COLUMNS = [
     "ticker",
@@ -37,28 +39,6 @@ RANK_COLUMNS_ASC = [
     "rank",
     "market_cap_rank",
 ]
-
-
-def read_table(path: str | Path) -> pd.DataFrame:
-    path = Path(path)
-    suffix = path.suffix.lower()
-    if suffix in {".parquet", ".pq"}:
-        return pd.read_parquet(path)
-    if suffix == ".csv":
-        return pd.read_csv(path)
-    raise ValueError(f"Unsupported table type: {path}")
-
-
-def write_table(df: pd.DataFrame, path: str | Path) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    suffix = path.suffix.lower()
-    if suffix in {".parquet", ".pq"}:
-        df.to_parquet(path, index=False)
-    elif suffix == ".csv":
-        df.to_csv(path, index=False)
-    else:
-        raise ValueError(f"Unsupported table type: {path}")
 
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
