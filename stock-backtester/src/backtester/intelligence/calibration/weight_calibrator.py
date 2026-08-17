@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from .calibration_dataset import feature_columns
-from .candidates import read_table
+from ..candidates import read_table
 
 
 def standardize(x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

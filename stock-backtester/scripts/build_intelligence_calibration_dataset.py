@@ -9,7 +9,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from backtester.intelligence.calibration_dataset import build_calibration_dataset, feature_columns
+from backtester.intelligence.calibration.calibration_dataset import build_calibration_dataset, feature_columns
 
 
 def parse_args() -> argparse.Namespace:

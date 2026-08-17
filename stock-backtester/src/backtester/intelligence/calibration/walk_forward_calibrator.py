@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from .calibration_dataset import feature_columns
-from .candidates import detect_date_column, detect_ticker_column, read_table, write_table
+from ..candidates import detect_date_column, detect_ticker_column, read_table, write_table
 from .weight_calibrator import logistic_fit, ridge_fit, sigmoid
 
 

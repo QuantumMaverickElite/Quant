@@ -86,6 +86,19 @@ Completed on `reorg/phase0-authority-inventory`:
   worker and path contracts have not yet been verified for movement.
 - No feature, sentiment, panel, provider, or training behavior changed.
 
+## Phase 9 status — intelligence calibration topology
+
+- The user-performed move grouped `calibration_dataset.py`,
+  `walk_forward_calibrator.py`, and `weight_calibrator.py` under
+  `src/backtester/intelligence/calibration/`.
+- Script imports and moved-module imports now target the calibration package.
+- Existing calibration parquet, prediction/summary, and weight-calibration
+  JSON paths and schemas remain unchanged.
+- `historical_feature_builder.py` remains at the intelligence root as the
+  SEC-specific feature builder.
+- Intelligence topology cleanup should pause after this repair; the next
+  physical forensics target is a coherent family under `scripts/`.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.
@@ -95,7 +108,7 @@ Completed on `reorg/phase0-authority-inventory`:
 
 ## Explicitly untouched
 
-No production algorithms, strategy behavior, signal formulas, allocators, intelligence behavior, workers, Rust behavior, output schemas, data files, overlays, historical backtests, or generated output trees were moved, deleted, or rewritten. The only import changes are the selected table-I/O compatibility imports described above.
+No production algorithms, strategy behavior, signal formulas, allocators, intelligence behavior, workers, Rust behavior, output schemas, data files, overlays, historical backtests, or generated output trees were moved, deleted, or rewritten. Import changes are limited to the behavior-preserving package topology repairs recorded for the completed phases.
 
 ## Future sequence
 

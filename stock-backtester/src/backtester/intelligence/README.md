@@ -27,12 +27,17 @@ Current implementation and authority
   construction. It is downstream of source acquisition and upstream of
   calibration/training; it is distinct from `events/` and `llm/`, and is not
   allocator authority.
+- **Calibration:** [`calibration/`](calibration/) contains calibration-dataset
+  construction, fitted intelligence weights, and time-safe walk-forward
+  calibration/evaluation. It consumes feature tables and produces research
+  artifacts; it is not allocator authority.
 - **Operational/evaluation:** remaining allocator-facing and heuristic/fallback
   modules stay at this root until their compatibility contracts are mapped.
 - **Provider/ingestion:** historical source collectors and provider policy stay
   at this root for now.
-- **Learning/calibration:** calibration and walk-forward modules stay at this
-  root for now.
+- **SEC historical features:** `historical_feature_builder.py` remains at this
+  root as the SEC-specific point-in-time feature builder; it is separate from
+  calibration and from the news-oriented `features/` family.
 
 Connects to
 -----------

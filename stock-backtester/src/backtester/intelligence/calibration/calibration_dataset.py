@@ -5,7 +5,7 @@ import re
 
 import pandas as pd
 
-from .candidates import detect_date_column, detect_ticker_column, read_table, write_table
+from ..candidates import detect_date_column, detect_ticker_column, read_table, write_table
 
 
 def latest_per_query(features: pd.DataFrame) -> pd.DataFrame:

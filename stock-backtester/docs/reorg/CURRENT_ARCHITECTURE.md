@@ -74,6 +74,13 @@ The current implementation is physically grouped as:
   research transformation layer between source acquisition and learning;
   it is not the `events/` schema layer, the `llm/` runtime layer, or allocator
   authority.
+- `src/backtester/intelligence/calibration/` — calibration dataset assembly,
+  fitted intelligence weights, and time-safe walk-forward calibration. It
+  consumes research feature tables and preserves the existing calibration
+  artifact paths; it is not a promoted allocator authority.
+- `src/backtester/intelligence/historical_feature_builder.py` remains at the
+  root as the SEC-specific historical feature builder, separate from both
+  `features/` and `calibration/` for now.
 
 ## Computational regimes
 

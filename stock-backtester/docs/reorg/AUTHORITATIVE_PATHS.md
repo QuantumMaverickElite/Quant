@@ -13,6 +13,7 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 | Event-learning package | `src/backtester/intelligence/events/` | ACTIVE RESEARCH | Facts, labels, impact datasets, event-day aggregation, and event features; not allocator authority. |
 | LLM/event-extraction package | `src/backtester/intelligence/llm/` | ACTIVE RESEARCH | Contextual extraction, semantic classification, LLM joins, and NLP runtime; structured features only. |
 | Historical intelligence features | `src/backtester/intelligence/features/` | ACTIVE RESEARCH | Historical news feature, sentiment, and panel construction downstream of source acquisition and upstream of calibration; not allocator authority. |
+| Intelligence calibration | `src/backtester/intelligence/calibration/` | ACTIVE RESEARCH | Calibration dataset construction, fitted weights, and time-safe walk-forward evaluation; output schemas and paths remain unchanged. |
 | Repository navigation spine | `README.md`, subsystem `README.md` files, `docs/README.md`, `scripts/README.md` | DOCUMENTATION / TOOLING | Phase 5 entry points; descriptive only and not an execution authority. |
 | Dividend-capture future ownership | `src/backtester/strategies/dividend_capture/` (future), `research/strategies/dividend_capture/` (future) | ACTIVE RESEARCH / PLANNED | Explicitly no longer a long-term root peer; forensics required before movement. |
 | Experiment registry | `src/backtester/experiments.py` | REUSABLE INFRASTRUCTURE | Read-only typed discovery metadata for a small pilot; no execution authority. |
