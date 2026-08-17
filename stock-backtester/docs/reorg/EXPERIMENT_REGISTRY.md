@@ -29,6 +29,16 @@ PYTHONPATH=src python -m backtester.experiments list --json
 The registry does not implement `plan`, `run`, stress execution, process
 orchestration, or UI integration.
 
+Phase 4 adds typed configuration discovery:
+
+```bash
+PYTHONPATH=src python -m backtester.experiments config intelligence.ml_policy.permutation
+PYTHONPATH=src python -m backtester.experiments config intelligence.ml_policy.permutation --set permutations=5000
+```
+
+Parameter descriptions and current defaults remain in the registry metadata;
+the configuration command only validates and displays them.
+
 ## Pilot scope
 
 The pilot registers the four historical ML-policy research experiments, the

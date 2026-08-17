@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -31,7 +31,54 @@ class ParameterSpec:
     maximum: float | int | None = None
     cli_flag: str | None = None
     mode: ParameterMode = "FIXED"
+    supported_modes: tuple[ParameterMode, ...] = ("FIXED",)
     configurable: bool = True
+    required: bool = False
+    nullable: bool = True
+    repeatable: bool = False
+    source_kind: str = "UNKNOWN"
+    source_path: str | None = None
+    source_symbol: str | None = None
+
+
+@dataclass(frozen=True)
+class FixedValue:
+    value: Any
+    mode: Literal["FIXED"] = "FIXED"
+
+
+@dataclass(frozen=True)
+class ChoiceValue:
+    values: tuple[Any, ...]
+    mode: Literal["CHOICE"] = "CHOICE"
+
+
+@dataclass(frozen=True)
+class SweepValue:
+    start: int | float
+    stop: int | float
+    step: int | float
+    mode: Literal["SWEEP"] = "SWEEP"
+
+
+@dataclass(frozen=True)
+class RandomValue:
+    distribution: Literal["uniform", "integer_uniform", "choice"]
+    minimum: int | float | None = None
+    maximum: int | float | None = None
+    choices: tuple[Any, ...] = ()
+    mode: Literal["RANDOM"] = "RANDOM"
+
+
+ConfigValue = FixedValue | ChoiceValue | SweepValue | RandomValue
+
+
+@dataclass(frozen=True)
+class ExperimentConfig:
+    experiment_id: str
+    parameters: dict[str, ConfigValue]
+    name: str | None = None
+    notes: str = ""
 
 
 @dataclass(frozen=True)
@@ -129,7 +176,13 @@ def _p(
     minimum: float | int | None = None,
     maximum: float | int | None = None,
     mode: ParameterMode = "FIXED",
+    supported_modes: tuple[ParameterMode, ...] = ("FIXED",),
+    source_kind: str = "CLI_DEFAULT",
+    source_path: str | None = None,
+    source_symbol: str | None = "parse_args",
 ) -> ParameterSpec:
+    if supported_modes == ("FIXED",) and mode != "FIXED":
+        supported_modes = ("CHOICE", mode)
     return ParameterSpec(
         id=id,
         display_name=display_name,
@@ -143,6 +196,10 @@ def _p(
         minimum=minimum,
         maximum=maximum,
         mode=mode,
+        supported_modes=supported_modes,
+        source_kind=source_kind,
+        source_path=source_path,
+        source_symbol=source_symbol,
     )
 
 
@@ -182,7 +239,255 @@ def build_registry() -> Registry:
         ExperimentSpec("signals.mean_reversion.peer_spread_baseline", "Peer-spread mean-reversion baseline", "Generate mean-reversion signals from peer-spread features using the documented command defaults.", "ACTIVE CORE", "mean_reversion", "mean_reversion", "ACTIVE CORE", "pipeline.large_universe.mean_reversion", ("signals.mean_reversion.builder",), ("command.signals.mean_reversion.builder",), ("scripts/run_mean_reversion_signals.py", "src/backtester/signals/mean_reversion.py"), ("docs/large_universe_pipline.md",), (), ("outputs/correlation/peer_spreads.parquet",), ("outputs/signals/mean_reversion_signals.parquet",), (_p("min_abs_z", "Minimum absolute z-score", "float", 1.5, "Minimum peer-spread z-score.", "signals.mean_reversion", cli_flag="--min-abs-z"), _p("min_peer_corr", "Minimum peer correlation", "float", 0.30, "Minimum top-k average peer correlation.", "signals.mean_reversion", cli_flag="--min-peer-corr"), _p("allow_short", "Allow short signals", "boolean", False, "Enable both long and short signals.", "signals.mean_reversion", cli_flag="--allow-short")), ("baseline", "mean-reversion", "peer-spread"), ("scripts/run_mean_reversion_signals.py",), "The command is authoritative for this baseline; no H20/H100 variant is inferred."),
         ExperimentSpec("pipeline.large_universe.deformation_weighted", "Deformation-weighted mean-reversion research", "Apply documented correlation-deformation weights to context-adjusted mean-reversion signals.", "ACTIVE RESEARCH", "mean_reversion", "correlation_deformation", "ACTIVE RESEARCH", "pipeline.large_universe.mean_reversion", ("signals.mean_reversion.builder", "research.large_universe.peer_spreads"), (), ("scripts/apply_deformation_weights_to_mean_reversion_signals.py",), ("docs/research_notes/regime_correlation_deformation.md",), (), ("outputs/signals/mean_reversion_signals_context_adjusted.parquet", "outputs/context/market_context_with_regime_deformation.parquet"), ("outputs/signals/mean_reversion_signals_deformation_weighted.parquet",), (), ("deformation", "mean-reversion", "research"), (), "Parameter authority remains in the script and research notes; no unverified defaults are added here.", True),
     )
+    parameter_sources = {
+        "intelligence.ml_policy.application": "scripts/apply_ml_policy_strength.py",
+        "intelligence.ml_policy.validation": "scripts/validate_ml_policy_candidate.py",
+        "intelligence.ml_policy.sweep": "scripts/sweep_ml_policy_strength.py",
+        "intelligence.ml_policy.permutation": "scripts/permutation_test_ml_policy.py",
+        "signals.mean_reversion.peer_spread_baseline": "scripts/run_mean_reversion_signals.py",
+    }
+    experiments = tuple(
+        replace(
+            experiment,
+            parameters=tuple(
+                replace(parameter, source_path=parameter_sources.get(experiment.id))
+                for parameter in experiment.parameters
+            ),
+        )
+        for experiment in experiments
+    )
     return Registry(components=components, pipelines=pipelines, experiments=experiments, commands=commands)
+
+
+def _experiment(registry: Registry, experiment_id: str) -> ExperimentSpec:
+    for experiment in registry.experiments:
+        if experiment.id == experiment_id:
+            return experiment
+    raise ValueError(f"Unknown experiment ID: {experiment_id}")
+
+
+def _parameter_map(experiment: ExperimentSpec) -> dict[str, ParameterSpec]:
+    return {parameter.id: parameter for parameter in experiment.parameters}
+
+
+def default_config(experiment_id: str, registry: Registry | None = None) -> ExperimentConfig:
+    registry = registry or build_registry()
+    experiment = _experiment(registry, experiment_id)
+    values: dict[str, ConfigValue] = {}
+    for parameter in experiment.parameters:
+        if parameter.type == "list":
+            values[parameter.id] = ChoiceValue(tuple(parameter.default or ()))
+        else:
+            values[parameter.id] = FixedValue(parameter.default)
+    config = ExperimentConfig(experiment_id=experiment.id, parameters=values)
+    errors = validate_config(config, registry)
+    if errors:
+        raise ValueError("Invalid default configuration: " + "; ".join(errors))
+    return config
+
+
+def _type_matches(parameter: ParameterSpec, value: Any) -> bool:
+    if value is None:
+        return parameter.nullable
+    if parameter.type == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if parameter.type == "float":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if parameter.type == "boolean":
+        return isinstance(value, bool)
+    if parameter.type in {"string", "path", "enum"}:
+        return isinstance(value, str)
+    if parameter.type == "list":
+        return isinstance(value, (list, tuple))
+    return False
+
+
+def _scalar_valid(parameter: ParameterSpec, value: Any) -> str | None:
+    if not _type_matches(parameter, value):
+        return f"parameter {parameter.id} expects {parameter.type}, got {type(value).__name__}"
+    if value is None:
+        return None
+    if parameter.type == "enum" and parameter.allowed_values and value not in parameter.allowed_values:
+        return f"parameter {parameter.id} must be one of {list(parameter.allowed_values)!r}"
+    if parameter.minimum is not None and value < parameter.minimum:
+        return f"parameter {parameter.id} is below minimum {parameter.minimum}"
+    if parameter.maximum is not None and value > parameter.maximum:
+        return f"parameter {parameter.id} is above maximum {parameter.maximum}"
+    return None
+
+
+def _validate_config_value(parameter: ParameterSpec, value: ConfigValue) -> list[str]:
+    errors: list[str] = []
+    mode = value.mode
+    if mode not in parameter.supported_modes:
+        errors.append(f"parameter {parameter.id} does not support mode {mode}")
+        return errors
+    if isinstance(value, FixedValue):
+        error = _scalar_valid(parameter, value.value)
+        if error:
+            errors.append(error)
+    elif isinstance(value, ChoiceValue):
+        if not value.values:
+            errors.append(f"choice parameter {parameter.id} cannot be empty")
+        if parameter.type == "list":
+            if any(item is None for item in value.values):
+                errors.append(f"choice parameter {parameter.id} contains null")
+        else:
+            for item in value.values:
+                error = _scalar_valid(parameter, item)
+                if error:
+                    errors.append(error)
+    elif isinstance(value, SweepValue):
+        if parameter.type not in {"integer", "float"}:
+            errors.append(f"sweep parameter {parameter.id} must be numeric")
+        for field_name, item in (("start", value.start), ("stop", value.stop), ("step", value.step)):
+            error = _scalar_valid(parameter, item)
+            if error:
+                errors.append(f"{parameter.id}.{field_name}: {error}")
+        if value.step == 0:
+            errors.append(f"sweep parameter {parameter.id} has zero step")
+        elif value.start < value.stop and value.step < 0:
+            errors.append(f"sweep parameter {parameter.id} step must be positive")
+        elif value.start > value.stop and value.step > 0:
+            errors.append(f"sweep parameter {parameter.id} step must be negative")
+    elif isinstance(value, RandomValue):
+        if value.distribution not in {"uniform", "integer_uniform", "choice"}:
+            errors.append(f"random parameter {parameter.id} has unsupported distribution {value.distribution}")
+        if value.distribution == "choice":
+            if not value.choices:
+                errors.append(f"random choice parameter {parameter.id} cannot be empty")
+            for item in value.choices:
+                error = _scalar_valid(parameter, item)
+                if error:
+                    errors.append(error)
+        else:
+            if value.minimum is None or value.maximum is None:
+                errors.append(f"random parameter {parameter.id} requires minimum and maximum")
+            elif value.minimum > value.maximum:
+                errors.append(f"random parameter {parameter.id} minimum exceeds maximum")
+            else:
+                for item in (value.minimum, value.maximum):
+                    error = _scalar_valid(parameter, item)
+                    if error:
+                        errors.append(error)
+            if value.distribution == "integer_uniform" and parameter.type != "integer":
+                errors.append(f"integer_uniform parameter {parameter.id} must be integer")
+    return errors
+
+
+def validate_config(config: ExperimentConfig, registry: Registry | None = None) -> list[str]:
+    registry = registry or build_registry()
+    try:
+        experiment = _experiment(registry, config.experiment_id)
+    except ValueError as exc:
+        return [str(exc)]
+    specs = _parameter_map(experiment)
+    errors: list[str] = []
+    unknown = sorted(set(config.parameters) - set(specs))
+    errors.extend(f"unknown parameter: {config.experiment_id}: {item}" for item in unknown)
+    for parameter in experiment.parameters:
+        if parameter.required and parameter.id not in config.parameters and parameter.default is None:
+            errors.append(f"missing required parameter: {parameter.id}")
+    for parameter_id, value in config.parameters.items():
+        if parameter_id in specs:
+            if not specs[parameter_id].configurable:
+                errors.append(f"parameter is not configurable: {parameter_id}")
+            errors.extend(_validate_config_value(specs[parameter_id], value))
+    return sorted(errors)
+
+
+def resolve_config(config: ExperimentConfig, registry: Registry | None = None) -> ExperimentConfig:
+    registry = registry or build_registry()
+    defaults = default_config(config.experiment_id, registry)
+    merged = dict(defaults.parameters)
+    merged.update(config.parameters)
+    resolved = ExperimentConfig(config.experiment_id, merged, config.name, config.notes)
+    errors = validate_config(resolved, registry)
+    if errors:
+        raise ValueError("Invalid configuration: " + "; ".join(errors))
+    return resolved
+
+
+def config_to_dict(config: ExperimentConfig, registry: Registry | None = None) -> dict[str, Any]:
+    resolved = resolve_config(config, registry)
+    parameters: dict[str, Any] = {}
+    for parameter_id in sorted(resolved.parameters):
+        parameters[parameter_id] = asdict(resolved.parameters[parameter_id])
+    return {"experiment_id": resolved.experiment_id, "name": resolved.name, "notes": resolved.notes, "parameters": parameters}
+
+
+def config_to_json(config: ExperimentConfig, registry: Registry | None = None) -> str:
+    return _json(config_to_dict(config, registry))
+
+
+def config_from_dict(payload: dict[str, Any], registry: Registry | None = None) -> ExperimentConfig:
+    if not isinstance(payload, dict) or not isinstance(payload.get("experiment_id"), str):
+        raise ValueError("configuration requires an experiment_id")
+    raw_parameters = payload.get("parameters", {})
+    if not isinstance(raw_parameters, dict):
+        raise ValueError("configuration parameters must be an object")
+    values: dict[str, ConfigValue] = {}
+    for parameter_id, raw in raw_parameters.items():
+        if not isinstance(raw, dict) or raw.get("mode") not in {"FIXED", "CHOICE", "SWEEP", "RANDOM"}:
+            raise ValueError(f"invalid configuration value for {parameter_id}")
+        mode = raw["mode"]
+        if mode == "FIXED":
+            values[parameter_id] = FixedValue(raw.get("value"))
+        elif mode == "CHOICE":
+            values[parameter_id] = ChoiceValue(tuple(raw.get("values", ())))
+        elif mode == "SWEEP":
+            values[parameter_id] = SweepValue(raw.get("start"), raw.get("stop"), raw.get("step"))
+        else:
+            values[parameter_id] = RandomValue(raw.get("distribution"), raw.get("minimum"), raw.get("maximum"), tuple(raw.get("choices", ())))
+    config = ExperimentConfig(payload["experiment_id"], values, payload.get("name"), payload.get("notes", ""))
+    errors = validate_config(config, registry)
+    if errors:
+        raise ValueError("Invalid configuration: " + "; ".join(errors))
+    return resolve_config(config, registry)
+
+
+def load_config_json(text: str, registry: Registry | None = None) -> ExperimentConfig:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid configuration JSON: {exc}") from exc
+    return config_from_dict(payload, registry)
+
+
+def apply_overrides(config: ExperimentConfig, overrides: list[str], registry: Registry | None = None) -> ExperimentConfig:
+    registry = registry or build_registry()
+    resolved = resolve_config(config, registry)
+    specs = _parameter_map(_experiment(registry, config.experiment_id))
+    values = dict(resolved.parameters)
+    for override in overrides:
+        if "=" not in override:
+            raise ValueError(f"override must be NAME=VALUE: {override}")
+        parameter_id, raw = override.split("=", 1)
+        parameter_id = parameter_id.strip()
+        if parameter_id not in specs:
+            raise ValueError(f"unknown parameter: {parameter_id}")
+        parameter = specs[parameter_id]
+        try:
+            if parameter.type == "boolean":
+                if raw.lower() not in {"true", "false"}:
+                    raise ValueError("expected true or false")
+                value: Any = raw.lower() == "true"
+            elif parameter.type == "integer":
+                value = int(raw)
+            elif parameter.type == "float":
+                value = float(raw)
+            elif parameter.type == "list":
+                value = json.loads(raw)
+            else:
+                value = raw
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ValueError(f"invalid value for parameter {parameter_id}: {raw!r}") from exc
+        values[parameter_id] = FixedValue(value)
+    result = ExperimentConfig(config.experiment_id, values, config.name, config.notes)
+    errors = validate_config(result, registry)
+    if errors:
+        raise ValueError("Invalid override: " + "; ".join(errors))
+    return result
 
 
 def _path_exists(root: Path, path: str) -> bool:
@@ -302,6 +607,35 @@ def _print_describe(registry: Registry, experiment_id: str, as_json: bool) -> in
     return 0
 
 
+def _print_config(registry: Registry, experiment_id: str, overrides: list[str], as_json: bool) -> int:
+    try:
+        config = default_config(experiment_id, registry)
+        if overrides:
+            config = apply_overrides(config, overrides, registry)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    if as_json:
+        print(config_to_json(config, registry), end="")
+        return 0
+    print(experiment_id)
+    print("PARAMETER       MODE      VALUE")
+    overridden = {item.split("=", 1)[0].strip() for item in overrides if "=" in item}
+    for parameter_id in sorted(config.parameters):
+        value = config.parameters[parameter_id]
+        if isinstance(value, FixedValue):
+            display = repr(value.value)
+        elif isinstance(value, ChoiceValue):
+            display = repr(list(value.values))
+        elif isinstance(value, SweepValue):
+            display = f"{value.start}..{value.stop} step {value.step}"
+        else:
+            display = value.distribution
+        suffix = "  [override]" if parameter_id in overridden else ""
+        print(f"{parameter_id:<15} {value.mode:<9} {display}{suffix}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Read-only research experiment registry discovery.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -312,12 +646,18 @@ def main(argv: list[str] | None = None) -> int:
     describe_parser.add_argument("--json", action="store_true")
     validate_parser = subparsers.add_parser("validate", help="Validate registry references and metadata.")
     validate_parser.add_argument("--json", action="store_true")
+    config_parser = subparsers.add_parser("config", help="Show validated default configuration without running anything.")
+    config_parser.add_argument("experiment_id")
+    config_parser.add_argument("--json", action="store_true")
+    config_parser.add_argument("--set", dest="overrides", action="append", default=[], metavar="NAME=VALUE")
     args = parser.parse_args(argv)
     registry = build_registry()
     if args.command == "list":
         return _print_list(registry, args.json)
     if args.command == "describe":
         return _print_describe(registry, args.experiment_id, args.json)
+    if args.command == "config":
+        return _print_config(registry, args.experiment_id, args.overrides, args.json)
     errors = validate_registry(registry)
     if args.json:
         print(_json({"valid": not errors, "errors": errors}), end="")

@@ -30,6 +30,12 @@ Completed on `reorg/phase0-authority-inventory`:
 - Added deterministic human-readable and JSON discovery commands: `list`, `describe`, and `validate`.
 - Registry discovery is metadata-only; no experiment execution, planning, stress orchestration, or UI was added.
 
+## Phase 4 status
+
+- Evolved the experiment registry with typed `ParameterSpec`, `ExperimentConfig`, fixed/choice/sweep/random value models, provenance metadata, deterministic JSON, and validated in-memory overrides.
+- Added read-only `config` discovery output; no experiment command is invoked and no existing CLI default was changed.
+- Added stdlib-only configuration tests covering type errors, choices, sweep validation, random distribution metadata, overrides, and JSON round trips.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.
