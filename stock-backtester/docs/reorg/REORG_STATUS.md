@@ -23,6 +23,13 @@ Completed on `reorg/phase0-authority-inventory`:
 - Shared column detection now has one family-owned helper; workflow-specific statistical and policy logic remains separate.
 - No event-learning, operational intelligence, allocator, or production behavior was changed.
 
+## Phase 3 status
+
+- Added a stdlib-first typed experiment/component/pipeline/command registry at `src/backtester/experiments.py`.
+- Registered the four historical ML-policy experiments plus a documented mean-reversion baseline, large-universe pipeline, and deformation-weighted research entry.
+- Added deterministic human-readable and JSON discovery commands: `list`, `describe`, and `validate`.
+- Registry discovery is metadata-only; no experiment execution, planning, stress orchestration, or UI was added.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.
@@ -51,6 +58,7 @@ No production algorithms, strategy behavior, signal formulas, allocators, intell
 - Add offline contract tests for sacred commands and Rust matrix schemas.
 - Define official compact baseline manifests before touching large outputs.
 - Reconcile dependency specifications in a separate, explicitly approved task.
+- Require new research experiments to document ownership, purpose, inputs, outputs, parameters, command/runner, and test or baseline evidence before registry integration.
 
 ## User decisions required
 

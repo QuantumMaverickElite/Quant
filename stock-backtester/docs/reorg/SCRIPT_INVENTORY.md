@@ -8,6 +8,8 @@ Classification is evidence-assisted static analysis of imports, references, docu
 
 Phase 1/2 migration note: the four ML-policy scripts now remain as compatibility wrappers around `src/backtester/intelligence/ml_policy_*.py`; their policy calculations, CLI contracts, and output schemas were not changed. See [ML_POLICY_SCRIPT_FAMILY.md](ML_POLICY_SCRIPT_FAMILY.md).
 
+Phase 3 note: the registry pilot describes those four commands and a small number of mean-reversion/large-universe workflows without reclassifying the remaining 186-script inventory.
+
 | path | classification | subsystem | status | sacred | migration_risk | confidence | likely_destination |
 |---|---|---|---|---|---|---|---|
 | scripts/__init__.py | UNCERTAIN | general | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
