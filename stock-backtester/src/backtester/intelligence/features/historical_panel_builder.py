@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .candidates import detect_date_column, detect_ticker_column, read_table, write_table
+from ..candidates import detect_date_column, detect_ticker_column, read_table, write_table
 
 
 DEFAULT_RANK_COLUMNS = (

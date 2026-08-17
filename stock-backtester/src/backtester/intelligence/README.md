@@ -22,6 +22,11 @@ Current implementation and authority
   semantic classification/clustering, LLM classification joins, and NLP
   runtime support. This is the current research direction, not automatically an
   allocator replacement.
+- **Features:** [`features/`](features/) contains historical news feature
+  construction, sentiment transformation, and historical research-panel
+  construction. It is downstream of source acquisition and upstream of
+  calibration/training; it is distinct from `events/` and `llm/`, and is not
+  allocator authority.
 - **Operational/evaluation:** remaining allocator-facing and heuristic/fallback
   modules stay at this root until their compatibility contracts are mapped.
 - **Provider/ingestion:** historical source collectors and provider policy stay

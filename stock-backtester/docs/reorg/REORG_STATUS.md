@@ -76,6 +76,16 @@ Completed on `reorg/phase0-authority-inventory`:
 - Remaining provider/ingestion, learning/calibration, and operational/evaluation
   files remain at the intelligence root for later batches.
 
+## Phase 8 status — intelligence feature topology
+
+- The user-performed move grouped historical news feature construction,
+  sentiment transformation, and historical panel construction under
+  `src/backtester/intelligence/features/`.
+- Command paths remain unchanged; their imports now target the features package.
+- Source acquisition/provider modules remain at the intelligence root because
+  worker and path contracts have not yet been verified for movement.
+- No feature, sentiment, panel, provider, or training behavior changed.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.

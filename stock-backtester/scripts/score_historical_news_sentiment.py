@@ -9,7 +9,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from backtester.intelligence.historical_news_sentiment import enrich_historical_news_sentiment
+from backtester.intelligence.features.historical_news_sentiment import enrich_historical_news_sentiment
 
 
 def parse_args() -> argparse.Namespace:

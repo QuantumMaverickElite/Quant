@@ -9,7 +9,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from backtester.intelligence.historical_news_feature_builder import (
+from backtester.intelligence.features.historical_news_feature_builder import (
     DEFAULT_WINDOWS,
     build_and_save_news_features,
     join_news_features_to_signals,

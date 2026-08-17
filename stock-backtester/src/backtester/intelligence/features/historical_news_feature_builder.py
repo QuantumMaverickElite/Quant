@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .candidates import detect_date_column, detect_ticker_column, read_table, write_table
-from .provider_policy import provider_policy, record_passes_policy
+from ..candidates import detect_date_column, detect_ticker_column, read_table, write_table
+from ..provider_policy import provider_policy, record_passes_policy
 
 
 DEFAULT_WINDOWS = (1, 7, 30, 90)

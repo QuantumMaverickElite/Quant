@@ -69,6 +69,11 @@ The current implementation is physically grouped as:
   datasets, event-day aggregation, and event features.
 - `src/backtester/intelligence/llm/` — contextual extraction, semantic
   classification/clustering, LLM classification joins, and NLP runtime.
+- `src/backtester/intelligence/features/` — historical news feature and
+  sentiment transformations plus historical panel construction. This is a
+  research transformation layer between source acquisition and learning;
+  it is not the `events/` schema layer, the `llm/` runtime layer, or allocator
+  authority.
 
 ## Computational regimes
 
