@@ -73,13 +73,13 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | research/combined_signals/compare_allocator_rankings.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/combined_signals |
 | research/correlation/compare_deformation_weight_changed_orders.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
 | scripts/compare_equity_layers.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/compare_fast_v2_drift_thresholds.py | EVALUATION / BENCHMARK | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/threshold_rebalance/compare_fast_v2_drift_thresholds.py | RESEARCH COMPARISON | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/threshold_rebalance |
 | research/event_learning/evaluation/compare_llm_classification_runs.py | BENCHMARK / RESEARCH EXPERIMENT | event_learning_evaluation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/event_learning/evaluation |
 | scripts/compare_rebalance_frequencies.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_regime_by_year.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_regime_runs.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_strategy_vs_buy_hold.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/compare_threshold_portfolios.py | EVALUATION / BENCHMARK | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/threshold_rebalance/compare_threshold_portfolios.py | RESEARCH COMPARISON | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/threshold_rebalance |
 | scripts/create_market_cap_boost_signals.py | DATA TRANSFORMATION | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/create_market_cap_rank_bonus_signals.py | DATA TRANSFORMATION | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/create_market_cap_tiebreaker_signals.py | DATA TRANSFORMATION | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
@@ -122,7 +122,7 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/monitor_intelligence_training.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/monitor_long_intelligence_training.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | research/combined_signals/monte_carlo_allocator_intelligence.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | HIGH | MEDIUM | research/combined_signals |
-| scripts/monte_carlo_from_feature_matrix.py | EVALUATION / BENCHMARK | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/threshold_rebalance/monte_carlo_from_feature_matrix.py | MONTE CARLO RESEARCH | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/threshold_rebalance |
 | scripts/monte_carlo_market_state.py | EVALUATION / BENCHMARK | market_state | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | research/combined_signals/monte_carlo_strategy_grid.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/combined_signals |
 | scripts/monte_carlo_walk_forward_predictions.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |

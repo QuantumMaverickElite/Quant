@@ -60,7 +60,7 @@ while preserving defensive behavior in unstable regimes?
 
 ```text
 scripts/build_market_state_feature_matrix.py
-scripts/monte_carlo_from_feature_matrix.py
+research/threshold_rebalance/monte_carlo_from_feature_matrix.py
 scripts/backtest_market_state_portfolio.py
 scripts/scan_market_state.py
 scripts/test_market_state_trades.py

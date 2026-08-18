@@ -526,7 +526,7 @@ python scripts/build_market_state_feature_matrix.py \
 ### Monte Carlo from Feature Matrix
 
 ```bash
-python scripts/monte_carlo_from_feature_matrix.py \
+python research/threshold_rebalance/monte_carlo_from_feature_matrix.py \
   --feature-path outputs/feature_matrix/market_state_2018_2026_quality/market_state_features.csv \
   --price-path outputs/feature_matrix/market_state_2018_2026_quality/close_prices.csv \
   --runs 100 \

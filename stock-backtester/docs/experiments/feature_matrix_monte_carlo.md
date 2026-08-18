@@ -36,7 +36,7 @@ metadata.csv
 ## Run Monte Carlo
 
 ```bash
-python scripts/monte_carlo_from_feature_matrix.py \
+python research/threshold_rebalance/monte_carlo_from_feature_matrix.py \
   --feature-path outputs/feature_matrix/market_state_2018_2026_quality/market_state_features.csv \
   --price-path outputs/feature_matrix/market_state_2018_2026_quality/close_prices.csv \
   --runs 100 \

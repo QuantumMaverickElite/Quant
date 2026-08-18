@@ -47,6 +47,11 @@ They are historical ML-policy research tooling, not event-learning authority.
   in [`../research/combined_signals/`](../research/combined_signals/), along
   with allocator-signal builders and Monte Carlo comparisons; this is research
   analysis, not the stable command surface.
+- **Threshold-rebalance research:** comparisons and feature-matrix Monte Carlo
+  now live in [`../research/threshold_rebalance/`](../research/threshold_rebalance/).
+  The executable strategy lineage remains here: `threshold_rebalance_fast_v2.py`,
+  `threshold_rebalance_from_feature_matrix.py`, `threshold_rebalance_fast_v3.py`,
+  and `threshold_rebalance_matrix_engine.py`.
 - **Event-learning evaluation:** dataset audits and LLM benchmark programs now
   live in [`../research/event_learning/evaluation/`](../research/event_learning/evaluation/).
   Commands that build event facts, labels, datasets, and classifier inputs

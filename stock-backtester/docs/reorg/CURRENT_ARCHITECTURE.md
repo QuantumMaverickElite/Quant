@@ -40,6 +40,11 @@ Deformation evaluation, order comparisons, and correlation diagnostics are
 separated under `research/correlation/`. The reusable correlation boundary
 remains `src/backtester/correlation/`.
 
+Threshold-rebalance comparisons and feature-matrix Monte Carlo studies are
+separated under `research/threshold_rebalance/`. The strategy command lineage
+and its existing output contracts remain under `scripts/`; reusable matrix
+allocator mechanics remain under `src/backtester/engines/`.
+
 ## Intelligence flows
 
 ### Legacy / operational fallback

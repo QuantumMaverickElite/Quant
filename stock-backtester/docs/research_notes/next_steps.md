@@ -51,9 +51,9 @@ Default behavior:
 
 Scripts likely needing this:
 
-    scripts/monte_carlo_from_feature_matrix.py
+    research/threshold_rebalance/monte_carlo_from_feature_matrix.py
     scripts/monte_carlo_market_state.py
-    scripts/compare_threshold_portfolios.py
+    research/threshold_rebalance/compare_threshold_portfolios.py
     scripts/threshold_rebalance_fast_v2.py
     scripts/threshold_rebalance_fast_v3.py
     scripts/threshold_rebalance_matrix_engine.py

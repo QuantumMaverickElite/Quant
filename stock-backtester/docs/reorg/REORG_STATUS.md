@@ -142,6 +142,16 @@ Completed on `reorg/phase0-authority-inventory`:
 - Deformation metrics, horizons, periods, order comparisons, schemas, and
   output paths were not changed; H20/H100 authority remains unresolved.
 
+## Phase 17 status — threshold-rebalance research topology
+
+- Three comparison/Monte Carlo programs now live under
+  `research/threshold_rebalance/`.
+- Their repository-root-relative inputs, output paths, schemas, seeds, and
+  research calculations were not changed.
+- Fast V2, feature-matrix, Fast V3, and matrix-engine strategy commands remain
+  under `scripts/`; V2/V3 authority is unresolved and Fast V3 remains
+  protected.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs
