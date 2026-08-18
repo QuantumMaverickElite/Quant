@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import subprocess
 import sys
-import time
 from pathlib import Path
+
+from backtester.intelligence.training_orchestration import run_step
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,35 +38,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--force-score", action="store_true")
     parser.add_argument("--keep-going", action="store_true")
     return parser.parse_args()
-
-
-def write_manifest(path: Path, rows: list[dict]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["step", "returncode", "elapsed_seconds", "command"]
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fields)
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def run_step(name: str, cmd: list[str], *, manifest: Path, rows: list[dict], keep_going: bool) -> None:
-    print("\n" + "=" * 80)
-    print(name)
-    print(" ".join(cmd))
-    started = time.time()
-    completed = subprocess.run(cmd, text=True)
-    elapsed = time.time() - started
-    rows.append(
-        {
-            "step": name,
-            "returncode": completed.returncode,
-            "elapsed_seconds": round(elapsed, 3),
-            "command": " ".join(cmd),
-        }
-    )
-    write_manifest(manifest, rows)
-    if completed.returncode != 0 and not keep_going:
-        raise SystemExit(completed.returncode)
 
 
 def main() -> None:

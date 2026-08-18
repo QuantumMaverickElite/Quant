@@ -31,6 +31,9 @@ Current implementation and authority
   construction, fitted intelligence weights, and time-safe walk-forward
   calibration/evaluation. It consumes feature tables and produces research
   artifacts; it is not allocator authority.
+- **Training orchestration:** `training_orchestration.py` contains the small
+  shared mechanics used by the batch, pool, and long-run training commands.
+  It does not choose research policy or execute training on import.
 - **Operational/evaluation:** remaining allocator-facing and heuristic/fallback
   modules stay at this root until their compatibility contracts are mapped.
 - **Provider/ingestion:** historical source collectors and provider policy stay
@@ -53,6 +56,9 @@ Important commands
 - `scripts/run_market_intelligence_batch.py` (batch research)
 - `scripts/validate_ml_policy_candidate.py` (historical ML-policy wrapper)
 - `scripts/check_intelligence_nlp.py` (bounded check where dependencies permit)
+- `scripts/run_intelligence_training_batch.py`,
+  `scripts/run_pool_intelligence_training.py`, and
+  `scripts/launch_long_intelligence_training.py` (historical training commands)
 
 Tests
 -----

@@ -39,6 +39,8 @@ They are historical ML-policy research tooling, not event-learning authority.
   `apply_deformation_*`, and deformation diagnostics.
 - **Intelligence and training:** `run_market_intelligence_*`, `build_*intelligence*`,
   `run_*training*`, and `scripts/legacy/intelligence_heuristics/`.
+  The four historical training commands retain their paths while sharing
+  lightweight mechanics from `backtester.intelligence.training_orchestration`.
 - **Combined-signal research:** allocator comparisons and diagnostics now live
   in [`../research/combined_signals/`](../research/combined_signals/), along
   with allocator-signal builders and Monte Carlo comparisons; this is research

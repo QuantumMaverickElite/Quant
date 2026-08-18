@@ -88,6 +88,10 @@ allocator/intelligence artifacts and does not own reusable implementation.
   fitted intelligence weights, and time-safe walk-forward calibration. It
   consumes research feature tables and preserves the existing calibration
   artifact paths; it is not a promoted allocator authority.
+- Historical training commands remain user-facing under `scripts/`; their
+  shared manifest/step-launch mechanics live in
+  `backtester.intelligence.training_orchestration`. Batch, pool, and long-run
+  policy remain distinct and their baseline authority is unresolved.
 - `src/backtester/intelligence/historical_feature_builder.py` remains at the
   root as the SEC-specific historical feature builder, separate from both
   `features/` and `calibration/` for now.

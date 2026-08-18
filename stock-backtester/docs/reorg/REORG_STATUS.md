@@ -133,6 +133,18 @@ Completed on `reorg/phase0-authority-inventory`:
 
 ## Preservation blockers
 
+## Phase 13 status — training orchestration extraction
+
+- Shared manifest writing, child-step launching, filename-safe float formatting,
+  shell quoting, and input-path checks now live in
+  `src/backtester/intelligence/training_orchestration.py`.
+- The batch, pool, and long-run training command paths remain unchanged; their
+  research policy, defaults, child command paths, and output directories remain
+  in the wrappers.
+- Monitoring remains script-owned because its dataframe/report presentation is
+  not yet a shared orchestration contract.
+- No training, pool launch, network access, or output generation was performed.
+
 - Overlay directories are ignored and not recoverable from normal Git history.
 - The v2.6.2 overlay documentation has no canonical destination.
 - Existing output trees contain both regenerable intermediates and research evidence; official baselines are not yet identified.

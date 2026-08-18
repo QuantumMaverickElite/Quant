@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import argparse
 import os
-import shlex
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+
+from backtester.intelligence.training_orchestration import quote_cmd, require_paths
 
 
 DEFAULT_NEWS_SOURCES = [
@@ -36,26 +37,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--keep-going", action="store_true", help="Keep going after failed steps. Default is fail-fast.")
     parser.add_argument("--profile", choices=["compatible_10d", "short_horizon", "balanced"], default="compatible_10d")
     return parser.parse_args()
-
-
-def quote_cmd(parts: list[str]) -> str:
-    return " ".join(shlex.quote(str(part)) for part in parts)
-
-
-def require_paths(paths: list[str], *, label: str) -> list[Path]:
-    existing: list[Path] = []
-    missing: list[Path] = []
-    for value in paths:
-        path = Path(value)
-        if path.exists():
-            existing.append(path)
-        else:
-            missing.append(path)
-    if missing:
-        print(f"Missing {label}:")
-        for path in missing:
-            print(f"  {path}")
-    return existing
 
 
 def profile_args(profile: str) -> dict[str, list[str]]:

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import subprocess
 import sys
-import time
 from pathlib import Path
 
 import pandas as pd
+
+from backtester.intelligence.training_orchestration import path_for_float, run_step
 
 
 def parse_float_list(values: list[str]) -> list[float]:
@@ -42,39 +41,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--nlp-device", choices=["auto", "cpu", "cuda"], default="cpu")
     parser.add_argument("--keep-going", action="store_true")
     return parser.parse_args()
-
-
-def run_step(name: str, cmd: list[str], *, work_dir: Path, manifest_rows: list[dict], keep_going: bool) -> None:
-    started = time.time()
-    print("\n" + "=" * 80)
-    print(name)
-    print(" ".join(cmd))
-    completed = subprocess.run(cmd, text=True)
-    elapsed = time.time() - started
-    manifest_rows.append(
-        {
-            "step": name,
-            "returncode": completed.returncode,
-            "elapsed_seconds": round(elapsed, 3),
-            "command": " ".join(cmd),
-        }
-    )
-    write_manifest(work_dir / "manifest.csv", manifest_rows)
-    if completed.returncode != 0 and not keep_going:
-        raise SystemExit(completed.returncode)
-
-
-def write_manifest(path: Path, rows: list[dict]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["step", "returncode", "elapsed_seconds", "command"]
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fields)
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def path_for_float(value: float) -> str:
-    return str(value).replace(".", "p").replace("-", "m")
 
 
 def read_table(path: Path) -> pd.DataFrame:
@@ -120,8 +86,8 @@ def main() -> None:
     run_step(
         "merge_sources",
         merge_cmd,
-        work_dir=work_dir,
-        manifest_rows=manifest_rows,
+        manifest=work_dir / "manifest.csv",
+        rows=manifest_rows,
         keep_going=args.keep_going,
     )
 
@@ -147,8 +113,8 @@ def main() -> None:
                 "--nlp-device",
                 args.nlp_device,
             ],
-            work_dir=work_dir,
-            manifest_rows=manifest_rows,
+            manifest=work_dir / "manifest.csv",
+            rows=manifest_rows,
             keep_going=args.keep_going,
         )
         news_sources_for_features = scored_sources
@@ -172,8 +138,8 @@ def main() -> None:
             "--windows",
             *[str(w) for w in args.windows],
         ],
-        work_dir=work_dir,
-        manifest_rows=manifest_rows,
+        manifest=work_dir / "manifest.csv",
+        rows=manifest_rows,
         keep_going=args.keep_going,
     )
 
@@ -193,8 +159,8 @@ def main() -> None:
             "--out",
             str(calibration_dataset),
         ],
-        work_dir=work_dir,
-        manifest_rows=manifest_rows,
+        manifest=work_dir / "manifest.csv",
+        rows=manifest_rows,
         keep_going=args.keep_going,
     )
 
@@ -247,8 +213,8 @@ def main() -> None:
                                 "--cash",
                                 str(args.cash),
                             ],
-                            work_dir=work_dir,
-                            manifest_rows=manifest_rows,
+                            manifest=work_dir / "manifest.csv",
+                            rows=manifest_rows,
                             keep_going=args.keep_going,
                         )
                         prediction_rows = prediction_row_count(predictions)
@@ -274,8 +240,8 @@ def main() -> None:
                                 "--out",
                                 str(mc_summary),
                             ],
-                            work_dir=work_dir,
-                            manifest_rows=manifest_rows,
+                            manifest=work_dir / "manifest.csv",
+                            rows=manifest_rows,
                             keep_going=args.keep_going,
                         )
 
