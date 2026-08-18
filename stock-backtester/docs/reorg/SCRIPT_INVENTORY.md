@@ -71,7 +71,7 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/compare_actual_closed_trades.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | research/combined_signals/compare_allocator_intelligence.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | HIGH | MEDIUM | research/combined_signals |
 | research/combined_signals/compare_allocator_rankings.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/combined_signals |
-| scripts/compare_deformation_weight_changed_orders.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/correlation/compare_deformation_weight_changed_orders.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
 | scripts/compare_equity_layers.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_fast_v2_drift_thresholds.py | EVALUATION / BENCHMARK | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | research/event_learning/evaluation/compare_llm_classification_runs.py | BENCHMARK / RESEARCH EXPERIMENT | event_learning_evaluation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/event_learning/evaluation |
@@ -87,9 +87,9 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/create_survivable_vol_penalty_only_signals.py | DATA TRANSFORMATION | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | research/combined_signals/diagnose_allocator_intelligence.py | EVALUATION / BENCHMARK | combined_signals | ACTIVE RESEARCH | no | HIGH | MEDIUM | research/combined_signals |
 | research/mean_reversion/evaluate_mean_reversion_by_compression_bucket.py | EVALUATION / BENCHMARK | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/mean_reversion |
-| scripts/evaluate_mean_reversion_by_deformation.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/evaluate_mean_reversion_by_deformation_subperiods.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/evaluate_mean_reversion_by_deformation_yearly.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/correlation/evaluate_mean_reversion_by_deformation.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
+| research/correlation/evaluate_mean_reversion_by_deformation_subperiods.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
+| research/correlation/evaluate_mean_reversion_by_deformation_yearly.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
 | research/mean_reversion/evaluate_mean_reversion_signals.py | EVALUATION / BENCHMARK | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/mean_reversion |
 | scripts/export_combined_allocator_signals.py | DATA TRANSFORMATION | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/export_orders_from_signals_with_cached_prices.py | DATA TRANSFORMATION | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
@@ -104,10 +104,10 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/fetch_sec_intelligence_sources.py | DATA INGESTION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/filter_cached_price_matrix.py | UNCERTAIN | allocator_matrix | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
 | scripts/generate_peer_basket_spreads.py | UNCERTAIN | correlation_deformation | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
-| scripts/inspect_correlation_features.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/correlation/inspect_correlation_features.py | VALIDATION / DIAGNOSTIC | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
 | scripts/inspect_evidence_graph.py | DEBUG / INSPECTION TOOL | operational_intelligence | OPERATIONAL / FALLBACK | no | MEDIUM | HIGH | scripts/ |
 | research/mean_reversion/inspect_mean_reversion_signals.py | VALIDATION / DIAGNOSTIC | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/mean_reversion |
-| scripts/inspect_regime_correlation_features.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/correlation/inspect_regime_correlation_features.py | VALIDATION / DIAGNOSTIC | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
 | scripts/join_llm_classifications.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/label_event_forward_outcomes.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/large_universe_peer_search.py | UNCERTAIN | correlation_deformation | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
@@ -131,7 +131,7 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/parse_cbworker_yahoo_chart.py | DATA INGESTION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/permutation_test_ml_policy.py | UNCERTAIN | general | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
 | scripts/plot_rebalance_median_curves.py | VISUALIZATION | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/plot_regime_deformation_diagnostics.py | VISUALIZATION | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/correlation/plot_regime_deformation_diagnostics.py | VISUALIZATION | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/correlation |
 | scripts/plot_rust_stress_report.py | VISUALIZATION | rust_stress | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/prune_intelligence_training_runs.py | MAINTENANCE TOOL | intelligence | ACTIVE RESEARCH | no | HIGH | HIGH | src/quant_research or research/experiments |
 | tools/reorg/reorg_audit.py | MAINTENANCE TOOL | reorganization | ACTIVE RESEARCH | no | MEDIUM | HIGH | tools/reorg |

@@ -1,4 +1,4 @@
-# scripts/evaluate_mean_reversion_by_deformation.py
+# research/correlation/evaluate_mean_reversion_by_deformation.py
 
 from __future__ import annotations
 

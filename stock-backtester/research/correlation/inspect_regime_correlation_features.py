@@ -1,4 +1,4 @@
-# scripts/inspect_regime_correlation_features.py
+# research/correlation/inspect_regime_correlation_features.py
 
 from __future__ import annotations
 

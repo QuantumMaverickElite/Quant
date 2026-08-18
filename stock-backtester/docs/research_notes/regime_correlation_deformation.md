@@ -59,16 +59,16 @@ Engine:
 
     src/backtester/correlation/regime.py
     scripts/run_regime_correlation_features.py
-    scripts/inspect_regime_correlation_features.py
+    research/correlation/inspect_regime_correlation_features.py
     scripts/merge_regime_deformation_into_context.py
 
 Validation:
 
-    scripts/evaluate_mean_reversion_by_deformation.py
-    scripts/evaluate_mean_reversion_by_deformation_subperiods.py
-    scripts/evaluate_mean_reversion_by_deformation_yearly.py
+    research/correlation/evaluate_mean_reversion_by_deformation.py
+    research/correlation/evaluate_mean_reversion_by_deformation_subperiods.py
+    research/correlation/evaluate_mean_reversion_by_deformation_yearly.py
     research/mean_reversion/evaluate_mean_reversion_by_compression_bucket.py
-    scripts/plot_regime_deformation_diagnostics.py
+    research/correlation/plot_regime_deformation_diagnostics.py
     scripts/apply_deformation_weights_to_mean_reversion_signals.py
     scripts/compare_actual_closed_trades.py
 

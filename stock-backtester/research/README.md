@@ -14,3 +14,5 @@ Current research families:
 - [`event_learning/`](event_learning/) — event-dataset audits and LLM benchmarks.
 - [`mean_reversion/`](mean_reversion/) — mean-reversion evaluation, robustness,
   and same-universe controls.
+- [`correlation/`](correlation/) — deformation evaluation and correlation
+  diagnostics.

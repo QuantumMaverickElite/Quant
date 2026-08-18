@@ -133,6 +133,15 @@ Completed on `reorg/phase0-authority-inventory`:
 
 ## Preservation blockers
 
+## Phase 16 status — correlation/deformation research topology
+
+- Seven deformation evaluation and correlation-diagnostic programs now live
+  under `research/correlation/`.
+- Reusable correlation implementation and stable pipeline commands remain in
+  their existing locations.
+- Deformation metrics, horizons, periods, order comparisons, schemas, and
+  output paths were not changed; H20/H100 authority remains unresolved.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs

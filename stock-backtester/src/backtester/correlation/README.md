@@ -14,6 +14,9 @@ Current implementation
   entry point; `apply_deformation_weights_to_mean_reversion_signals.py` applies
   the optional adjustment.
 
+Research evaluation and diagnostics now live under
+`research/correlation/`; they do not own this reusable implementation.
+
 Connects to
 -----------
 

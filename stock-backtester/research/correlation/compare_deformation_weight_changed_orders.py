@@ -1,4 +1,4 @@
-# scripts/compare_deformation_weight_changed_orders.py
+# research/correlation/compare_deformation_weight_changed_orders.py
 
 from __future__ import annotations
 

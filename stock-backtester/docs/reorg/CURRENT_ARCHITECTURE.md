@@ -36,6 +36,10 @@ Mean-reversion evaluation and controls are now separated under
 `research/mean_reversion/`; `scripts/` retains the pipeline entry points that
 build peer spreads, signals, context, and deformation artifacts.
 
+Deformation evaluation, order comparisons, and correlation diagnostics are
+separated under `research/correlation/`. The reusable correlation boundary
+remains `src/backtester/correlation/`.
+
 ## Intelligence flows
 
 ### Legacy / operational fallback

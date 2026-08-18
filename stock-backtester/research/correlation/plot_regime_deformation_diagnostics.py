@@ -1,4 +1,4 @@
-# scripts/plot_regime_deformation_diagnostics.py
+# research/correlation/plot_regime_deformation_diagnostics.py
 
 from __future__ import annotations
 
