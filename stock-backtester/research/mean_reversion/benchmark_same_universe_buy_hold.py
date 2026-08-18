@@ -1,4 +1,4 @@
-# scripts/benchmark_same_universe_buy_hold.py
+# research/mean_reversion/benchmark_same_universe_buy_hold.py
 
 from __future__ import annotations
 

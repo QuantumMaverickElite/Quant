@@ -67,7 +67,7 @@ Validation:
     scripts/evaluate_mean_reversion_by_deformation.py
     scripts/evaluate_mean_reversion_by_deformation_subperiods.py
     scripts/evaluate_mean_reversion_by_deformation_yearly.py
-    scripts/evaluate_mean_reversion_by_compression_bucket.py
+    research/mean_reversion/evaluate_mean_reversion_by_compression_bucket.py
     scripts/plot_regime_deformation_diagnostics.py
     scripts/apply_deformation_weights_to_mean_reversion_signals.py
     scripts/compare_actual_closed_trades.py

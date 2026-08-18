@@ -1,4 +1,4 @@
-# scripts/evaluate_mean_reversion_by_compression_bucket.py
+# research/mean_reversion/evaluate_mean_reversion_by_compression_bucket.py
 
 from __future__ import annotations
 

@@ -57,7 +57,7 @@ Scripts likely needing this:
     scripts/threshold_rebalance_fast_v2.py
     scripts/threshold_rebalance_fast_v3.py
     scripts/threshold_rebalance_matrix_engine.py
-    scripts/stress_mean_reversion_monte_carlo.py
+    research/mean_reversion/stress_mean_reversion_monte_carlo.py
 
 ## Priority 3: Market graph fabric next steps
 

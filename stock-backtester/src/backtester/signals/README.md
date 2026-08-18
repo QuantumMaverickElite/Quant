@@ -25,7 +25,7 @@ Important commands
 
 - `scripts/run_mean_reversion_signals.py`
 - `scripts/run_peer_spread_features.py`
-- `scripts/evaluate_mean_reversion_signals.py`
+- `research/mean_reversion/evaluate_mean_reversion_signals.py`
 
 Tests
 -----

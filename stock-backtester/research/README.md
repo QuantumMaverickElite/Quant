@@ -12,3 +12,5 @@ Current research families:
 
 - [`combined_signals/`](combined_signals/) — allocator and signal comparisons.
 - [`event_learning/`](event_learning/) — event-dataset audits and LLM benchmarks.
+- [`mean_reversion/`](mean_reversion/) — mean-reversion evaluation, robustness,
+  and same-universe controls.

@@ -1,4 +1,4 @@
-# scripts/stress_mean_reversion_monte_carlo.py
+# research/mean_reversion/stress_mean_reversion_monte_carlo.py
 
 from __future__ import annotations
 

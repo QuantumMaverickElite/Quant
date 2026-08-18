@@ -32,6 +32,10 @@ universe builder
 
 The package correlation modules are reusable implementation. Large-universe orchestration remains script-heavy and uses binary matrix metadata, literal output paths, and `/tmp/quant_*` conventions.
 
+Mean-reversion evaluation and controls are now separated under
+`research/mean_reversion/`; `scripts/` retains the pipeline entry points that
+build peer spreads, signals, context, and deformation artifacts.
+
 ## Intelligence flows
 
 ### Legacy / operational fallback

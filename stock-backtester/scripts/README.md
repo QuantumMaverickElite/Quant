@@ -35,6 +35,8 @@ They are historical ML-policy research tooling, not event-learning authority.
 
 - **Mean reversion / large universe:** `run_*mean_reversion*`, `run_peer_spread*`,
   `generate_peer_basket_spreads.py`, and their evaluators.
+  Evaluation, inspection, Monte Carlo, and same-universe control programs now
+  live in [`../research/mean_reversion/`](../research/mean_reversion/).
 - **Correlation/deformation:** `run_regime_correlation_features.py`,
   `apply_deformation_*`, and deformation diagnostics.
 - **Intelligence and training:** `run_market_intelligence_*`, `build_*intelligence*`,

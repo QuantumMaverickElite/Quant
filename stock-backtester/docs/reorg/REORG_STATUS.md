@@ -133,6 +133,15 @@ Completed on `reorg/phase0-authority-inventory`:
 
 ## Preservation blockers
 
+## Phase 15 status — mean-reversion research topology
+
+- Six evaluation, robustness, inspection, and same-universe control programs
+  now live under `research/mean_reversion/`.
+- Packaged signal construction remains under `src/backtester/signals/`; stable
+  pipeline commands remain under `scripts/`.
+- Generated outputs, horizons, seeds, Monte Carlo methods, and benchmark
+  assumptions were not changed. H20/H100 authority remains unresolved.
+
 ## Phase 13 status — training orchestration extraction
 
 - Shared manifest writing, child-step launching, filename-safe float formatting,

@@ -1,4 +1,4 @@
-# scripts/inspect_mean_reversion_signals.py
+# research/mean_reversion/inspect_mean_reversion_signals.py
 
 from __future__ import annotations
 
