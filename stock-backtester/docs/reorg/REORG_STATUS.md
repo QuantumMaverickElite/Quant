@@ -152,6 +152,15 @@ Completed on `reorg/phase0-authority-inventory`:
   under `scripts/`; V2/V3 authority is unresolved and Fast V3 remains
   protected.
 
+## Phase 20 status — peer/spread contract tests
+
+- Added deterministic tests for the existing staged cached, one-pass cached,
+  and downstream mean-reversion peer/spread contracts.
+- Preserved the staged historical names `ticker_return` and `avg_peer_corr`;
+  the canonical one-pass names remain `stock_return` and `top_k_avg_corr`.
+- No production peer-search, spread, matrix, signal, or output behavior was
+  changed. These tests prepare a future extraction of cached peer search.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs
