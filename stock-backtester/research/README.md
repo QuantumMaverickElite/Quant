@@ -8,4 +8,7 @@ reproducibility runners, and research-specific analysis.
 - Validation belongs in `tests/`.
 - Repository maintenance belongs in `tools/`.
 
-Current research family: [`combined_signals/`](combined_signals/).
+Current research families:
+
+- [`combined_signals/`](combined_signals/) — allocator and signal comparisons.
+- [`event_learning/`](event_learning/) — event-dataset audits and LLM benchmarks.

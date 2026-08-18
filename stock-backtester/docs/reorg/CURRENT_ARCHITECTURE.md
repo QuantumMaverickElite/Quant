@@ -61,7 +61,13 @@ worker/provider payloads
   -> future bounded allocator overlay
 ```
 
-The event-learning documentation explicitly requires `event_time <= signal_time` and says LLM output must not directly control allocation. This path is active research and is not yet promoted to allocator authority.
+Evaluation and benchmark analysis is kept separate from pipeline commands in
+`research/event_learning/evaluation/`. It audits event-impact artifacts,
+constructs deterministic LLM benchmark samples, and compares classification
+runs. The event-learning documentation explicitly requires
+`event_time <= signal_time` and says LLM output must not directly control
+allocation. This path is active research and is not yet promoted to allocator
+authority.
 
 The current implementation is physically grouped as:
 

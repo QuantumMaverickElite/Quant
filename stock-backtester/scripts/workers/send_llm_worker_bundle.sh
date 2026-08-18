@@ -33,7 +33,7 @@ echo "== building worker bundle =="
 tar -czf "$BUNDLE" \
   scripts/run_llm_classification_batch.py \
   scripts/classify_event_facts_llm.py \
-  scripts/build_llm_benchmark_sample.py \
+  research/event_learning/evaluation/build_llm_benchmark_sample.py \
   src/backtester/__init__.py \
   src/backtester/intelligence/__init__.py \
   src/backtester/intelligence/llm/llm_event_classifier.py \

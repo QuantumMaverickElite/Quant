@@ -119,6 +119,18 @@ Completed on `reorg/phase0-authority-inventory`:
 - `simulate_intelligence_equity_curves.py` remains in `scripts/` because a
   historical stress runner invokes its exact module path.
 
+## Phase 12 status — event-learning evaluation research
+
+- Four event-learning audit/benchmark programs now live under
+  `research/event_learning/evaluation/`.
+- Dataset audits remain artifact-consuming research commands, not tests; LLM
+  benchmark sampling and run comparison retain deterministic selection, join,
+  and output behavior.
+- `scripts/inspect_evidence_graph.py` remains an operational/heuristic
+  evidence-graph diagnostic and was intentionally not moved.
+- The four programs continue writing their existing `outputs/intelligence/`
+  artifacts; only source ownership changed.
+
 ## Preservation blockers
 
 - Overlay directories are ignored and not recoverable from normal Git history.

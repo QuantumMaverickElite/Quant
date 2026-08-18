@@ -43,6 +43,10 @@ They are historical ML-policy research tooling, not event-learning authority.
   in [`../research/combined_signals/`](../research/combined_signals/), along
   with allocator-signal builders and Monte Carlo comparisons; this is research
   analysis, not the stable command surface.
+- **Event-learning evaluation:** dataset audits and LLM benchmark programs now
+  live in [`../research/event_learning/evaluation/`](../research/event_learning/evaluation/).
+  Commands that build event facts, labels, datasets, and classifier inputs
+  remain here as pipeline entry points.
 - **Rust and matrix acceleration:** `export_rust_*`, `run_*market_fabric*.sh`,
   and Rust stress summarizers.
 - **Visualization:** `visuals/` and `build_market_fabric_*` helpers.

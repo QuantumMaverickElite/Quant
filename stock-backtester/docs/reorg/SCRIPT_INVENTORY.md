@@ -8,7 +8,7 @@ Classification is evidence-assisted static analysis of imports, references, docu
 
 Phase 1/2/6 migration note: the four ML-policy scripts remain compatibility wrappers around `src/backtester/intelligence/ml_policy/`; their policy calculations, CLI contracts, and output schemas were not changed. See [ML_POLICY_SCRIPT_FAMILY.md](ML_POLICY_SCRIPT_FAMILY.md).
 
-Phase 3 note: the registry pilot describes those four commands and a small number of mean-reversion/large-universe workflows without reclassifying the remaining 186-script inventory.
+Phase 3 note: the registry pilot describes those four commands and a small number of mean-reversion/large-universe workflows without reclassifying the remaining 186-script inventory. Event-learning audit and benchmark programs now live under `research/event_learning/evaluation/`; they are research utilities, not tests.
 
 | path | classification | subsystem | status | sacred | migration_risk | confidence | likely_destination |
 |---|---|---|---|---|---|---|---|
@@ -26,8 +26,8 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/archive/visual_experiments/render_market_fabric.py | ARCHIVED / HISTORICAL | market_fabric | HISTORICAL | no | MEDIUM | HIGH | research/history or archive manifest |
 | scripts/archive/visual_experiments/visualize_market_fabric_vispy.py | ARCHIVED / HISTORICAL | market_fabric | HISTORICAL | no | MEDIUM | HIGH | research/history or archive manifest |
 | scripts/archive_compact_artifact_to_git.py | MAINTENANCE TOOL | general | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
-| scripts/audit_event_day_impact_dataset.py | MAINTENANCE TOOL | intelligence | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
-| scripts/audit_event_impact_dataset.py | MAINTENANCE TOOL | intelligence | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
+| research/event_learning/evaluation/audit_event_day_impact_dataset.py | AUDIT COMMAND | event_learning_evaluation | ACTIVE RESEARCH | no | MEDIUM | HIGH | research/event_learning/evaluation |
+| research/event_learning/evaluation/audit_event_impact_dataset.py | AUDIT COMMAND | event_learning_evaluation | ACTIVE RESEARCH | no | MEDIUM | HIGH | research/event_learning/evaluation |
 | scripts/audit_historical_source_mix.py | MAINTENANCE TOOL | general | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
 | scripts/audit_quant_outputs.py | MAINTENANCE TOOL | general | ACTIVE RESEARCH | no | MEDIUM | HIGH | src/quant_research or research/experiments |
 | scripts/augment_market_graph_frames_with_allocator_overlay.py | UNCERTAIN | market_fabric | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
@@ -52,7 +52,7 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/build_historical_sec_features.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/build_intelligence_calibration_dataset.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/build_intelligence_price_features.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/build_llm_benchmark_sample.py | DATA TRANSFORMATION | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/event_learning/evaluation/build_llm_benchmark_sample.py | BENCHMARK / RESEARCH EXPERIMENT | event_learning_evaluation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/event_learning/evaluation |
 | scripts/build_market_cap_cache.py | DATA TRANSFORMATION | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/build_market_fabric_allocator_overlay.py | VISUALIZATION | market_fabric | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/build_market_fabric_trade_overlay.py | VISUALIZATION | market_fabric | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
@@ -74,7 +74,7 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/compare_deformation_weight_changed_orders.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_equity_layers.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_fast_v2_drift_thresholds.py | EVALUATION / BENCHMARK | allocator_matrix | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/compare_llm_classification_runs.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| research/event_learning/evaluation/compare_llm_classification_runs.py | BENCHMARK / RESEARCH EXPERIMENT | event_learning_evaluation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | research/event_learning/evaluation |
 | scripts/compare_rebalance_frequencies.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_regime_by_year.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/compare_regime_runs.py | EVALUATION / BENCHMARK | general | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
@@ -105,7 +105,7 @@ Phase 3 note: the registry pilot describes those four commands and a small numbe
 | scripts/filter_cached_price_matrix.py | UNCERTAIN | allocator_matrix | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
 | scripts/generate_peer_basket_spreads.py | UNCERTAIN | correlation_deformation | UNCERTAIN | no | MEDIUM | LOW | USER DECISION REQUIRED |
 | scripts/inspect_correlation_features.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
-| scripts/inspect_evidence_graph.py | EVALUATION / BENCHMARK | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
+| scripts/inspect_evidence_graph.py | DEBUG / INSPECTION TOOL | operational_intelligence | OPERATIONAL / FALLBACK | no | MEDIUM | HIGH | scripts/ |
 | scripts/inspect_mean_reversion_signals.py | EVALUATION / BENCHMARK | mean_reversion | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/inspect_regime_correlation_features.py | EVALUATION / BENCHMARK | correlation_deformation | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
 | scripts/join_llm_classifications.py | TRAINING | intelligence | ACTIVE RESEARCH | no | MEDIUM | MEDIUM | src/quant_research or research/experiments |
