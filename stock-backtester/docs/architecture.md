@@ -15,7 +15,7 @@ describes current ownership; it does not promote unresolved research variants.
 | `tests/` | Small deterministic offline contract and regression tests |
 | `tools/` | Repository maintenance rather than quantitative research |
 | `configs/` | Audit, storage, workflow, and registry policy |
-| `outputs/` | Ignored generated artifacts; not source authority |
+| `outputs/` | Ignored generated artifacts and filesystem contracts; not source authority |
 | `rust_engine/` | Rust stress and repeated-computation implementation |
 | `docs/` | Current reference documentation plus clearly indexed history |
 
@@ -193,9 +193,23 @@ Standalone historical dividend research now lives under
 [`research/dividend_capture/`](../research/dividend_capture/README.md), distinct
 from the package event-strategy baseline. Deterministic contracts protect its
 path-independent behavior; no generation is promoted as authority. The root
-`dividend-capture/` directory retains ignored generated outputs plus empty local
-`data/` and `notes/` placeholders as a Phase 26 compatibility lane. See the
-[Phase 25B record](reorg/PHASE25B_ROOT_PHYSICAL_CLEANUP.md).
+`dividend-capture/` directory retains ignored historical outputs plus empty
+local `data/` and `notes/` placeholders as a documented compatibility lane.
+Phase 26 retained it because exact regeneration is unproven and
+`stock-backtester/outputs/dividend/` has different lineage. See the
+[Phase 25B record](reorg/PHASE25B_ROOT_PHYSICAL_CLEANUP.md) and current
+[output taxonomy](reorg/PHASE26_OUTPUT_TAXONOMY.md).
+
+## Output ownership
+
+Generated artifacts are not source authority, but major output paths are often
+interfaces between commands, research stages, Python, Rust, and worker-derived
+tables. The current 34-family inventory, writer/reader map, preservation
+decisions, and provenance findings live in the
+[Phase 26 output taxonomy](reorg/PHASE26_OUTPUT_TAXONOMY.md). Retention and the
+metadata standard for new significant runs live in
+[output_policy.md](output_policy.md). H20/H100, threshold-generation, and
+intelligence-training authority remain unresolved.
 
 ## Current, fallback, historical, unresolved
 

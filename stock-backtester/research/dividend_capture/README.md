@@ -4,7 +4,9 @@
 > package or production authority. Four distinct experiment families are
 > preserved without promotion or merger. Deterministic relocation contracts
 > live in `tests/test_dividend_capture_contracts.py`. Generated historical
-> state remains at `~/projects/quant/dividend-capture/outputs/` for Phase 26.
+> state remains at `~/projects/quant/dividend-capture/outputs/` as an explicit
+> historical compatibility contract. Phase 26 classified and retained it
+> without promoting any research generation.
 
 A research project testing dividend-related trading ideas around ex-dividend dates.
 
@@ -76,7 +78,9 @@ a separate ownership context.
 ## Typical Workflow
 
 Run these examples from `stock-backtester/`. Output paths intentionally target
-the unchanged repository-root compatibility lane.
+the retained repository-root compatibility lane. It contains 60 historical
+CSV/plot/note artifacts across the four research families; exact regeneration
+from live yfinance history is not proven.
 
 ### Setup
 

@@ -254,6 +254,24 @@ Completed on `reorg/phase0-authority-inventory`:
   local `data/` and `notes/` placeholders for Phase 26 compatibility. No output
   file was moved or rewritten.
 
+## Phase 26 status — output taxonomy and preservation
+
+- Inventoried all 34 direct `outputs/` families: 1,501,563,492 bytes in 3,405
+  files, plus the separate 4,536,281-byte, 60-file historical dividend lane.
+- Classified every major family by role, regenerability, path disposition,
+  provenance, writers/readers, durability, and preservation decision. No
+  top-level family remains unknown.
+- Preserved literal pipeline contracts across signals, correlation/context,
+  matrices/cache, Rust, intelligence, MarketState, and worker-derived tables;
+  no schema or methodology changed and no H20/H100 or threshold authority was
+  chosen.
+- Retained all physical artifacts. No candidate met the complete deletion or
+  safe-move standard, and moving dividend history would conflict with a
+  documented path and a separate `outputs/dividend/` lineage.
+- Updated current policy with a minimal manifest standard, shallow placement
+  convention, and retention rules for new significant runs. Output organization
+  is explicitly classified and sufficient for Reorg V1 freeze.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs
@@ -311,5 +329,5 @@ No production algorithms, strategy behavior, signal formulas, allocators, intell
 - Promote or retain the current feature branch as the reorganization baseline.
 - Decide whether heuristic intelligence remains operational.
 - Select official durable research baselines.
-- Retain the documented worker path contract and classify dividend generated
-  state during Phase 26.
+- Decide which manifested future runs merit durable-baseline promotion; Phase 26
+  retained existing output generations without inventing that authority.

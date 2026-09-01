@@ -29,6 +29,10 @@ Start with:
   [PHASE25_OVERLAY_PRESERVATION.md](PHASE25_OVERLAY_PRESERVATION.md). The
   tracked archive and final root work are recorded in
   [PHASE25B_ROOT_PHYSICAL_CLEANUP.md](PHASE25B_ROOT_PHYSICAL_CLEANUP.md).
+  The current generated-artifact snapshot, writer/reader decisions, and freeze
+  disposition are recorded in
+  [PHASE26_OUTPUT_TAXONOMY.md](PHASE26_OUTPUT_TAXONOMY.md) and its
+  [machine-readable inventory](PHASE26_OUTPUT_INVENTORY.csv).
 
 The phase files remain physically here because moving them would create noisy
 reference churn without improving the current authority map. Readers should not
