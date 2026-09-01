@@ -1,6 +1,8 @@
 # Current Architecture
 
-This is a description of the repository as it exists on the Phase 0 branch. It is not a target architecture and does not imply that the newer research path has replaced older operational code.
+This describes the current reorganization baseline. It is not a target
+architecture and does not imply that a newer research path has replaced older
+operational code.
 
 ## Core backtest flow
 
@@ -30,7 +32,24 @@ universe builder
   -> scorecards and market-fabric visualization
 ```
 
-The package correlation modules are reusable implementation. Large-universe orchestration remains script-heavy and uses binary matrix metadata, literal output paths, and `/tmp/quant_*` conventions.
+Peer/spread computation currently has three intentionally distinct ownership
+paths:
+
+- package/tabular: `src/backtester/correlation/spreads.py`, invoked by
+  `scripts/run_peer_spread_features.py`;
+- staged cached matrix: `src/backtester/correlation/peer_search.py` and
+  `peer_spreads.py`, invoked by the stable
+  `scripts/large_universe_peer_search.py` and
+  `scripts/generate_peer_basket_spreads.py` commands;
+- one-pass cached matrix:
+  `scripts/run_peer_spread_features_from_cached_matrix.py`, whose implementation
+  extraction is deferred.
+
+These paths are not established as quantitatively equivalent. The staged
+output keeps the historical `ticker_return` and `avg_peer_corr` names, while
+the one-pass output keeps `stock_return` and `top_k_avg_corr`. Remaining
+large-universe filesystem orchestration stays under `scripts/` and continues
+to use binary matrix metadata and existing path conventions.
 
 Mean-reversion evaluation and controls are now separated under
 `research/mean_reversion/`; `scripts/` retains the pipeline entry points that
@@ -136,4 +155,7 @@ The current fabric stress metric includes forward-return information for diagnos
 
 ## Current architectural conclusion
 
-The repository is a research operating system with a stable reusable core, script-heavy orchestration, a large intelligence history, and multiple computational regimes. Phase 0 records these boundaries; it does not collapse them.
+The repository is a research operating system with a stable reusable core,
+script-heavy orchestration, a large intelligence history, and multiple
+computational regimes. This map records those boundaries; it does not collapse
+them.

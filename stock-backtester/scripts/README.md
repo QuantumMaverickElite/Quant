@@ -10,6 +10,9 @@ the commands most likely to be useful on re-entry.
 | --- | --- | --- |
 | `run_mean_reversion_signals.py` | build peer-spread signals | current / signals |
 | `run_peer_spread_features.py` | build peer features | current / large-universe |
+| `large_universe_peer_search.py` | staged cached-matrix peer search | wrapper over `backtester.correlation.peer_search` |
+| `generate_peer_basket_spreads.py` | staged cached-matrix spread generation | wrapper over `backtester.correlation.peer_spreads` |
+| `run_peer_spread_features_from_cached_matrix.py` | one-pass cached-matrix peer/spread features | separate implementation; extraction deferred |
 | `build_universe.py` | select a research universe | current / large-universe |
 | `run_market_context_features.py` | generate market context | current / context |
 | `run_regime_correlation_features.py` | generate regime/correlation features | current / correlation |
@@ -35,6 +38,9 @@ They are historical ML-policy research tooling, not event-learning authority.
 
 - **Mean reversion / large universe:** `run_*mean_reversion*`, `run_peer_spread*`,
   `generate_peer_basket_spreads.py`, and their evaluators.
+  The staged cached command paths remain stable wrappers while reusable peer
+  search and spread computation live in `src/backtester/correlation/`. The
+  package/tabular and one-pass cached paths remain separate regimes.
   Evaluation, inspection, Monte Carlo, and same-universe control programs now
   live in [`../research/mean_reversion/`](../research/mean_reversion/).
 - **Correlation/deformation:** `run_regime_correlation_features.py`,

@@ -1,4 +1,4 @@
-from backtester.correlation.io import load_price_panel, prices_to_return_matrix
+from backtester.correlation.io import build_asset_metadata, prices_to_return_matrix
 from backtester.correlation.regime import (
     RegimeCorrelationConfig,
     compute_rolling_regime_pair_correlations,
@@ -7,12 +7,18 @@ from backtester.correlation.regime import (
     summarize_regime_pair_correlations,
     summarize_ticker_stress_sensitivity,
 )
+from backtester.correlation.tracker import (
+    CorrelationTracker,
+    CorrelationTrackerConfig,
+)
 from backtester.correlation.types import AssetMetadata, ReturnMatrix
 
 __all__ = [
     "AssetMetadata",
+    "CorrelationTracker",
+    "CorrelationTrackerConfig",
     "ReturnMatrix",
-    "load_price_panel",
+    "build_asset_metadata",
     "prices_to_return_matrix",
     "RegimeCorrelationConfig",
     "compute_rolling_regime_pair_correlations",

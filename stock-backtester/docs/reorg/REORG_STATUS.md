@@ -161,6 +161,21 @@ Completed on `reorg/phase0-authority-inventory`:
 - No production peer-search, spread, matrix, signal, or output behavior was
   changed. These tests prepare a future extraction of cached peer search.
 
+## Phase 21 status — staged peer/spread implementation extraction
+
+- Staged cached-matrix peer-search implementation now lives in
+  `src/backtester/correlation/peer_search.py`; the historical command remains
+  `scripts/large_universe_peer_search.py`.
+- Staged cached-matrix peer-basket spread implementation now lives in
+  `src/backtester/correlation/peer_spreads.py`; the historical command remains
+  `scripts/generate_peer_basket_spreads.py`.
+- Phase 20 golden assertions now exercise package ownership and verify that the
+  script-visible helpers are the same function objects.
+- Package/tabular, staged cached-matrix, and one-pass cached-matrix behavior
+  remain separate. The one-pass extraction is deferred.
+- No quantitative behavior or schema change was intended. In particular,
+  staged `ticker_return` and `avg_peer_corr` remain protected.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs

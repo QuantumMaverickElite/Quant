@@ -1,7 +1,7 @@
 """Small behavioral contracts for the three peer/spread implementations.
 
-These tests intentionally import the current script helpers.  The scripts are
-the oracle for the future extraction into ``backtester.correlation``.
+The golden assertions exercise the canonical package implementations.  The
+historical script helpers remain lightweight compatibility exports.
 """
 
 from __future__ import annotations
@@ -36,8 +36,12 @@ def load_script(name: str):
 class PeerSpreadFixtureMixin:
     @classmethod
     def setUpClass(cls) -> None:
-        cls.peer_search = load_script("large_universe_peer_search.py")
-        cls.staged = load_script("generate_peer_basket_spreads.py")
+        from backtester.correlation import peer_search, peer_spreads
+
+        cls.peer_search = peer_search
+        cls.staged = peer_spreads
+        cls.peer_search_script = load_script("large_universe_peer_search.py")
+        cls.staged_script = load_script("generate_peer_basket_spreads.py")
         cls.cached = load_script("run_peer_spread_features_from_cached_matrix.py")
 
         cls.tickers = list("ABCDEFGHIJ")
@@ -88,6 +92,12 @@ class PeerSpreadFixtureMixin:
 
 
 class TestPeerSearchContracts(PeerSpreadFixtureMixin, unittest.TestCase):
+    def test_script_helper_resolves_to_package_implementation(self):
+        self.assertIs(
+            self.peer_search_script.compute_top_peers,
+            self.peer_search.compute_top_peers,
+        )
+
     def test_golden_peer_schema_order_and_determinism(self):
         kwargs = dict(
             window=12,
@@ -197,6 +207,12 @@ class TestPeerSearchContracts(PeerSpreadFixtureMixin, unittest.TestCase):
 
 
 class TestStagedPeerSpreadContracts(PeerSpreadFixtureMixin, unittest.TestCase):
+    def test_script_helper_resolves_to_package_implementation(self):
+        self.assertIs(
+            self.staged_script.compute_one_ticker,
+            self.staged.compute_one_ticker,
+        )
+
     def _peer_group(self):
         return pd.DataFrame(
             {
