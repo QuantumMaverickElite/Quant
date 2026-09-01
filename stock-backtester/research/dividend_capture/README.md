@@ -1,5 +1,11 @@
 # Dividend Capture Backtest
 
+> **Ownership status:** this is standalone historical research, not current
+> package or production authority. Four distinct experiment families are
+> preserved without promotion or merger. Deterministic relocation contracts
+> live in `tests/test_dividend_capture_contracts.py`. Generated historical
+> state remains at `~/projects/quant/dividend-capture/outputs/` for Phase 26.
+
 A research project testing dividend-related trading ideas around ex-dividend dates.
 
 ## Overview
@@ -51,104 +57,74 @@ The data suggests two broad post-dividend behaviors:
 
 This leads to strategy specialization rather than a single unified approach.
 
-## Repository Structure
+## Research families
 
 ```text
-dividend-capture/
-├── src/
-│   ├── original_universe/
-│   │   ├── naive_dividend_capture/
-│   │   │   ├── backtest.py
-│   │   │   └── visualize.py
-│   │   ├── regime_filtered/
-│   │   │   ├── backtest.py
-│   │   │   └── visualize.py
-│   │   └── long_only_recovery/
-│   │       ├── backtest.py
-│   │       └── visualize.py
-│   ├── pg_like_universe/
-│   │   └── naive_dividend_capture/
-│   │       ├── backtest.py
-│   │       └── visualize.py
-│   ├── utils/
-│   └── README.md
-├── data/
-├── notes/
-├── outputs/
-│   ├── original_universe/
-│   │   ├── naive_dividend_capture/
-│   │   │   ├── results/
-│   │   │   └── plots/
-│   │   ├── regime_filtered/
-│   │   │   ├── results/
-│   │   │   └── plots/
-│   │   ├── long_only_recovery/
-│   │   │   ├── results/
-│   │   │   └── plots/
-│   │   └── README.md
-│   ├── pg_like_universe/
-│   │   ├── naive_dividend_capture/
-│   │   │   ├── results/
-│   │   │   └── plots/
-│   │   ├── naive_dividend_capture_long_history/
-│   │   │   ├── results/
-│   │   │   └── plots/
-│   │   └── README.md
-│   └── scratch/
-├── requirements.txt
-└── README.md
+research/dividend_capture/src/
+├── original_universe/
+│   ├── naive_dividend_capture/  # baseline backtest and visualization
+│   ├── regime_filtered/         # distinct long/short regime methodology
+│   └── long_only_recovery/      # distinct recovery methodology
+└── pg_like_universe/
+    └── naive_dividend_capture/  # same naive method, different universe
 ```
+
+These are historical research programs, not reusable package implementation.
+The package dividend-event baseline under `src/backtester/strategies/` remains
+a separate ownership context.
+
 ## Typical Workflow
+
+Run these examples from `stock-backtester/`. Output paths intentionally target
+the unchanged repository-root compatibility lane.
 
 ### Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r research/dividend_capture/requirements.txt
 ```
 
 ### Run Naive Strategy (Original Universe)
 
 ```bash
-python src/original_universe/naive_dividend_capture/backtest.py \
+python research/dividend_capture/src/original_universe/naive_dividend_capture/backtest.py \
   --tickers KO PG JNJ XOM CVX T VZ PEP \
   --start 2018-01-01 \
   --end 2026-01-01 \
   --hold-days 1 \
   --capital 10000 \
-  --output-dir outputs/original_universe/naive_dividend_capture/results
+  --output-dir ../dividend-capture/outputs/original_universe/naive_dividend_capture/results
 ```
 
 ### Run Naive Strategy (PG-like Universe)
 
 ```bash
-python src/pg_like_universe/naive_dividend_capture/backtest.py \
+python research/dividend_capture/src/pg_like_universe/naive_dividend_capture/backtest.py \
   --tickers PG PEP KO CL KMB HSY WMT COST MCD \
   --start 2018-01-01 \
   --end 2026-01-01 \
   --hold-days 1 \
   --capital 10000 \
-  --output-dir outputs/pg_like_universe/naive_dividend_capture/results
+  --output-dir ../dividend-capture/outputs/pg_like_universe/naive_dividend_capture/results
 ```
 
 ### Run Long-History PG-like Experiment
 
 ```bash
-python src/pg_like_universe/naive_dividend_capture/backtest.py \
+python research/dividend_capture/src/pg_like_universe/naive_dividend_capture/backtest.py \
   --tickers PG PEP KO CL KMB HSY WMT COST MCD \
   --start 1970-01-01 \
   --end 2026-01-01 \
   --hold-days 1 \
   --capital 10000 \
-  --output-dir outputs/pg_like_universe/naive_dividend_capture_long_history/results
+  --output-dir ../dividend-capture/outputs/pg_like_universe/naive_dividend_capture_long_history/results
 ```
 
 ### Run Long-Only Recovery Strategy
 
 ```bash
-python src/original_universe/long_only_recovery/backtest.py \
-  --outputs-dir outputs/original_universe/naive_dividend_capture/results \
+python research/dividend_capture/src/original_universe/long_only_recovery/backtest.py \
+  --outputs-dir ../dividend-capture/outputs/original_universe/naive_dividend_capture/results \
   --train-end 2021-12-31 \
   --test-start 2022-01-01 \
   --trade-hold 1 \
@@ -158,24 +134,24 @@ python src/original_universe/long_only_recovery/backtest.py \
   --underreaction-threshold 0.9 \
   --min-avg-return 0.0 \
   --min-win-rate 0.50 \
-  --output-dir outputs/original_universe/long_only_recovery/results
+  --output-dir ../dividend-capture/outputs/original_universe/long_only_recovery/results
 ```
 
 ### Visualize Results
 
 ```bash
-python src/original_universe/long_only_recovery/visualize.py \
-  --input-file outputs/original_universe/long_only_recovery/results/long_only_recovery_test_trades.csv \
-  --plot-dir outputs/original_universe/long_only_recovery/plots
+python research/dividend_capture/src/original_universe/long_only_recovery/visualize.py \
+  --input-file ../dividend-capture/outputs/original_universe/long_only_recovery/results/long_only_recovery_test_trades.csv \
+  --plot-dir ../dividend-capture/outputs/original_universe/long_only_recovery/plots
 ```
 ## Interpretation Workflow
 
-1. Run multiple holding periods  
-2. Compare results across tickers  
-3. Analyze drop ratio vs dividend  
-4. Identify behavioral patterns  
-5. Segment stocks into strategy-specific groups  
-6. Test refined models  
+1. Run multiple holding periods
+2. Compare results across tickers
+3. Analyze drop ratio vs dividend
+4. Identify behavioral patterns
+5. Segment stocks into strategy-specific groups
+6. Test refined models
 
 ## Notes
 

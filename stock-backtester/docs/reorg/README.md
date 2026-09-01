@@ -26,7 +26,9 @@ Start with:
   [OVERLAY_LINEAGE.md](OVERLAY_LINEAGE.md). The current root ownership and
   preservation decisions are summarized by
   [PHASE25_ROOT_TOPOLOGY.md](PHASE25_ROOT_TOPOLOGY.md) and
-  [PHASE25_OVERLAY_PRESERVATION.md](PHASE25_OVERLAY_PRESERVATION.md).
+  [PHASE25_OVERLAY_PRESERVATION.md](PHASE25_OVERLAY_PRESERVATION.md). The
+  tracked archive and final root work are recorded in
+  [PHASE25B_ROOT_PHYSICAL_CLEANUP.md](PHASE25B_ROOT_PHYSICAL_CLEANUP.md).
 
 The phase files remain physically here because moving them would create noisy
 reference churn without improving the current authority map. Readers should not

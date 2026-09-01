@@ -21,6 +21,9 @@ The current offline tests are:
 - `test_mean_reversion_daily_portfolio_contracts.py` — deterministic signal
   ordering, execution lag, duplicate handling, exposure sizing, fees,
   mark-to-market, trade/equity schemas, summary, and compatibility contracts.
+- `test_dividend_capture_contracts.py` — standalone historical dividend
+  calendar, schema, shifted-regime, profile, long/short, and long-only research
+  behavior without downloads or output writes.
 
 From `stock-backtester/`, run the current offline suite with:
 
@@ -31,7 +34,8 @@ PYTHONPATH=src python -m unittest \
   tests.test_reorg_phase0_inventory \
   tests.test_intelligence_training_orchestration \
   tests.test_peer_spread_contracts tests.test_market_state_contracts \
-  tests.test_mean_reversion_daily_portfolio_contracts
+  tests.test_mean_reversion_daily_portfolio_contracts \
+  tests.test_dividend_capture_contracts
 ```
 
 Run one test module by replacing the module name, for example:

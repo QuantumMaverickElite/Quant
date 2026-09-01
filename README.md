@@ -18,16 +18,19 @@ documentation.
 | Path | Status |
 | --- | --- |
 | `stock-backtester/` | Main active quant research system |
-| `dividend-capture/` | Tracked, standalone historical strategy research; intentionally retained until its numerical behavior and ignored outputs have migration contracts |
+| `archive/` | Tracked, human-readable historical intelligence-overlay preservation; not runtime or research authority |
+| `dividend-capture/` | Generated dividend output compatibility state plus empty local `data/` and `notes/` placeholders; no tracked research source |
 | `worker_ingest/` | Ignored/local operational cache and synchronization interface used by tracked Chromebook parsers; its root path is a compatibility contract |
-| `market_intelligence_*_overlay/` | Ignored/local historical delivery bundles; preserved in place because most contain content that differs from tracked canonical files |
 | `.codex/`, `.venv/` | Local tooling/environment state, not repository projects |
 
-The worker cache and overlays do not appear in normal Git inventories and are
-not recoverable from a branch checkout. Do not move or delete them based only
-on the root layout. Root decisions and overlay preservation evidence are in the
+Tracked dividend research now lives under
+[`stock-backtester/research/dividend_capture/`](stock-backtester/research/dividend_capture/README.md).
+The worker cache and dividend output state do not appear in normal Git inventories.
+The 66 former intelligence overlays are now recoverable from the tracked
+archive; the old ignored source directories are intentionally absent. Root
+decisions and overlay preservation evidence are in the
 [Phase 25 root topology record](stock-backtester/docs/reorg/PHASE25_ROOT_TOPOLOGY.md)
-and [overlay preservation manifest](stock-backtester/docs/reorg/PHASE25_OVERLAY_PRESERVATION.md).
+and [Phase 25B physical-cleanup record](stock-backtester/docs/reorg/PHASE25B_ROOT_PHYSICAL_CLEANUP.md).
 
 No root-level lane should be inferred to be production authority merely because
 it has its own directory.

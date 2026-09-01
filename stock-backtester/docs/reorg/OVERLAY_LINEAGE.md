@@ -28,13 +28,15 @@ live path map. Source-file hashes remain preservation evidence.
 
 ## Preservation rule
 
-Do not delete, move, rewrite, or promote any overlay without a verified archive
-destination. Phase 25 found only a small fully duplicated subset; all overlays
-remain in place because no archive destination was authorized and moving only a
-subset would not resolve the preservation problem.
+The 66 overlays were copied into the tracked, human-readable
+`archive/intelligence_overlays/` tree and byte-verified before the old ignored
+source directories were removed. Do not restore the old locations or promote
+archive contents into current implementation.
 
 Git history is sufficient evidence for currently tracked canonical files, but it is not a complete substitute for preserving ignored overlay contents.
 
-## User decision required
+## Current verification
 
-Choose whether preserved overlays will live in the repository, in an external artifact store, or as verified compact archives plus tracked manifests.
+Run `python tools/reorg/archive_intelligence_overlays.py verify` from the Quant
+repository root. Archive verification intentionally does not depend on the
+removed source overlays.

@@ -16,5 +16,7 @@ Current research families:
   and same-universe controls.
 - [`correlation/`](correlation/) — deformation evaluation and correlation
   diagnostics.
+- [`dividend_capture/`](dividend_capture/) — four preserved historical
+  dividend-event research generations; not package or production authority.
 - [`threshold_rebalance/`](threshold_rebalance/) — threshold/rebalance
   comparisons and feature-matrix Monte Carlo research.

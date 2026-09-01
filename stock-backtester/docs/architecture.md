@@ -184,12 +184,18 @@ use a distinct remote `~/quant-worker` contract and copy newer results into
 `outputs/intelligence/worker_results/`. It is operational infrastructure, not a
 peer research project, and its path is intentionally retained.
 
-Ignored intelligence overlays are preservation-sensitive historical delivery
-bundles. Most contain content different from current tracked files, so they
-remain in place pending a user-selected archival destination. The tracked
-`dividend-capture/` lane is standalone historical strategy research; migration
-is explicitly deferred until numerical contracts and ignored-output ownership
-exist. See the [Phase 25 root record](reorg/PHASE25_ROOT_TOPOLOGY.md).
+The 66 former ignored intelligence overlays are preserved under the tracked,
+human-readable repository-root `archive/intelligence_overlays/` tree. Their old
+source directories are intentionally absent and archive verification is
+source-independent after migration.
+
+Standalone historical dividend research now lives under
+[`research/dividend_capture/`](../research/dividend_capture/README.md), distinct
+from the package event-strategy baseline. Deterministic contracts protect its
+path-independent behavior; no generation is promoted as authority. The root
+`dividend-capture/` directory retains ignored generated outputs plus empty local
+`data/` and `notes/` placeholders as a Phase 26 compatibility lane. See the
+[Phase 25B record](reorg/PHASE25B_ROOT_PHYSICAL_CLEANUP.md).
 
 ## Current, fallback, historical, unresolved
 
@@ -202,5 +208,4 @@ exist. See the [Phase 25 root record](reorg/PHASE25_ROOT_TOPOLOGY.md).
 | Unresolved | Multiple variants remain and no authority choice has been made |
 
 Known unresolved areas include H20/H100 baselines, threshold V2/V3 lineage,
-training modes, official durable output baselines, the overlay archive
-destination, and a future contract-first dividend-capture migration.
+training modes and official durable output baselines.

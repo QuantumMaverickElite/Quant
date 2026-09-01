@@ -128,6 +128,15 @@ def actual_archive_files() -> set[Path]:
 
 
 def verify_sources(rows: list[PreservationRow]) -> None:
+    overlays = sorted({REPO_ROOT / row.overlay_path for row in rows})
+    missing_overlays = [path for path in overlays if not path.is_dir()]
+    if missing_overlays:
+        raise RuntimeError(
+            "Source overlays are unavailable: "
+            f"missing={len(missing_overlays)} of {len(overlays)}. "
+            "This is expected after a completed archive migration; use the "
+            "'verify' action for archive-only verification."
+        )
     errors = [error for row in rows if (error := verify_file(row.source, row))]
     expected = expected_source_files(rows)
     actual = meaningful_source_files(rows)
@@ -184,7 +193,6 @@ def write_verification(rows: list[PreservationRow]) -> None:
 
 
 def verify_archive(rows: list[PreservationRow], write_manifest: bool = False) -> None:
-    verify_sources(rows)
     errors = [error for row in rows if (error := verify_file(row.archived, row))]
     expected = expected_archive_files(rows)
     actual = actual_archive_files()
@@ -213,7 +221,7 @@ def verify_archive(rows: list[PreservationRow], write_manifest: bool = False) ->
 def remove_sources(rows: list[PreservationRow], confirmed: bool) -> None:
     if not confirmed:
         raise RuntimeError("Removal requires --confirm-remove-verified-sources")
-    verify_archive(rows, write_manifest=True)
+    verify_archive(rows)
     overlays = sorted({REPO_ROOT / row.overlay_path for row in rows})
     for overlay in overlays:
         if not overlay.name.startswith("market_intelligence_") or not overlay.name.endswith("_overlay"):
@@ -225,7 +233,7 @@ def remove_sources(rows: list[PreservationRow], confirmed: bool) -> None:
     remaining = [str(path) for path in overlays if path.exists()]
     if remaining:
         raise RuntimeError("Overlay removal incomplete:\n" + "\n".join(remaining))
-    verify_archive(rows, write_manifest=True)
+    verify_archive(rows)
     print(f"removed verified sources: overlays={len(overlays)}")
 
 
@@ -246,10 +254,13 @@ def main() -> None:
     elif args.action == "copy":
         copy_archive(rows)
     elif args.action == "verify":
-        verify_archive(rows, write_manifest=True)
+        verify_archive(rows)
     else:
         remove_sources(rows, args.confirm_remove_verified_sources)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as exc:
+        raise SystemExit(f"error: {exc}") from None

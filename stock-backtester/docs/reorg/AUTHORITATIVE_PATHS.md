@@ -16,7 +16,7 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 | Intelligence calibration | `src/backtester/intelligence/calibration/` | ACTIVE RESEARCH | Calibration dataset construction, fitted weights, and time-safe walk-forward evaluation; output schemas and paths remain unchanged. |
 | Combined-signal research | `research/combined_signals/` | ACTIVE RESEARCH | Allocator ranking/comparison diagnostics across baseline, heuristic, and ML intelligence; consumes existing artifacts and owns no reusable implementation. |
 | Repository navigation spine | `README.md`, subsystem `README.md` files, `docs/README.md`, `scripts/README.md` | DOCUMENTATION / TOOLING | Phase 5 entry points; descriptive only and not an execution authority. |
-| Dividend-capture future ownership | `src/backtester/strategies/dividend_capture/` (future), `research/strategies/dividend_capture/` (future) | ACTIVE RESEARCH / PLANNED | Explicitly no longer a long-term root peer; forensics required before movement. |
+| Historical dividend-capture research | `research/dividend_capture/` | HISTORICAL RESEARCH | Four distinct experiment families; contract-protected and not package or allocator authority. |
 | Experiment registry | `src/backtester/experiments.py` | REUSABLE INFRASTRUCTURE | Read-only typed discovery metadata for a small pilot; no execution authority. |
 | Parameter/configuration registry | `src/backtester/experiments.py` (`ParameterSpec`, `ExperimentConfig`) | REUSABLE INFRASTRUCTURE | Typed defaults, provenance, modes, JSON serialization, and validation only; existing command defaults remain authoritative. |
 
@@ -37,7 +37,7 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 | Event-learning intelligence | `src/backtester/intelligence/events/` | ACTIVE RESEARCH | HIGH | HIGH |
 | NLP/LLM features | `src/backtester/intelligence/llm/` | ACTIVE RESEARCH | HIGH | HIGH |
 | Training | walk-forward and event-day runners | ACTIVE RESEARCH | MEDIUM | HIGH |
-| Dividend capture | `dividend-capture/src/` plus event engine | ACTIVE RESEARCH | HIGH | MEDIUM |
+| Dividend capture | `research/dividend_capture/` plus separate `src/backtester/strategies/event_strategies.py` baseline | HISTORICAL RESEARCH / ACTIVE CORE BASELINE | HIGH | MEDIUM |
 | Survivable volatility | `src/features/survivable_volatility.py` | ACTIVE RESEARCH | MEDIUM | MEDIUM |
 | Workers | `scripts/workers/`, local `worker_ingest/` | OPERATIONAL FALLBACK | HIGH | HIGH |
 | Visualization | `visuals/`, `src/backtester/visuals/` | ACTIVE RESEARCH | HIGH | MEDIUM |
@@ -53,5 +53,4 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 ## User decision required
 
 - Confirm whether the operational heuristic intelligence path is still actively used.
-- Confirm whether `dividend-capture` should eventually join the main package or remain a separate reproducible project.
 - Confirm whether remote Chromebook/SSH worker conventions are permanent compatibility requirements.

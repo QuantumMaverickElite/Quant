@@ -236,6 +236,24 @@ Completed on `reorg/phase0-authority-inventory`:
   remote worker, credential, provider, data, output, or quantitative behavior
   changed.
 
+## Phase 25B status — root physical cleanup
+
+- Commit `9b44094` preserves all 66 former ignored intelligence overlays as 289
+  byte-verified payload files under the tracked, human-readable root archive.
+  The 66 old source directories are intentionally absent.
+- Archive verification is now lifecycle-correct: `verify` checks only the
+  archive, while `verify-sources` remains the explicit pre-removal check used by
+  `copy`. Removal verifies the archive both before and after deleting only the
+  guarded source paths.
+- Four deterministic contracts protect the standalone dividend research
+  calendar, schemas, shifted regime window, classifications, and strategy
+  signals. Forensics confirm research rather than package ownership.
+- All 12 tracked dividend research files now live under
+  `research/dividend_capture/`; all eight Python programs remain in their four
+  distinct families. The root lane retains 60 ignored output files plus empty
+  local `data/` and `notes/` placeholders for Phase 26 compatibility. No output
+  file was moved or rewritten.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs
@@ -257,8 +275,8 @@ Completed on `reorg/phase0-authority-inventory`:
   not yet a shared orchestration contract.
 - No training, pool launch, network access, or output generation was performed.
 
-- Overlay directories are ignored and not recoverable from normal Git history;
-  their archive destination remains a user decision.
+- Historical overlay payloads are recoverable from the tracked archive; the old
+  ignored delivery directories are intentionally absent.
 - The v2.6.2 overlay documentation has no canonical destination.
 - Existing output trees contain both regenerable intermediates and research evidence; official baselines are not yet identified.
 - The operational heuristic intelligence path and event-learning research path coexist.
@@ -292,6 +310,6 @@ No production algorithms, strategy behavior, signal formulas, allocators, intell
 
 - Promote or retain the current feature branch as the reorganization baseline.
 - Decide whether heuristic intelligence remains operational.
-- Select official research baselines and overlay preservation destination.
-- Run a contract-first dividend-capture migration only if it is required for a
-  later reorganization; retain the documented worker path contract.
+- Select official durable research baselines.
+- Retain the documented worker path contract and classify dividend generated
+  state during Phase 26.
