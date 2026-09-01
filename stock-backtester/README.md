@@ -91,7 +91,8 @@ remaining under `scripts/` are not interchangeable with offline tests.
 
 Generated artifacts are intentionally not source authority. `outputs/`
 contains a mixture of caches, matrices, training runs, research evidence,
-reports, and temporary results; retention authority remains incomplete. Read
+reports, and temporary results; run-level provenance and promotion authority
+remain incomplete even though every major family is classified. Read
 [the output policy](docs/output_policy.md) before cleaning or promoting data.
 
 Current documentation is indexed in [`docs/README.md`](docs/README.md).

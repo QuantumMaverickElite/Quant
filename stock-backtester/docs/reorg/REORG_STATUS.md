@@ -272,6 +272,25 @@ Completed on `reorg/phase0-authority-inventory`:
   convention, and retention rules for new significant runs. Output organization
   is explicitly classified and sufficient for Reorg V1 freeze.
 
+## Phase 27 status — Reorg V1 freeze
+
+- Re-ran the root and project ten-minute re-entry test from current navigation
+  without relying on phase history; all requested authority, pipeline,
+  research, validation, tool, output, worker, archive, and compatibility
+  surfaces are reachable in at most two documentation hops.
+- Verified the physical ownership rules, four intelligence lineages/statuses,
+  three peer/spread regimes, MarketState generations, dividend research/output
+  split, worker interface, 34-family output inventory, registered paths,
+  package initializer exports, generated Git hygiene, and archive integrity.
+- Repaired four small current-document inconsistencies: post-removal archive
+  verification, moved maintenance-tool ownership, historical overlay-count
+  tense, and the operational intelligence-engine output-contract reference.
+- Consolidated acceptable post-freeze debt, safe extension rules, the re-entry
+  scorecard, and validation evidence in `REORG_V1_FREEZE.md`.
+- Decision: `READY_TO_FREEZE`. Reorg V1 physical reorganization is complete;
+  dependency-complete user validation remains the acceptance gate before the
+  freeze record is committed.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs

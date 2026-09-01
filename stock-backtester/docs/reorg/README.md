@@ -10,6 +10,7 @@ Start with:
 - [Current architecture](../architecture.md)
 - [Research workflow](../research_workflow.md)
 - [Outputs and artifacts](../output_policy.md)
+- [Reorg V1 freeze boundary](REORG_V1_FREEZE.md)
 
 ## What lives here
 
@@ -33,6 +34,9 @@ Start with:
   disposition are recorded in
   [PHASE26_OUTPUT_TAXONOMY.md](PHASE26_OUTPUT_TAXONOMY.md) and its
   [machine-readable inventory](PHASE26_OUTPUT_INVENTORY.csv).
+  The final re-entry audit, deferred-debt register, extension rules, and
+  validation boundary are recorded in
+  [REORG_V1_FREEZE.md](REORG_V1_FREEZE.md).
 
 The phase files remain physically here because moving them would create noisy
 reference churn without improving the current authority map. Readers should not

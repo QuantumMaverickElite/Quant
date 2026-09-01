@@ -11,7 +11,7 @@ utilities, not quantitative research commands.
 | `reorg_overlay_inventory.py` | compare overlay files and hashes | yes, report files | `python tools/reorg/reorg_overlay_inventory.py --out outputs/reorg_audit/latest` |
 | `reorg_phase0_inventory.py` | build bounded Phase 0 manifests | yes, manifests/docs | `python tools/reorg/reorg_phase0_inventory.py --root .` |
 | `reorg_sacred_smoke.py` | dry-run or execute configured sacred checks | potentially; command-dependent | `python tools/reorg/reorg_sacred_smoke.py --manifest configs/sacred_scripts.json --dry-run` |
-| `archive_intelligence_overlays.py` | copy and byte-verify the Phase 25 ignored overlays in their tracked archive | only for explicit `copy` / confirmed removal | `python tools/reorg/archive_intelligence_overlays.py verify-sources` |
+| `archive_intelligence_overlays.py` | copy and byte-verify the Phase 25 ignored overlays in their tracked archive | only for explicit `copy` / confirmed removal | `python tools/reorg/archive_intelligence_overlays.py verify` |
 
 The inventory tools are read-only with respect to source/data and write only their
 requested reports. Sacred smoke is potentially executing and must remain
@@ -19,3 +19,6 @@ offline/non-destructive; skip commands that require providers, downloads, or
 large research runs. The overlay archive tool is separately bounded by the
 Phase 25 manifest: `copy` preserves all 289 rows and `remove-sources` refuses to
 run unless both archive verification and an explicit confirmation flag pass.
+After the completed migration, normal validation is archive-only `verify`;
+`verify-sources` is the pre-removal lifecycle check and now fails because the
+audited source overlays are intentionally absent.

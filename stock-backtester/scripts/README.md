@@ -76,8 +76,9 @@ They are historical ML-policy research tooling, not event-learning authority.
 - **Visualization:** `visuals/` and `build_market_fabric_*` helpers.
 - **Workers:** `scripts/workers/`; packaging and SSH assumptions are documented in
   `docs/reorg/SACRED_WORKFLOWS.md`.
-- **Maintenance/audit:** `reorg_audit.py`, `reorg_sacred_smoke.py`, and related
-  inventory helpers.
+- **Maintenance/audit:** these are no longer script commands; use
+  [`../tools/reorg/`](../tools/reorg/README.md) for `reorg_audit.py`,
+  `reorg_sacred_smoke.py`, and related inventory helpers.
 
 ## Tests and maintenance
 

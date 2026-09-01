@@ -4,11 +4,12 @@ Original machine-readable source: [overlay_lineage.csv](overlay_lineage.csv).
 The Phase 25 live preservation decision is recorded in
 [PHASE25_OVERLAY_PRESERVATION.md](PHASE25_OVERLAY_PRESERVATION.md).
 
-## Findings
+## Phase 0 findings
 
-- 56 `market_intelligence_*_overlay` directories exist under `stock-backtester`.
-- 10 additional overlay directories exist at repository root.
-- These directories are ignored by Git and are therefore not protected by branch rollback.
+- The Phase 0 scan found 56 `market_intelligence_*_overlay` directories under
+  `stock-backtester` and 10 additional overlay directories at repository root.
+- Those source directories were ignored by Git and therefore were not protected
+  by branch rollback before the Phase 25B archive migration.
 - Overlay files are patch-delivery source/documentation, not runtime imports.
 - Version documents contain explicit copy commands showing promotion from overlay paths into canonical `src/`, `scripts/`, and `docs/` paths.
 - Many overlay files are identical to canonical files; others differ because canonical code continued evolving.
