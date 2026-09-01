@@ -1,6 +1,8 @@
 # Overlay Lineage and Preservation
 
-Machine-readable source: [overlay_lineage.csv](overlay_lineage.csv).
+Original machine-readable source: [overlay_lineage.csv](overlay_lineage.csv).
+The Phase 25 live preservation decision is recorded in
+[PHASE25_OVERLAY_PRESERVATION.md](PHASE25_OVERLAY_PRESERVATION.md).
 
 ## Findings
 
@@ -12,6 +14,11 @@ Machine-readable source: [overlay_lineage.csv](overlay_lineage.csv).
 - Many overlay files are identical to canonical files; others differ because canonical code continued evolving.
 - `market_intelligence_v2_6_2_overlay/docs/market_intelligence_v2_6_2.md` has no tracked canonical counterpart, including under `docs/history/intelligence/` and is recorded as `CANONICAL MISSING` in the manifest.
 
+The Phase 0 destination columns reflect the paths that existed when that scan
+ran. Phase 22 later moved historical intelligence documents and research
+commands, so those destination strings are historical evidence rather than a
+live path map. Source-file hashes remain preservation evidence.
+
 ## Relationship meanings
 
 - `IDENTICAL`: overlay hash equals the candidate canonical destination.
@@ -21,7 +28,10 @@ Machine-readable source: [overlay_lineage.csv](overlay_lineage.csv).
 
 ## Preservation rule
 
-Do not delete, move, rewrite, or promote any overlay during Phase 0. Fully identical overlays may become archival candidates only after their hashes, documentation, and reproducibility value have been recorded externally or in a future preservation commit.
+Do not delete, move, rewrite, or promote any overlay without a verified archive
+destination. Phase 25 found only a small fully duplicated subset; all overlays
+remain in place because no archive destination was authorized and moving only a
+subset would not resolve the preservation problem.
 
 Git history is sufficient evidence for currently tracked canonical files, but it is not a complete substitute for preserving ignored overlay contents.
 

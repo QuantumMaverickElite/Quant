@@ -23,7 +23,10 @@ Start with:
 - current compatibility contracts include
   [OUTPUT_CONTRACTS.md](OUTPUT_CONTRACTS.md),
   [SACRED_WORKFLOWS.md](SACRED_WORKFLOWS.md), and
-  [OVERLAY_LINEAGE.md](OVERLAY_LINEAGE.md).
+  [OVERLAY_LINEAGE.md](OVERLAY_LINEAGE.md). The current root ownership and
+  preservation decisions are summarized by
+  [PHASE25_ROOT_TOPOLOGY.md](PHASE25_ROOT_TOPOLOGY.md) and
+  [PHASE25_OVERLAY_PRESERVATION.md](PHASE25_OVERLAY_PRESERVATION.md).
 
 The phase files remain physically here because moving them would create noisy
 reference churn without improving the current authority map. Readers should not

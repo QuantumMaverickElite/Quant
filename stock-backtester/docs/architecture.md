@@ -177,12 +177,19 @@ the other's schemas.
 
 ## Workers and root-level lanes
 
-`worker_ingest/` and worker scripts are operational infrastructure with
-deployment and packaging assumptions. They are not a peer research project.
-Root ignored intelligence overlays are preservation-sensitive historical
-bundles. `dividend-capture/` is intended eventually to become a strategy or
-research lane within the main system, but requires separate forensic migration.
-None is moved by documentation consolidation.
+The repository-root `worker_ingest/` directory is an ignored local cache and
+synchronization interface. Two tracked parsers consume its exact
+`~/projects/quant/worker_ingest/chromebook` path, while current worker commands
+use a distinct remote `~/quant-worker` contract and copy newer results into
+`outputs/intelligence/worker_results/`. It is operational infrastructure, not a
+peer research project, and its path is intentionally retained.
+
+Ignored intelligence overlays are preservation-sensitive historical delivery
+bundles. Most contain content different from current tracked files, so they
+remain in place pending a user-selected archival destination. The tracked
+`dividend-capture/` lane is standalone historical strategy research; migration
+is explicitly deferred until numerical contracts and ignored-output ownership
+exist. See the [Phase 25 root record](reorg/PHASE25_ROOT_TOPOLOGY.md).
 
 ## Current, fallback, historical, unresolved
 
@@ -195,5 +202,5 @@ None is moved by documentation consolidation.
 | Unresolved | Multiple variants remain and no authority choice has been made |
 
 Known unresolved areas include H20/H100 baselines, threshold V2/V3 lineage,
-training modes, official durable output baselines, root overlay preservation,
-worker ownership, and dividend-capture migration.
+training modes, official durable output baselines, the overlay archive
+destination, and a future contract-first dividend-capture migration.

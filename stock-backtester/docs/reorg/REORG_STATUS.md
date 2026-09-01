@@ -220,6 +220,22 @@ Completed on `reorg/phase0-authority-inventory`:
   intelligence stress, and Rust/export workflows remain explicit deferrals or
   legitimate high-risk commands. No methodology or authority changed.
 
+## Phase 25 status — root topology and preservation
+
+- Classified every repository-root lane without moving generated outputs or
+  preservation-sensitive ignored content.
+- Kept all 66 ignored intelligence overlays in place. A live scan found 289
+  source/document files: 132 identical to a plausible tracked counterpart, 156
+  different, and one with no tracked counterpart. The aggregate source hash and
+  decisions are tracked in `PHASE25_OVERLAY_PRESERVATION.md`.
+- Explicitly deferred `dividend-capture/` migration until behavioral contracts
+  and ignored-output ownership are established; active stock-backtester code
+  does not import it.
+- Intentionally retained root `worker_ingest/` as an operational compatibility
+  interface because tracked parsers consume its exact local path. No SSH,
+  remote worker, credential, provider, data, output, or quantitative behavior
+  changed.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs
@@ -241,7 +257,8 @@ Completed on `reorg/phase0-authority-inventory`:
   not yet a shared orchestration contract.
 - No training, pool launch, network access, or output generation was performed.
 
-- Overlay directories are ignored and not recoverable from normal Git history.
+- Overlay directories are ignored and not recoverable from normal Git history;
+  their archive destination remains a user decision.
 - The v2.6.2 overlay documentation has no canonical destination.
 - Existing output trees contain both regenerable intermediates and research evidence; official baselines are not yet identified.
 - The operational heuristic intelligence path and event-learning research path coexist.
@@ -276,4 +293,5 @@ No production algorithms, strategy behavior, signal formulas, allocators, intell
 - Promote or retain the current feature branch as the reorganization baseline.
 - Decide whether heuristic intelligence remains operational.
 - Select official research baselines and overlay preservation destination.
-- Decide long-term ownership of dividend capture and remote worker workflows.
+- Run a contract-first dividend-capture migration only if it is required for a
+  later reorganization; retain the documented worker path contract.

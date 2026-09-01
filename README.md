@@ -13,18 +13,21 @@ documentation.
 3. Use [reorganization history](stock-backtester/docs/reorg/README.md) only for
    migration archaeology.
 
-## Root layout
+## Root layout and ownership
 
 | Path | Status |
 | --- | --- |
 | `stock-backtester/` | Main active quant research system |
-| `dividend-capture/` | Separate historical research lane pending a dedicated ownership migration |
-| `worker_ingest/` | Operational ingestion infrastructure, not a peer research project |
-| `market_intelligence_*_overlay/` | Ignored/local historical overlays requiring preservation decisions before archival |
+| `dividend-capture/` | Tracked, standalone historical strategy research; intentionally retained until its numerical behavior and ignored outputs have migration contracts |
+| `worker_ingest/` | Ignored/local operational cache and synchronization interface used by tracked Chromebook parsers; its root path is a compatibility contract |
+| `market_intelligence_*_overlay/` | Ignored/local historical delivery bundles; preserved in place because most contain content that differs from tracked canonical files |
+| `.codex/`, `.venv/` | Local tooling/environment state, not repository projects |
 
-The last two categories may not appear in normal Git inventories. Do not move or
-delete them based only on the root layout. Overlay lineage is documented in
-[OVERLAY_LINEAGE.md](stock-backtester/docs/reorg/OVERLAY_LINEAGE.md).
+The worker cache and overlays do not appear in normal Git inventories and are
+not recoverable from a branch checkout. Do not move or delete them based only
+on the root layout. Root decisions and overlay preservation evidence are in the
+[Phase 25 root topology record](stock-backtester/docs/reorg/PHASE25_ROOT_TOPOLOGY.md)
+and [overlay preservation manifest](stock-backtester/docs/reorg/PHASE25_OVERLAY_PRESERVATION.md).
 
 No root-level lane should be inferred to be production authority merely because
 it has its own directory.
