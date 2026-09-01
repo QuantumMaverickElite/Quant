@@ -18,6 +18,9 @@ The current offline tests are:
 - `test_market_state_contracts.py` — deterministic MarketState composition,
   fast feature-row, rebalance, momentum, portfolio weighting/return, schema,
   and script-to-package compatibility contracts.
+- `test_mean_reversion_daily_portfolio_contracts.py` — deterministic signal
+  ordering, execution lag, duplicate handling, exposure sizing, fees,
+  mark-to-market, trade/equity schemas, summary, and compatibility contracts.
 
 From `stock-backtester/`, run the current offline suite with:
 
@@ -27,7 +30,8 @@ PYTHONPATH=src python -m unittest \
   tests.test_experiment_registry tests.test_parameter_config_registry \
   tests.test_reorg_phase0_inventory \
   tests.test_intelligence_training_orchestration \
-  tests.test_peer_spread_contracts tests.test_market_state_contracts
+  tests.test_peer_spread_contracts tests.test_market_state_contracts \
+  tests.test_mean_reversion_daily_portfolio_contracts
 ```
 
 Run one test module by replacing the module name, for example:

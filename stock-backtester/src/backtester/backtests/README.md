@@ -1,5 +1,19 @@
 # Research backtests
 
+## Mean-reversion daily portfolio
+
+`mean_reversion_daily_portfolio.py` owns the reusable mechanics for the
+large-universe Python daily evaluator: signal filtering and per-date ranking,
+next-trading-day entries, configured trading-day exits, overlapping long
+positions, confidence-weighted exposure, fees, mark-to-market equity, closed
+trades, drawdown, and summary statistics.
+
+`scripts/backtest_mean_reversion_daily_portfolio.py` retains signal-file and
+price-download orchestration, output paths and formats, terminal reporting, and
+compatibility re-exports. This evaluator remains separate from threshold,
+matrix-allocator, and Rust stress methodologies. Its deterministic contracts
+live in `tests/test_mean_reversion_daily_portfolio_contracts.py`.
+
 ## MarketState portfolio mechanics
 
 `market_state_portfolio.py` owns reusable mechanics extracted from

@@ -35,7 +35,7 @@ build universe
 | Market context | `scripts/run_market_context_features.py` | `backtester.context` |
 | Context adjustment | `scripts/apply_context_to_mean_reversion_signals.py` | Stable command path |
 | Deformation features/adjustment | `scripts/run_regime_correlation_features.py`, `apply_deformation_weights_to_mean_reversion_signals.py` | `backtester.correlation`; research evaluation under `research/correlation/` |
-| Portfolio evaluation | `scripts/backtest_mean_reversion_daily_portfolio.py` | Command-heavy implementation debt |
+| Portfolio evaluation | `scripts/backtest_mean_reversion_daily_portfolio.py` | `backtester.backtests.mean_reversion_daily_portfolio` |
 | Rust stress | export commands plus `rust_engine/` | Explicit cross-language schemas |
 
 ## Peer/spread regimes
@@ -83,12 +83,26 @@ stress folders. Retention authority is documented in
 - Record horizon choices without declaring H20 or H100 canonical.
 - Keep evaluation/diagnostic programs in the corresponding `research/` lane.
 
+## Python daily portfolio evaluator
+
+The daily evaluator consumes context-adjusted mean-reversion signals, filters
+and ranks them per signal date, enters long positions on the next trading day,
+holds overlapping positions for the configured trading-day horizon, and emits
+orders, closed trades, daily equity, and summary metrics. Reusable order,
+position, portfolio, and summary mechanics live in
+`src/backtester/backtests/mean_reversion_daily_portfolio.py`; the script retains
+downloads, paths, Parquet/CSV writes, and terminal presentation.
+
+This is not a benchmark-authority decision and does not change or unify the
+separate threshold, matrix, one-pass peer/spread, or Rust simulation paths.
+
 ## Safe validation
 
 The deterministic peer/spread contracts are:
 
 ```bash
 PYTHONPATH=src python tests/test_peer_spread_contracts.py
+PYTHONPATH=src python tests/test_mean_reversion_daily_portfolio_contracts.py
 ```
 
 Validate registry metadata and the full offline suite with:

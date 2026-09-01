@@ -18,7 +18,7 @@ the commands most likely to be useful on re-entry.
 | `run_regime_correlation_features.py` | generate regime/correlation features | current / correlation |
 | `apply_context_to_mean_reversion_signals.py` | context adjustment | research pipeline |
 | `apply_deformation_weights_to_mean_reversion_signals.py` | deformation adjustment | research pipeline |
-| `backtest_mean_reversion_daily_portfolio.py` | evaluate a signal portfolio | research evaluator |
+| `backtest_mean_reversion_daily_portfolio.py` | evaluate a signal portfolio | wrapper over `backtester.backtests.mean_reversion_daily_portfolio` |
 | `export_rust_matrix_inputs.py` / `export_rust_stress_inputs.py` | prepare Rust contracts | compatibility-sensitive |
 | `summarize_rust_stress_runs.py` | summarize Rust results | research evaluator |
 | `run_market_intelligence_live.py` | operational intelligence loop | live/provider assumptions |
@@ -43,6 +43,9 @@ They are historical ML-policy research tooling, not event-learning authority.
   The staged cached command paths remain stable wrappers while reusable peer
   search and spread computation live in `src/backtester/correlation/`. The
   package/tabular and one-pass cached paths remain separate regimes.
+  Daily overlapping-position portfolio mechanics live in
+  `src/backtester/backtests/mean_reversion_daily_portfolio.py`; the historical
+  evaluator command path remains stable.
   Evaluation, inspection, Monte Carlo, and same-universe control programs now
   live in [`../research/mean_reversion/`](../research/mean_reversion/).
 - **Correlation/deformation:** `run_regime_correlation_features.py`,

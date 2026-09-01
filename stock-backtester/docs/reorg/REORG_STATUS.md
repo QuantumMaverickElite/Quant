@@ -205,6 +205,21 @@ Completed on `reorg/phase0-authority-inventory`:
   distinct research generations. No allocator authority or quantitative
   methodology was changed.
 
+## Phase 24 status — final implementation cleanup
+
+- Daily overlapping-position mean-reversion portfolio mechanics now live in
+  `src/backtester/backtests/mean_reversion_daily_portfolio.py`; the historical
+  command remains `scripts/backtest_mean_reversion_daily_portfolio.py`.
+- Deterministic contracts protect signal filtering/ranking, trading-day entry
+  and exit alignment, duplicates, exposure sizing, fees, schemas, summaries,
+  missing marks, repeatability, and script-helper compatibility.
+- `scripts/strategy_scorecard.py` remains a cohesive standalone reporting
+  command after read-only forensics found no tracked code callers or clean
+  low-risk shared authority boundary.
+- One-pass peer/spread, threshold generations, MarketState research commands,
+  intelligence stress, and Rust/export workflows remain explicit deferrals or
+  legitimate high-risk commands. No methodology or authority changed.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs

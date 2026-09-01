@@ -57,6 +57,13 @@ universe
 The detailed command and artifact sequence is documented in the
 [large-universe runbook](large_universe_pipeline.md).
 
+The daily overlapping-position evaluator is owned by
+`backtester.backtests.mean_reversion_daily_portfolio`; its stable download,
+file-output, and reporting command remains
+`scripts/backtest_mean_reversion_daily_portfolio.py`. This evaluator is a
+Python research path and is not declared equivalent to the matrix allocator,
+threshold-rebalance implementations, or Rust stress engine.
+
 Peer/spread computation has three intentionally distinct regimes:
 
 1. **Package/tabular:** `src/backtester/correlation/spreads.py`, invoked by
