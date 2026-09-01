@@ -19,6 +19,9 @@ stock-backtester/assets/results/
 stock-backtester/outputs/
 stock-backtester/data/intelligence/historical/
 market_intelligence_*_overlay/
+!archive/
+!archive/intelligence_overlays/
+!archive/intelligence_overlays/**
 *.jsonl
 *.jsonl.gz
 *.tar.gz
