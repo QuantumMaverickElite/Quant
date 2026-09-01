@@ -1,92 +1,67 @@
-# Output Policy
+# Outputs and artifact policy
 
-Generated outputs are ignored by Git.
+`outputs/` contains generated research state, not source-code authority. This
+phase documents the tree but does not move, delete, or promote any artifact.
 
-The main repo should store:
+## Current categories
 
-```text
-source code
-scripts
-documentation
-configuration
-small curated examples if needed
-```
+| Category | Typical location | Treatment |
+| --- | --- | --- |
+| Durable research evidence | `outputs/experiments/`, selected summaries and scorecards | Preserve only with manifest, inputs, parameters, and provenance |
+| Reports and backtests | `outputs/reports/`, `outputs/backtests/`, comparison folders | Regenerable unless explicitly promoted |
+| Signals and features | `outputs/signals/`, `outputs/features/`, `outputs/context/`, `outputs/correlation/` | Pipeline contracts; retention authority varies |
+| Matrices and caches | `outputs/cache/`, `outputs/feature_matrix/` and `/tmp/quant_*` | Regenerable or reproducibility interfaces; often large |
+| Intelligence results | `outputs/intelligence/` | Mixed event datasets, audits, classifications, calibration, and training evidence |
+| Training runs | `outputs/intelligence/training_runs/` | Research evidence; preserve manifests and promoted summaries |
+| Monte Carlo and Rust stress | `outputs/monte_carlo/`, Rust-output locations | Usually regenerable; compact summaries preferred |
+| Visual artifacts | market-fabric/frame/plot directories | Diagnostic unless explicitly promoted |
+| Temporary run state | smoke, debug, retry, and timestamped scratch folders | No implied retention authority |
 
-The main repo should not store:
+The physical taxonomy is inconsistent and contains overlapping generations.
+Path alone is insufficient to decide whether an artifact is durable, a cache,
+or disposable.
 
-```text
-large Monte Carlo outputs
-per-run folders
-spaghetti plots from every experiment
-temporary debug outputs
-large intermediate matrices
-```
+## Reproducibility interfaces
 
-## Ignored Output Folders
+The `/tmp/quant_*` families are not arbitrary scratch names. Commands use them
+as explicit handoff locations for universes, price matrices, return matrices,
+peer maps, and Rust inputs. They are locally temporary but operationally
+meaningful interfaces. Record exact paths and metadata in experiment manifests.
 
-Common ignored folders include:
+A durable experiment should record at least:
 
-```text
-outputs/
-results/
-archive/old_backtests/
-src/outputs/
-wheelhouse/
-__pycache__/
-*.egg-info/
-```
+- Git commit and dependency versions;
+- command and parameters;
+- seed and sampled universe;
+- input paths and hashes;
+- output paths and schema/version;
+- creation time and promotion/retention status.
 
-## Save Modes
+See [reproducibility.md](reproducibility.md) and
+[OUTPUT_CONTRACTS.md](reorg/OUTPUT_CONTRACTS.md).
 
-The preferred save behavior is:
+## Save and retention principles
 
-```text
---save-mode none:
-    no files; console output only
+- Prefer compact summaries and Parquet/Zstd-compatible formats.
+- Do not commit large matrices, per-trial curves, frame sets, or debug outputs.
+- Do not delete `outputs/signals/` or intelligence evidence until manifests
+  establish provenance and replacement authority.
+- Cache only when recomputation cost justifies disk pressure.
+- An artifact becomes a baseline only through an explicit research decision,
+  not because it is old, large, or referenced by a script.
 
---save-mode compact:
-    summary CSV + trial CSV + small metadata
+The older [artifact policy](artifact_policy.md) adds external-storage guidance.
+The [output cleanup plan](output_cleanup_plan.md) is a historical/proposed
+campaign, not authorization to delete anything.
 
---save-mode plots:
-    compact files + selected plots
+## Future output cleanup
 
---save-mode full:
-    full curves/spaghetti outputs; use intentionally
-```
+A future output campaign should:
 
-## Disk Rule
+1. inventory physical artifacts without following ignored overlays;
+2. classify durable evidence, pipeline contracts, caches, and disposable runs;
+3. choose official baselines and required manifests;
+4. repair producers to emit predictable compact layouts;
+5. archive or remove only after user approval and recoverability checks.
 
-The project should optimize algorithms before adding caches.
-
-Caching large arrays should not be the default. With limited disk space, caching can quietly destroy the laptop.
-
-Use this rule:
-
-```text
-Optimize algorithm first.
-Save compact summaries by default.
-Archive important baselines externally.
-Only cache large outputs when explicitly needed.
-```
-
-## Local Cleanup Commands
-
-Check disk usage:
-
-```bash
-du -h outputs --max-depth=3 | sort -h | tail -50
-df -h .
-```
-
-Remove Python caches:
-
-```bash
-find . -type d -name "__pycache__" -prune -exec rm -rf {} +
-find . -type f -name "*.pyc" -delete
-```
-
-Check repo status:
-
-```bash
-gst
-```
+Until those prerequisites exist, output cleanup remains a documented proposal.

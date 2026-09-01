@@ -1,66 +1,48 @@
-# Quant Research Documentation
+# Documentation authority map
 
-This folder contains modular documentation for the stock backtester and allocator research framework.
+This directory separates current operating documentation from historical
+research and migration evidence. Start here instead of reconstructing the
+system from versioned notes or reorganization phases.
 
-The root `README.md` is the project front page. These documents are the deeper reference modules.
+## Current authoritative surface
 
-## Documentation map
+| Topic | Authority |
+| --- | --- |
+| Repository navigation and quick start | [Project README](../README.md) |
+| Current architecture and ownership | [Architecture](architecture.md) |
+| Large-universe pipeline | [Large-universe runbook](large_universe_pipeline.md) |
+| Research lifecycle and benchmark discipline | [Research workflow](research_workflow.md) |
+| Generated outputs and artifacts | [Output policy](output_policy.md) |
+| Reproducibility principles | [Reproducibility](reproducibility.md) |
+| Intelligence implementation and authority | [Intelligence README](../src/backtester/intelligence/README.md) |
+| Event-learning research | [Event-learning README](../research/event_learning/README.md) |
+| Experiment/config registry | [Experiment registry](reorg/EXPERIMENT_REGISTRY.md) and [parameter registry](reorg/PARAMETER_CONFIG_REGISTRY.md) |
+| Offline tests | [Tests README](../tests/README.md) |
 
-### Current
+Subsystem-local READMEs under `src/backtester/`, `research/`, `scripts/`,
+`configs/`, and `rust_engine/` provide the next level of detail.
 
-- [Architecture](architecture.md)
-- [Output policy](output_policy.md)
-- [Artifact policy](artifact_policy.md)
-- [Reproducibility](reproducibility.md)
-- [Subsystem READMEs](../src/backtester/)
-- [Reorganization status](reorg/REORG_STATUS.md)
+## Current reference areas
 
-### Research
+- [System guides](systems/) — market state, entropy, volatility, regimes,
+  options, dividend-capture context, and matrix backends.
+- [Strategy math](strategy_math.md) — mathematical definitions and formulas.
+- [Intelligence storage policy](intelligence/storage_policy.md).
+- [Output contracts](reorg/OUTPUT_CONTRACTS.md) and
+  [sacred workflows](reorg/SACRED_WORKFLOWS.md).
 
-- [Combined signal research](research_notes/COMBINED_SIGNAL_RESEARCH.md)
-- [Allocator findings](research_notes/allocator_findings.md)
-- [Known limitations](research_notes/known_limitations.md)
-- [Experiment notes](experiments/)
+Some detailed experiment and research-note documents remain useful evidence but
+are not general operating instructions.
 
-### History
+## Historical and forensic material
 
-The many `market_intelligence_v*.md` files document version history and are not
-the current authority map. Start with [CURRENT_ARCHITECTURE](reorg/CURRENT_ARCHITECTURE.md)
-and the intelligence README instead. Reorganization evidence is indexed under
-[docs/reorg](reorg/README.md).
+- [Intelligence history](history/intelligence/README.md) preserves versioned
+  operational, provider, calibration, ML-policy, and training generations.
+- [Reorganization history](reorg/README.md) indexes phase records, inventories,
+  and migration forensics.
+- [Experiment notes](experiments/) and [research notes](research_notes/) record
+  particular studies and findings; verify their inputs and dates before reuse.
 
-## Core Docs
-
-- [Architecture](architecture.md)
-- [Output Policy](output_policy.md)
-- [Artifact Policy](artifact_policy.md)
-- [Reproducibility](reproducibility.md)
-
-## Systems
-
-- [MarketState System](systems/market_state.md)
-- [Entropy Engine](systems/entropy_engine.md)
-- [Volatility Engines](systems/volatility_engines.md)
-- [Regime Strategy](systems/regime_strategy.md)
-- [Dividend Capture](systems/dividend_capture.md)
-- [Options Overlay](systems/options_overlay.md)
-- [CPU/GPU Matrix Backend](systems/cpu_gpu_matrix_backend.md)
-
-## Experiments
-
--[Feature Matrix Monte Carlo](experiments/feature_matrix_monte_carlo.md)
-
-- [Threshold Rebalance Experiments](experiments/threshold_rebalance.md)
-- [Matrix Allocator Engine](experiments/matrix_allocator_engine.md)
-- [Rebalance Frequency Tests](experiments/rebalance_frequency_tests.md)
-- [Benchmark Scripts](experiments/benchmark_scripts.md)
-
-## Math Reference
-
-- [Strategy Math and Signal Definitions](strategy_math.md)
-
-## Research Notes
-
-- [Allocator Findings](research_notes/allocator_findings.md)
-- [Known Limitations](research_notes/known_limitations.md)
-- [Next Steps](research_notes/next_steps.md)
+Historical paths and commands describe the repository at the time of the
+recorded experiment. Current paths are governed by the architecture and
+subsystem READMEs above.

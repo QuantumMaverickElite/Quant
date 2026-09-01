@@ -176,6 +176,19 @@ Completed on `reorg/phase0-authority-inventory`:
 - No quantitative behavior or schema change was intended. In particular,
   staged `ticker_return` and `avg_peer_corr` remain protected.
 
+## Phase 22 status — documentation authority consolidation
+
+- Established `docs/architecture.md` as the stable current architecture and
+  reduced root/project READMEs to navigation and validation entry points.
+- Added current large-universe and research-workflow guides and consolidated
+  generated-output guidance in `docs/output_policy.md`.
+- Grouped 77 versioned and dated intelligence records under
+  `docs/history/intelligence/`; current event-learning, operational fallback,
+  and historical ML-policy authority remain explicitly distinct.
+- Preserved phase records in place behind a historical reorganization index.
+  No quantitative implementation, generated output, overlay, worker, or data
+  content changed.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs

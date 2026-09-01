@@ -10,7 +10,7 @@ Machine-readable source: [overlay_lineage.csv](overlay_lineage.csv).
 - Overlay files are patch-delivery source/documentation, not runtime imports.
 - Version documents contain explicit copy commands showing promotion from overlay paths into canonical `src/`, `scripts/`, and `docs/` paths.
 - Many overlay files are identical to canonical files; others differ because canonical code continued evolving.
-- `market_intelligence_v2_6_2_overlay/docs/market_intelligence_v2_6_2.md` has no canonical counterpart in `stock-backtester/docs/` and is recorded as `CANONICAL MISSING` in the manifest.
+- `market_intelligence_v2_6_2_overlay/docs/market_intelligence_v2_6_2.md` has no tracked canonical counterpart, including under `docs/history/intelligence/` and is recorded as `CANONICAL MISSING` in the manifest.
 
 ## Relationship meanings
 

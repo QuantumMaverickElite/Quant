@@ -3,8 +3,8 @@
 ## Authority and purpose
 
 The four historical commands belong to the v4/v5 ML-policy research line
-documented in `docs/market_intelligence_v4_4.md` through
-`docs/market_intelligence_v4_8.md`. They are ACTIVE RESEARCH / HISTORICAL
+documented in `docs/history/intelligence/market_intelligence_v4_4.md` through
+`docs/history/intelligence/market_intelligence_v4_8.md`. They are ACTIVE RESEARCH / HISTORICAL
 RESEARCH TOOLING, not operational heuristic intelligence and not the current
 event-learning/LLM authority. No production allocator path was promoted.
 

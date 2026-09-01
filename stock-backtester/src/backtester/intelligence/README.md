@@ -1,87 +1,71 @@
 # Intelligence
 
-Purpose
--------
+The intelligence subsystem contains three distinct lineages. They share some
+data and commands but must not be treated as one promoted allocator.
 
-This directory contains three intentionally distinct lines of work. They share
-some schemas and artifacts, but they are not interchangeable authorities.
+## Authority and status
 
-Current implementation and authority
--------------------------------------
+| Lineage | Status | Ownership |
+| --- | --- | --- |
+| Event learning | Current research direction; not allocator authority | `events/`, `llm/`, `features/`, `calibration/`; evaluation under `research/event_learning/` |
+| Heuristic intelligence | Still-wired operational fallback | package-root engine, providers, evidence graph, scoring, reporting, and signal integration |
+| ML policy | Historical research tooling | `ml_policy/` with compatibility commands under `scripts/` |
 
-- **Operational heuristic/fallback:** `intelligence_engine.py`,
-  `allocator_adjustment.py`, and related scoring modules. This is the legacy
-  allocator-facing path; its operational status remains a user decision.
-- **Historical ML-policy research:** [`ml_policy/`](ml_policy/) contains common
-  logic plus application, validation, sweep, and permutation modules. The old
-  commands remain in `scripts/` as wrappers;
-  this line is research tooling, not current event-learning authority.
-- **Events:** [`events/`](events/) contains event schemas/facts, time-safe
-  outcome labels, impact datasets, event-day aggregation, and event features.
-- **LLM / event extraction:** [`llm/`](llm/) contains contextual extraction,
-  semantic classification/clustering, LLM classification joins, and NLP
-  runtime support. This is the current research direction, not automatically an
-  allocator replacement.
-- **Features:** [`features/`](features/) contains historical news feature
-  construction, sentiment transformation, and historical research-panel
-  construction. It is downstream of source acquisition and upstream of
-  calibration/training; it is distinct from `events/` and `llm/`, and is not
-  allocator authority.
-- **Calibration:** [`calibration/`](calibration/) contains calibration-dataset
-  construction, fitted intelligence weights, and time-safe walk-forward
-  calibration/evaluation. It consumes feature tables and produces research
-  artifacts; it is not allocator authority.
-- **Training orchestration:** `training_orchestration.py` contains the small
-  shared mechanics used by the batch, pool, and long-run training commands.
-  It does not choose research policy or execute training on import.
-- **Operational/evaluation:** remaining allocator-facing and heuristic/fallback
-  modules stay at this root until their compatibility contracts are mapped.
-- **Provider/ingestion:** historical source collectors and provider policy stay
-  at this root for now.
-- **SEC historical features:** `historical_feature_builder.py` remains at this
-  root as the SEC-specific point-in-time feature builder; it is separate from
-  calibration and from the news-oriented `features/` family.
+## Event-learning implementation
 
-Connects to
------------
+- `events/` owns event schemas, fact construction, time-safe outcome labels,
+  impact datasets, event-day aggregation, and event features.
+- `llm/` owns contextual extraction, structured classification, semantic
+  processing, joins, and NLP runtime.
+- `features/` owns historical news/sentiment transformations and panel
+  construction.
+- `calibration/` owns calibration datasets, fitted weights, and walk-forward
+  calibration.
 
-Scripts build news/source features and intelligence artifacts, while signal and
-allocator experiments consume selected outputs. See the output contracts before
-moving any path.
+The required causal boundary is `event_time <= signal_time`. LLM output is
+structured research context and must not directly control allocation.
+Evaluation and benchmark programs live under
+[`research/event_learning/evaluation/`](../../../research/event_learning/evaluation/README.md).
 
-Important commands
-------------------
+## Operational heuristic fallback
 
-- `scripts/run_market_intelligence_live.py` (operational/live assumptions)
-- `scripts/run_market_intelligence_batch.py` (batch research)
-- `scripts/validate_ml_policy_candidate.py` (historical ML-policy wrapper)
-- `scripts/check_intelligence_nlp.py` (bounded check where dependencies permit)
-- `scripts/run_intelligence_training_batch.py`,
-  `scripts/run_pool_intelligence_training.py`, and
-  `scripts/launch_long_intelligence_training.py` (historical training commands)
+`intelligence_engine.py` and related source loading, claim/evidence extraction,
+price-risk scoring, opportunity/regime scoring, reporting, and signal
+integration remain operationally wired. Provider and ingestion files remain at
+the package root because worker packaging and exact import paths are
+compatibility constraints.
 
-Tests
------
+Start with [the operational engine note](../../../docs/market_intelligence_engine.md).
+Legacy standalone scorers are documented under
+[`scripts/legacy/intelligence_heuristics/`](../../../scripts/legacy/intelligence_heuristics/README.md).
 
-`tests/test_ml_policy_family.py` is an offline contract test. Other
-intelligence checks may require data or providers; do not infer current
-authority from versioned filenames.
+## Historical ML-policy research
 
-The ML-policy files are now grouped in the compact `intelligence/ml_policy/`
-subpackage. The four historical command wrappers remain the compatibility
-boundary.
+The [ML-policy package](ml_policy/README.md) contains reusable mechanics for
+historical application, validation, sweep, and permutation studies. Its stable
+historical commands remain under `scripts/`. It is not current event-learning
+or allocator authority. Versioned research documentation is indexed under
+[`docs/history/intelligence/`](../../../docs/history/intelligence/README.md).
 
-Current event-learning flow
----------------------------
+## Providers, workers, and training
 
-provider/source payloads → normalized source rows → `events/event_fact_table.py`
-→ time-safe outcome labels → event-impact dataset → structured/LLM event
-features → event-day aggregation → baseline or walk-forward learning → future
-bounded allocator overlay. The pipeline is research-only and is not promoted to
-allocator authority.
+Provider/source acquisition modules remain near the package root. Worker
+scripts and root `worker_ingest/` infrastructure have operational deployment,
+bundle, and path assumptions; do not reorganize them without a dedicated
+contract audit.
 
-See also
---------
+Historical training commands remain user-facing under `scripts/`. Shared
+manifest writing and child-step launching live in
+`training_orchestration.py`. Batch, pool, and detached long-run modes remain
+separate; no baseline authority is inferred.
 
-- [`docs/intelligence/event_learning_rearchitecture.md`](../../../docs/intelligence/event_learning_rearchitecture.md)
-- [`docs/reorg/ML_POLICY_SCRIPT_FAMILY.md`](../../../docs/reorg/ML_POLICY_SCRIPT_FAMILY.md)
+## Inputs, outputs, validation
+
+Typical inputs are provider/worker payloads, event facts, prices, labels, and
+saved training tables. Outputs live under `outputs/intelligence/` and mix
+datasets, audit reports, classifications, calibration artifacts, and training
+runs. See [output policy](../../../docs/output_policy.md).
+
+Relevant offline tests include event/reorganization contracts, ML-policy family
+tests, training-orchestration tests, and table-I/O tests under `tests/`.
+Provider/network workflows require separate controlled validation.

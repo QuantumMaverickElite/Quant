@@ -1,123 +1,30 @@
-# Quant
+# Quant research workspace
 
-A collection of quantitative finance experiments, research pipelines, and backtesting systems.
+This repository is a quantitative research workspace. The main active system is
+[stock-backtester](stock-backtester/README.md), which contains reusable Python
+implementation, commands, research programs, tests, configuration, and
+documentation.
 
-This repository is structured as a growing research environment rather than a single project. Each subdirectory represents a different idea, model, or system being explored, tested, and iterated on over time.
+## Start here
 
----
+1. Read the [stock-backtester project map](stock-backtester/README.md).
+2. Use its [documentation index](stock-backtester/docs/README.md) for current
+   architecture, research workflow, outputs, and subsystem guides.
+3. Use [reorganization history](stock-backtester/docs/reorg/README.md) only for
+   migration archaeology.
 
-## Where to Start
+## Root layout
 
-If you're new to this repository:
+| Path | Status |
+| --- | --- |
+| `stock-backtester/` | Main active quant research system |
+| `dividend-capture/` | Separate historical research lane pending a dedicated ownership migration |
+| `worker_ingest/` | Operational ingestion infrastructure, not a peer research project |
+| `market_intelligence_*_overlay/` | Ignored/local historical overlays requiring preservation decisions before archival |
 
-1. Start with the [stock-backtester](stock-backtester/README.md) operational map.
+The last two categories may not appear in normal Git inventories. Do not move or
+delete them based only on the root layout. Overlay lineage is documented in
+[OVERLAY_LINEAGE.md](stock-backtester/docs/reorg/OVERLAY_LINEAGE.md).
 
-2. Inside that project, the most important layers are:
-
-- `stock-backtester/src/backtester/` contains the packaged research system.
-- `stock-backtester/scripts/` contains runnable pipelines and historical research tools.
-- `stock-backtester/tests/` is the intended home for offline validation (the first
-  clearly identified tests remain under `scripts/` until the next writable move).
-- `stock-backtester/configs/` contains audit, storage, and sacred-workflow policy.
-
-1. Example research modules include:
-
-- regime-based backtesting
-- dividend capture
-- volatility strategy research
-
-This repository is designed as a research workspace, so multiple ideas exist in parallel. Not every component is production-ready. The goal is exploration, iteration, and refinement.
-
-### Other root projects
-
-- `dividend-capture/` is a separate exploratory dividend-capture research project.
-- `worker_ingest/` contains worker/ingestion support and has its own operational assumptions.
-- Root `market_intelligence_*_overlay/` directories are ignored historical bundles. Do
-  not move or delete them casually; see the overlay lineage notes in
-  [stock-backtester/docs/reorg/OVERLAY_LINEAGE.md](stock-backtester/docs/reorg/OVERLAY_LINEAGE.md).
-
-For current-vs-historical distinctions and subsystem links, read
-[stock-backtester/README.md](stock-backtester/README.md) next.
-
----
-
-## Projects
-
-### stock-backtester
-
-The main active system in this repository.
-
-A modular backtesting framework for testing multiple classes of trading strategies across equities and ETFs.
-
-Focus areas include:
-
-- regime and momentum-based strategies
-- event-driven strategies
-- volatility strategy research
-- backtest infrastructure and experiment tracking
-
-Outputs are organized by strategy and timestamp so that experiments remain reproducible and do not overwrite one another.
-
----
-
-### dividend-capture
-
-A research project exploring dividend capture strategies and their variations.
-
-Core idea:  
-Buy before the ex-dividend date and sell after, attempting to capture dividend yield while minimizing price drop risk.
-
-Current findings:
-
-- naive dividend capture is generally unprofitable
-- price drops often offset much of the dividend
-- some tickers and holding periods show partial recovery patterns
-- the strategy is more useful as a research baseline than a finished system
-
-This project remains exploratory and is meant for experimentation rather than production use.
-
----
-
-## Philosophy
-
-This repo is not about copying known strategies. It is about:
-
-- testing ideas quickly
-- breaking assumptions
-- building intuition through data
-- iterating toward more robust systems
-
-Some ideas will fail. That is part of the process.
-
----
-
-## Structure
-
-```
-quant
-├── dividend-capture
-├── README.md
-└── stock-backtester
-```
-
-Each project is self-contained, with its own:
-
-- code
-- outputs
-- documentation
-
----
-
-## Current Direction
-
-The repository is moving toward a broader multi-strategy research framework, with emphasis on:
-
-- cleaner experiment tracking
-- better output organization
-- modular strategy development
-- future universe selection and portfolio construction
-- Integration of multiple simultaneous strategies
-
----
-
-This is an evolving workspace.
+No root-level lane should be inferred to be production authority merely because
+it has its own directory.

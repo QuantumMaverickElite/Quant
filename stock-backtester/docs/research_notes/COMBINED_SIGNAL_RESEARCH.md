@@ -33,9 +33,9 @@ Where to look
 - Context outputs: `outputs/context/`
 - Correlation outputs: `outputs/correlation/`
 - Intelligence outputs: `outputs/intelligence/`
-- Relevant implementation docs: `docs/large_universe_pipline.md`,
+- Relevant implementation docs: `docs/large_universe_pipeline.md`,
   `docs/research_notes/regime_correlation_deformation.md`, and
-  `docs/market_intelligence_experiment_summary_2026_06_23.md`.
+  `docs/history/intelligence/market_intelligence_experiment_summary_2026_06_23.md`.
 
 Authority and preservation
 --------------------------

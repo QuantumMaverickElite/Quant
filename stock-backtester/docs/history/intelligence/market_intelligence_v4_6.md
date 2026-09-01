@@ -75,4 +75,3 @@ Bad threshold:
 
 - removes the lift entirely
 - only works by over-concentrating in one or two dates
-

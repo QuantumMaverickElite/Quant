@@ -36,5 +36,5 @@ large-universe and evaluation scripts only with bounded fixtures.
 See also
 --------
 
-- [`docs/large_universe_pipline.md`](../../../docs/large_universe_pipline.md)
+- [`docs/large_universe_pipeline.md`](../../../docs/large_universe_pipeline.md)
 - [`docs/research_notes/COMBINED_SIGNAL_RESEARCH.md`](../../../docs/research_notes/COMBINED_SIGNAL_RESEARCH.md)

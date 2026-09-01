@@ -11,6 +11,8 @@ The current offline tests are:
 - `test_experiment_registry.py` — discovery registry integrity and JSON checks.
 - `test_parameter_config_registry.py` — typed configuration validation checks.
 - `test_reorg_phase0_inventory.py` — bounded inventory/overlay contract checks.
+- `test_intelligence_training_orchestration.py` — manifest and child-command
+  orchestration contracts.
 - `test_peer_spread_contracts.py` — deterministic cached peer-search, staged
   spread, one-pass schema, and downstream signal contracts.
 
@@ -20,7 +22,9 @@ From `stock-backtester/`, run the current offline suite with:
 PYTHONPATH=src python -m unittest \
   tests.test_table_io tests.test_ml_policy_family \
   tests.test_experiment_registry tests.test_parameter_config_registry \
-  tests.test_reorg_phase0_inventory tests.test_peer_spread_contracts
+  tests.test_reorg_phase0_inventory \
+  tests.test_intelligence_training_orchestration \
+  tests.test_peer_spread_contracts
 ```
 
 Run one test module by replacing the module name, for example:

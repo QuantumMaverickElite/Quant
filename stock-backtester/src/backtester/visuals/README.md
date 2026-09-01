@@ -6,11 +6,9 @@ The visualizer downloads historical market data, computes GARCH-based volatility
 
 ## Demo
 
-![NVDA GARCH Volatility Surface](../../outputs/garch_recordings/NVDA_20260501_054854/playback.gif)
-
-MP4 version:
-
-`src/outputs/garch_recordings/NVDA_20260501_054854/playback.mp4`
+Recorded examples are generated under output recording directories and are not
+source-controlled documentation dependencies. Generate a local recording with
+the demo command below instead of relying on a historical output path.
 
 ## File
 

@@ -1,108 +1,179 @@
-# Project Architecture
+# Current architecture
 
-The project is a modular quant research framework. It began as a stock backtester and has grown into a research system for testing strategies, market regimes, allocator rules, Monte Carlo simulations, and CPU/GPU matrix experiments.
+Stock Backtester is a research operating system with reusable Python
+implementation, stable command paths, research-specific programs, deterministic
+contracts, generated artifacts, and a Rust acceleration boundary. This document
+describes current ownership; it does not promote unresolved research variants.
 
-The long-term target architecture is:
+## Repository layers
 
-```text
-strategies -> signal processing -> allocator -> risk -> execution
-```
+| Path | Responsibility |
+| --- | --- |
+| `src/backtester/` | Reusable implementation and typed domain interfaces |
+| `scripts/` | Stable commands, compatibility wrappers, and remaining command-heavy programs |
+| `research/` | Experiments, ablations, controls, evaluations, and diagnostics |
+| `tests/` | Small deterministic offline contract and regression tests |
+| `tools/` | Repository maintenance rather than quantitative research |
+| `configs/` | Audit, storage, workflow, and registry policy |
+| `outputs/` | Ignored generated artifacts; not source authority |
+| `rust_engine/` | Rust stress and repeated-computation implementation |
+| `docs/` | Current reference documentation plus clearly indexed history |
 
-The current research focus is the allocator layer.
+The intended boundary is: reusable quantitative behavior belongs under
+`src/`; commands orchestrate it; research programs answer questions; tests
+protect stable behavior.
 
-## High-Level Flow
+## Core computational paths
 
-```text
-price data
-    -> feature generation
-    -> signal matrices
-    -> market-state / regime logic
-    -> allocator simulation
-    -> portfolio weights
-    -> equity curve
-    -> benchmark comparison
-    -> Monte Carlo validation
-```
-
-## Core Layers
-
-### Data Layer
-
-Responsible for pulling, formatting, and aligning price data.
-
-Important files:
+### Position and event backtests
 
 ```text
-src/backtester/data.py
-src/backtester/universes.py
+price or event data
+  -> strategy positions or event trades
+  -> optional volatility/regime decisions
+  -> position or event engine
+  -> metrics and reports
 ```
 
-### Analytics Layer
+Analytics, decisions, strategies, and engines live in their corresponding
+`src/backtester/` packages. Some older end-to-end orchestration remains in
+scripts and is future extraction debt.
 
-Computes features such as volatility, entropy, and other signal inputs.
-
-Important folder:
+### Large-universe mean reversion
 
 ```text
-src/backtester/analytics/
+universe
+  -> price matrix
+  -> returns matrix
+  -> peer search / correlation
+  -> peer-basket spreads
+  -> mean-reversion signals
+  -> market context
+  -> optional context/deformation adjustment
+  -> Python portfolio evaluation or Rust stress
+  -> reporting and market-fabric diagnostics
 ```
 
-### Decision Layer
+The detailed command and artifact sequence is documented in the
+[large-universe runbook](large_universe_pipeline.md).
 
-Converts raw analytics into allocator-facing decisions, permissions, and state.
+Peer/spread computation has three intentionally distinct regimes:
 
-Important folder:
+1. **Package/tabular:** `src/backtester/correlation/spreads.py`, invoked by
+   `scripts/run_peer_spread_features.py`.
+2. **Staged cached matrix:** `peer_search.py` and `peer_spreads.py`, invoked
+   by `large_universe_peer_search.py` and
+   `generate_peer_basket_spreads.py`.
+3. **One-pass cached matrix:**
+   `scripts/run_peer_spread_features_from_cached_matrix.py`; implementation
+   extraction is deferred.
+
+These regimes are not established as equivalent. The staged schema retains
+`ticker_return` and `avg_peer_corr`; the one-pass schema retains
+`stock_return` and `top_k_avg_corr`. H20 versus H100 authority is unresolved.
+
+### Market state, allocators, and threshold research
+
+Volatility and entropy analytics feed decision and MarketState layers, which
+can influence allocator scores and permissions. Reusable mechanics live under
+`src/backtester/analytics/`, `decision/`, `context/`, and `engines/`.
+Threshold-rebalance commands remain under `scripts/`; comparisons and
+Monte Carlo studies live under `research/threshold_rebalance/`. Fast V2,
+feature-matrix, Fast V3, and matrix-engine authority remains unresolved.
+
+## Intelligence architecture
+
+Three intelligence lineages coexist and must not be collapsed:
+
+### Current event-learning research
 
 ```text
-src/backtester/decision/
+provider or worker payloads
+  -> normalized event facts
+  -> time-safe forward outcomes
+  -> event-impact datasets
+  -> optional structured LLM classification
+  -> event-day aggregation
+  -> baseline or walk-forward learning
+  -> bounded future allocator research
 ```
 
-### Engine Layer
+Implementation is grouped under:
 
-Runs backtests, event simulations, matrix allocator simulations, and experimental CPU/GPU operations.
+- `src/backtester/intelligence/events/` — schemas, facts, labels, datasets,
+  aggregation, and event features;
+- `src/backtester/intelligence/llm/` — extraction, classification, semantic
+  processing, joins, and NLP runtime;
+- `src/backtester/intelligence/features/` — historical news/sentiment feature
+  transformations;
+- `src/backtester/intelligence/calibration/` — calibration datasets and
+  time-safe weight fitting.
 
-Important folder:
+Evaluation lives in `research/event_learning/evaluation/`. Event-learning is
+the current research direction, not promoted allocator authority.
 
-```text
-src/backtester/engines/
+### Operational heuristic fallback
+
+`MarketIntelligenceEngine`, provider/source loading, evidence graphs, price
+risk, reporting, and signal integration remain wired and protected. They are a
+legacy operational fallback, not the event-learning research architecture.
+Provider and ingestion modules remain near the intelligence package root
+because worker and path contracts constrain movement.
+
+### Historical ML-policy research
+
+Reusable historical ML-policy helpers live under
+`src/backtester/intelligence/ml_policy/`; historical command paths remain
+wrappers under `scripts/`. This research line is neither current
+event-learning authority nor allocator authority. Its versioned documentation
+is under `docs/history/intelligence/`.
+
+Training commands remain under `scripts/`; shared launch/manifest mechanics
+live in `backtester.intelligence.training_orchestration`. Batch, pool, and
+long-run training policy remains unresolved.
+
+## Experiment and configuration registry
+
+`src/backtester/experiments.py` provides metadata-only discovery of registered
+components, pipelines, commands, experiments, typed parameters, and
+configurations. It does not execute experiments or decide research authority.
+
+Use:
+
+```bash
+PYTHONPATH=src python -m backtester.experiments list
+PYTHONPATH=src python -m backtester.experiments describe <id>
+PYTHONPATH=src python -m backtester.experiments config <id>
+PYTHONPATH=src python -m backtester.experiments validate
 ```
 
-### Strategy Layer
+## Python and Rust boundary
 
-Contains strategy-specific signal logic.
+Python owns data preparation, feature/signal construction, orchestration, and
+reporting. Rust consumes explicit exported matrix/order contracts for repeated
+stress, exclusion, randomization, and portfolio simulation. Rust formats are
+cross-language contracts; neither implementation should silently reinterpret
+the other's schemas.
 
-Important folder:
+## Workers and root-level lanes
 
-```text
-src/backtester/strategies/
-```
+`worker_ingest/` and worker scripts are operational infrastructure with
+deployment and packaging assumptions. They are not a peer research project.
+Root ignored intelligence overlays are preservation-sensitive historical
+bundles. `dividend-capture/` is intended eventually to become a strategy or
+research lane within the main system, but requires separate forensic migration.
+None is moved by documentation consolidation.
 
-### Script Layer
+## Current, fallback, historical, unresolved
 
-Contains research scripts for building feature matrices, running Monte Carlo tests, comparing strategies, and benchmarking CPU/GPU behavior.
+| Status | Meaning |
+| --- | --- |
+| Current implementation | Actively owned reusable code or stable command path |
+| Current research | Active research direction without production promotion |
+| Operational fallback | Still wired/protected, but not the preferred research architecture |
+| Historical research | Preserved tooling or evidence; not current authority |
+| Unresolved | Multiple variants remain and no authority choice has been made |
 
-Important folder:
-
-```text
-scripts/
-```
-
-## Current Research Direction
-
-The project is moving from one-off backtests toward allocator research.
-
-The newer allocator pipeline is:
-
-```text
-price matrix
-    -> return matrix
-    -> signal matrices
-    -> normalized/ranked signals
-    -> combined allocator score
-    -> risk/diversification constraints
-    -> portfolio weights
-    -> portfolio return matrix
-    -> summary statistics
-```
-
-The goal is not to hardcode one strategy. The goal is to build reusable components that can combine many future signals.
+Known unresolved areas include H20/H100 baselines, threshold V2/V3 lineage,
+training modes, official durable output baselines, root overlay preservation,
+worker ownership, and dividend-capture migration.

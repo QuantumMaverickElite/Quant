@@ -66,4 +66,3 @@ Before integrating this as the live allocator policy:
 2. Repeat on an expanded ticker universe.
 3. Compare `strength=10 cap=0.05`, `strength=15 cap=0.05`, and `strength=20 cap=0.05`.
 4. Add a production config flag rather than hard-coding the strength.
-

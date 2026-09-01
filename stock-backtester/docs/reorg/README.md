@@ -1,49 +1,43 @@
-# Reorganization Control Room
+# Reorganization history and forensics
 
-This directory is the control room for the stock-backtester reorganization.
+This directory preserves the evidence and migration record for Reorg V1. It is
+not the primary documentation surface for the current system.
 
-The reorganization rule is simple:
+Start with:
 
-1. Measure before moving anything.
-2. Preserve old script paths until replacement wrappers exist.
-3. Protect sacred scripts with smoke tests and golden outputs.
-4. Move code behind stable interfaces before changing behavior.
-5. Archive overlays after their useful docs/code have been harvested.
+- [Current project README](../../README.md)
+- [Current documentation map](../README.md)
+- [Current architecture](../architecture.md)
+- [Research workflow](../research_workflow.md)
+- [Outputs and artifacts](../output_policy.md)
 
-## Phase 0 authority inventory
+## What lives here
 
-Run from the repository root:
+- `PHASE*.md` files are historical records of individual migration slices.
+- `REORG_STATUS.md` and `reorg_timeline.md` record accumulated phase history.
+- inventory CSV/JSON files capture bounded observations from earlier phases;
+  they are not automatically current.
+- `PHASE22_DOCUMENT_INVENTORY.csv` records the initial Phase 22 classification
+  of every tracked Markdown document.
+- forensics documents explain compatibility and preservation decisions.
+- current compatibility contracts include
+  [OUTPUT_CONTRACTS.md](OUTPUT_CONTRACTS.md),
+  [SACRED_WORKFLOWS.md](SACRED_WORKFLOWS.md), and
+  [OVERLAY_LINEAGE.md](OVERLAY_LINEAGE.md).
 
-```bash
-python tools/reorg/reorg_audit.py --out outputs/reorg_audit/latest
-python tools/reorg/reorg_sacred_smoke.py --manifest configs/sacred_scripts.json --dry-run
-python tools/reorg/reorg_phase0_inventory.py --root .
-```
+The phase files remain physically here because moving them would create noisy
+reference churn without improving the current authority map. Readers should not
+need to read Phase 0 through Phase 21 to understand current architecture.
 
-The Phase 0 control documents are:
+## Validation tools
 
-- [REORG_STATUS.md](REORG_STATUS.md)
-- [AUTHORITATIVE_PATHS.md](AUTHORITATIVE_PATHS.md)
-- [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md)
-- [SCRIPT_INVENTORY.md](SCRIPT_INVENTORY.md)
-- [OUTPUT_CONTRACTS.md](OUTPUT_CONTRACTS.md)
-- [OVERLAY_LINEAGE.md](OVERLAY_LINEAGE.md)
-- [SACRED_WORKFLOWS.md](SACRED_WORKFLOWS.md)
+Repository-maintenance commands live under
+[`tools/reorg/`](../../tools/reorg/README.md), not in this documentation
+directory. Machine-readable manifests should be regenerated only by their
+documented tools; do not treat old inventory output as live discovery.
 
-The compact machine-readable manifests are the CSV/JSON files in this directory. They are deliberately source-control friendly and do not contain raw output trees.
+## Preservation rule
 
-## Current navigation
-
-For the physical repository map, start with [`../../README.md`](../../README.md),
-then use the subsystem READMEs and [`../research_notes/COMBINED_SIGNAL_RESEARCH.md`](../research_notes/COMBINED_SIGNAL_RESEARCH.md).
-The Phase 5 topology record is [`PHASE5_TOPOLOGY.md`](PHASE5_TOPOLOGY.md).
-
-## Later-phase checklist
-
-After the audit report looks reasonable:
-
-1. Resolve the `USER DECISION REQUIRED` items in `REORG_STATUS.md`.
-2. Normalize artifact/storage behavior without moving source paths.
-3. Add compatibility wrappers before any path move.
-4. Run the Phase 0 tests, audit, and sacred smoke checks before and after each small change.
-5. Only then start moving code into a domain-oriented package structure.
+Historical does not mean disposable. Phase records, overlay lineage, output
+contracts, and forensic notes remain useful when repairing compatibility or
+explaining why multiple implementations coexist.

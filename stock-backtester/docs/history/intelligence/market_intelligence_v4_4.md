@@ -63,4 +63,3 @@ Bad sign:
 - gains come from one or two changed windows only
 
 If the sweep works at moderate strength, integrate a configurable ML influence multiplier into the allocator. If it does not, the next fix is more source coverage and richer features, not looser allocation policy.
-

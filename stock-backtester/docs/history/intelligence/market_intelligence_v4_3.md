@@ -96,4 +96,3 @@ The run is meaningful only if the input signal file contains the requested histo
 - News features use only articles published on or before each signal date.
 - Walk-forward training uses train/test splits with an embargo.
 - Monte Carlo bootstraps completed walk-forward test windows.
-

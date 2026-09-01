@@ -97,6 +97,6 @@ Current classification of the remaining files:
 ## Full inventory and runbooks
 
 - [Script inventory](../docs/reorg/SCRIPT_INVENTORY.md)
-- [Current architecture](../docs/reorg/CURRENT_ARCHITECTURE.md)
+- [Current architecture](../docs/architecture.md)
 - [Sacred workflows](../docs/reorg/SACRED_WORKFLOWS.md)
 - [Combined signal research](../docs/research_notes/COMBINED_SIGNAL_RESEARCH.md)
