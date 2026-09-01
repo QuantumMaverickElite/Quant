@@ -1,10 +1,13 @@
-# Output Contracts
+# Output paths used between programs
 
-These are existing filesystem interfaces, not proposed destinations. Generated does not mean disposable.
+These paths are existing interfaces between programs, not suggestions for a new
+directory layout. A file may be generated and still be required by the next
+pipeline stage.
 
 Original Phase 0 machine-readable source:
 [output_contracts.csv](output_contracts.csv). Its versioned documentation paths
-are a historical snapshot; the current table below reflects repaired ownership.
+are a historical snapshot; the current table below uses the paths repaired
+during Reorg V1.
 
 | path_pattern | contract_family | producers | consumers | formats_seen | reproducibility_role | regeneration_safety | migration_risk |
 |---|---|---|---|---|---|---|---|

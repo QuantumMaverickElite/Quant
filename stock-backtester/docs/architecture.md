@@ -1,27 +1,27 @@
-# Current architecture
+# System architecture
 
-Stock Backtester is a research operating system with reusable Python
+Stock Backtester is a quantitative research codebase with reusable Python
 implementation, stable command paths, research-specific programs, deterministic
-contracts, generated artifacts, and a Rust acceleration boundary. This document
-describes current ownership; it does not promote unresolved research variants.
+contracts, generated artifacts, and a Rust acceleration boundary. The sections
+below show where those pieces live and how the main workflows connect. They do
+not choose between research variants that are still being compared.
 
-## Repository layers
+## Where things live
 
 | Path | Responsibility |
 | --- | --- |
-| `src/backtester/` | Reusable implementation and typed domain interfaces |
-| `scripts/` | Stable commands, compatibility wrappers, and remaining command-heavy programs |
-| `research/` | Experiments, ablations, controls, evaluations, and diagnostics |
+| `src/backtester/` | Reusable implementation and shared domain types |
+| `scripts/` | Commands you run directly, plus compatibility wrappers and command-heavy workflows |
+| `research/` | Experiment-specific code, ablations, controls, evaluations, and diagnostics |
 | `tests/` | Small deterministic offline contract and regression tests |
-| `tools/` | Repository maintenance rather than quantitative research |
+| `tools/` | Maintenance scripts for auditing or reorganizing the repository; not part of the research pipeline |
 | `configs/` | Audit, storage, workflow, and registry policy |
-| `outputs/` | Ignored generated artifacts and filesystem contracts; not source authority |
+| `outputs/` | Ignored files produced by commands; several subpaths feed later pipeline stages |
 | `rust_engine/` | Rust stress and repeated-computation implementation |
 | `docs/` | Current reference documentation plus clearly indexed history |
 
-The intended boundary is: reusable quantitative behavior belongs under
-`src/`; commands orchestrate it; research programs answer questions; tests
-protect stable behavior.
+Reusable quantitative code belongs under `src/`. Commands orchestrate it,
+research programs answer specific questions, and tests protect stable behavior.
 
 ## Core computational paths
 
@@ -36,8 +36,8 @@ price or event data
 ```
 
 Analytics, decisions, strategies, and engines live in their corresponding
-`src/backtester/` packages. Some older end-to-end orchestration remains in
-scripts and is future extraction debt.
+`src/backtester/` packages. A few older end-to-end workflows remain in scripts
+because they are tightly coupled to their commands.
 
 ### Large-universe mean reversion
 
@@ -75,9 +75,10 @@ Peer/spread computation has three intentionally distinct regimes:
    `scripts/run_peer_spread_features_from_cached_matrix.py`; implementation
    extraction is deferred.
 
-These regimes are not established as equivalent. The staged schema retains
+These regimes have not been shown to be equivalent. The staged schema retains
 `ticker_return` and `avg_peer_corr`; the one-pass schema retains
-`stock_return` and `top_k_avg_corr`. H20 versus H100 authority is unresolved.
+`stock_return` and `top_k_avg_corr`. The project has not chosen H20 or H100 as
+the default baseline.
 
 ### Market state, allocators, and threshold research
 
@@ -92,18 +93,18 @@ simulation mechanics live separately in
 `scripts/build_market_state_feature_matrix.py` and
 `scripts/backtest_market_state_portfolio.py`.
 
-Those fast-volatility and GARCH paths are separate research generations, not
-established equivalents. Scan, paper-trade, smoke, and Monte Carlo commands
-retain their historical behavior and authority remains research-only or
-unresolved; MarketState is not promoted allocator authority by this ownership
-split.
+The fast-volatility and GARCH paths come from separate lines of research and
+have not been shown to be equivalent. Scan, paper-trade, smoke, and Monte Carlo
+commands keep their existing behavior; moving reusable code did not make any
+of them the default allocator.
 Threshold-rebalance commands remain under `scripts/`; comparisons and
-Monte Carlo studies live under `research/threshold_rebalance/`. Fast V2,
-feature-matrix, Fast V3, and matrix-engine authority remains unresolved.
+Monte Carlo studies live under `research/threshold_rebalance/`. The project has
+not selected Fast V2, feature-matrix, Fast V3, or the matrix engine as the
+preferred implementation.
 
-## Intelligence architecture
+## Intelligence research
 
-Three intelligence lineages coexist and must not be collapsed:
+Three intelligence approaches remain in the repository:
 
 ### Current event-learning research
 
@@ -115,7 +116,7 @@ provider or worker payloads
   -> optional structured LLM classification
   -> event-day aggregation
   -> baseline or walk-forward learning
-  -> bounded future allocator research
+  -> controlled allocator experiments
 ```
 
 Implementation is grouped under:
@@ -129,14 +130,14 @@ Implementation is grouped under:
 - `src/backtester/intelligence/calibration/` — calibration datasets and
   time-safe weight fitting.
 
-Evaluation lives in `research/event_learning/evaluation/`. Event-learning is
-the current research direction, not promoted allocator authority.
+Evaluation lives in `research/event_learning/evaluation/`. Event learning is
+the current research direction, but it does not yet control allocation.
 
 ### Operational heuristic fallback
 
 `MarketIntelligenceEngine`, provider/source loading, evidence graphs, price
-risk, reporting, and signal integration remain wired and protected. They are a
-legacy operational fallback, not the event-learning research architecture.
+risk, reporting, and signal integration remain available as an operational
+fallback. They are separate from the event-learning work.
 Provider and ingestion modules remain near the intelligence package root
 because worker and path contracts constrain movement.
 
@@ -144,9 +145,9 @@ because worker and path contracts constrain movement.
 
 Reusable historical ML-policy helpers live under
 `src/backtester/intelligence/ml_policy/`; historical command paths remain
-wrappers under `scripts/`. This research line is neither current
-event-learning authority nor allocator authority. Its versioned documentation
-is under `docs/history/intelligence/`.
+wrappers under `scripts/`. This code is kept for older experiments; it is not
+the current event-learning approach and does not control allocation. Versioned
+notes live under `docs/history/intelligence/`.
 
 Training commands remain under `scripts/`; shared launch/manifest mechanics
 live in `backtester.intelligence.training_orchestration`. Batch, pool, and
@@ -154,9 +155,9 @@ long-run training policy remains unresolved.
 
 ## Experiment and configuration registry
 
-`src/backtester/experiments.py` provides metadata-only discovery of registered
-components, pipelines, commands, experiments, typed parameters, and
-configurations. It does not execute experiments or decide research authority.
+`src/backtester/experiments.py` lists registered components, pipelines,
+commands, experiments, typed parameters, and configurations. It does not run
+experiments or choose which result becomes the baseline.
 
 Use:
 
@@ -184,42 +185,41 @@ use a distinct remote `~/quant-worker` contract and copy newer results into
 `outputs/intelligence/worker_results/`. It is operational infrastructure, not a
 peer research project, and its path is intentionally retained.
 
-The 66 former ignored intelligence overlays are preserved under the tracked,
-human-readable repository-root `archive/intelligence_overlays/` tree. Their old
-source directories are intentionally absent and archive verification is
-source-independent after migration.
+The 66 old intelligence overlays are stored under the tracked repository-root
+`archive/intelligence_overlays/` tree. Their former ignored directories have
+been removed, and the archive verifier no longer needs them.
 
 Standalone historical dividend research now lives under
 [`research/dividend_capture/`](../research/dividend_capture/README.md), distinct
 from the package event-strategy baseline. Deterministic contracts protect its
-path-independent behavior; no generation is promoted as authority. The root
-`dividend-capture/` directory retains ignored historical outputs plus empty
-local `data/` and `notes/` placeholders as a documented compatibility lane.
+path-independent behavior; none is treated as the current production strategy.
+The root `dividend-capture/` directory retains ignored historical outputs plus
+empty local `data/` and `notes/` placeholders because older experiments use
+that location.
 Phase 26 retained it because exact regeneration is unproven and
 `stock-backtester/outputs/dividend/` has different lineage. See the
 [Phase 25B record](reorg/PHASE25B_ROOT_PHYSICAL_CLEANUP.md) and current
 [output taxonomy](reorg/PHASE26_OUTPUT_TAXONOMY.md).
 
-## Output ownership
+## How outputs connect the pipeline
 
-Generated artifacts are not source authority, but major output paths are often
-interfaces between commands, research stages, Python, Rust, and worker-derived
-tables. The current 34-family inventory, writer/reader map, preservation
-decisions, and provenance findings live in the
-[Phase 26 output taxonomy](reorg/PHASE26_OUTPUT_TAXONOMY.md). Retention and the
-metadata standard for new significant runs live in
-[output_policy.md](output_policy.md). H20/H100, threshold-generation, and
-intelligence-training authority remain unresolved.
+Commands often pass data through files: Python writes Rust inputs, signal
+builders feed portfolio tests, and worker parsers feed event-learning jobs.
+Moving one of these paths requires updating its readers too. The
+[output policy](output_policy.md) explains retention and metadata for new runs;
+the [Phase 26 inventory](reorg/PHASE26_OUTPUT_TAXONOMY.md) maps all 34 output
+families. The project has not chosen preferred H20/H100, threshold, or
+intelligence-training runs.
 
-## Current, fallback, historical, unresolved
+## Status labels used in the docs
 
 | Status | Meaning |
 | --- | --- |
-| Current implementation | Actively owned reusable code or stable command path |
+| Current implementation | Reusable code or a command used by current workflows |
 | Current research | Active research direction without production promotion |
 | Operational fallback | Still wired/protected, but not the preferred research architecture |
-| Historical research | Preserved tooling or evidence; not current authority |
-| Unresolved | Multiple variants remain and no authority choice has been made |
+| Historical research | Older code or results kept so past work can be inspected or repeated |
+| Unresolved | Multiple variants remain and the project has not chosen one |
 
-Known unresolved areas include H20/H100 baselines, threshold V2/V3 lineage,
-training modes and official durable output baselines.
+Open research decisions include H20/H100 baselines, threshold V2/V3, training
+modes, and which output runs should be kept as long-term baselines.

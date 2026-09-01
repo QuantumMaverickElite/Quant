@@ -10,7 +10,7 @@ The current offline tests are:
 - `test_ml_policy_family.py` — historical ML-policy compatibility/regression checks.
 - `test_experiment_registry.py` — discovery registry integrity and JSON checks.
 - `test_parameter_config_registry.py` — typed configuration validation checks.
-- `test_reorg_phase0_inventory.py` — bounded inventory/overlay contract checks.
+- `test_reorg_phase0_inventory.py` — repository inventory and overlay contract checks.
 - `test_intelligence_training_orchestration.py` — manifest and child-command
   orchestration contracts.
 - `test_peer_spread_contracts.py` — deterministic cached peer-search, staged
@@ -44,6 +44,6 @@ Run one test module by replacing the module name, for example:
 PYTHONPATH=src python -m unittest tests.test_experiment_registry
 ```
 
-Regression/contract tests check stable behavior or interfaces. Research
-experiments belong under `scripts/` or a documented research area; they should
-not be named as tests merely because they print a diagnostic table.
+Regression and contract tests check stable behavior or interfaces. Put research
+experiments under `research/` or expose them through a documented command; a
+program that only prints a diagnostic table is not a test.

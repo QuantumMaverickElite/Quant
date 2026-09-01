@@ -1,7 +1,7 @@
 # Event-learning research
 
-This is the current intelligence research direction. It is not production or
-allocator authority.
+Event learning is the current intelligence research direction. It produces
+features and evaluations; it does not allocate portfolios directly.
 
 ## Scope
 
@@ -15,7 +15,7 @@ source or worker payloads
   -> optional LLM classifications
   -> event-day aggregation
   -> baseline or walk-forward models
-  -> bounded allocator experiments
+  -> allocator experiments
 ```
 
 Reusable implementation belongs under
@@ -30,15 +30,16 @@ analysis rather than provider operations.
 benchmark sampling, and classification-run comparisons. These are
 artifact-consuming research programs, not offline unit tests.
 
-## Authority boundaries
+## Research constraints
 
 - Enforce `event_time <= signal_time`.
 - Do not let LLM output directly control allocation.
 - Treat heuristic `MarketIntelligenceEngine` behavior as a separate
   operational fallback.
-- Treat `src/backtester/intelligence/ml_policy/` as historical research.
+- Use `src/backtester/intelligence/ml_policy/` only for older ML-policy
+  experiments.
 - Promote no event feature or model without baseline, ablation, leakage, and
   reproducibility evidence.
 
-Detailed design milestones under `docs/intelligence/` are historical research
-records. Current ownership is defined here and in the intelligence README.
+Detailed design milestones under `docs/intelligence/` record earlier research.
+Use this README and the intelligence package README to find the current code.

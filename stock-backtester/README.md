@@ -5,10 +5,10 @@ It supports reusable analytics and backtest components, command-line research
 pipelines, large-universe matrix workflows, intelligence/event-learning
 research, portfolio evaluation, and Rust-accelerated stress testing.
 
-This is a research system, not a claim that every strategy or implementation is
-production-authoritative. Unresolved alternatives are documented as unresolved.
+This is a research system. Several strategy variants are still under
+comparison, and the documentation says so where that matters.
 
-## Ten-minute map
+## Where to start
 
 | Question | Answer |
 | --- | --- |
@@ -20,8 +20,8 @@ production-authoritative. Unresolved alternatives are documented as unresolved.
 | Policies and registry configuration | [`configs/`](configs/README.md) |
 | Generated and cached artifacts | `outputs/`; see [output policy](docs/output_policy.md) |
 | Current architecture | [`docs/architecture.md`](docs/architecture.md) |
-| Documentation authority map | [`docs/README.md`](docs/README.md) |
-| Historical reorganization evidence | [`docs/reorg/`](docs/reorg/README.md) |
+| Documentation index | [`docs/README.md`](docs/README.md) |
+| Reorganization history | [`docs/reorg/`](docs/reorg/README.md) |
 | Historical intelligence generations | [`docs/history/intelligence/`](docs/history/intelligence/README.md) |
 
 ## Environment
@@ -40,7 +40,7 @@ Install the package only when the environment needs it:
 python -m pip install -e .
 ```
 
-Discover the registered research surface without running an experiment:
+List registered experiments without running one:
 
 ```bash
 python -m backtester.experiments list
@@ -56,7 +56,7 @@ python -m backtester.experiments validate
 - **Market state and allocators:** volatility, entropy, routing, matrix
   allocator, and threshold-rebalance research. Start with
   [system documentation](docs/systems/) and
-  [engine ownership](src/backtester/engines/README.md).
+  [engine guide](src/backtester/engines/README.md).
 - **Correlation and deformation:** reusable implementation is under
   [`src/backtester/correlation/`](src/backtester/correlation/README.md);
   evaluations and diagnostics are under
@@ -89,12 +89,11 @@ remaining under `scripts/` are not interchangeable with offline tests.
 
 ## Outputs and history
 
-Generated artifacts are intentionally not source authority. `outputs/`
-contains a mixture of caches, matrices, training runs, research evidence,
-reports, and temporary results; run-level provenance and promotion authority
-remain incomplete even though every major family is classified. Read
+`outputs/` contains caches, matrices, training runs, research results, reports,
+and temporary files. Every major family is documented, but many older runs do
+not have complete provenance or a formal baseline designation. Read
 [the output policy](docs/output_policy.md) before cleaning or promoting data.
 
 Current documentation is indexed in [`docs/README.md`](docs/README.md).
-Versioned intelligence notes and reorganization phase records are preserved for
-archaeology but are not current operating instructions.
+Versioned intelligence notes and reorganization phase records describe older
+work. Use the current documentation index for day-to-day development.

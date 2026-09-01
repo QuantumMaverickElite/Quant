@@ -1,8 +1,9 @@
 # Scripts: commands and research tools
 
-`scripts/` is a compatibility-heavy research workspace, not one package. The
-Phase 0 inventory is the exhaustive machine-readable index; this page highlights
-the commands most likely to be useful on re-entry.
+`scripts/` contains commands you run directly. Most reusable calculations live
+under `src/backtester/`; some older commands remain here because other scripts
+or documented workflows still call their existing paths. This page highlights
+the commands most useful when returning to the project.
 
 ## Current commands and pipelines
 
@@ -34,7 +35,8 @@ wrappers over `src/backtester/intelligence/ml_policy/`:
 - `sweep_ml_policy_strength.py`
 - `permutation_test_ml_policy.py`
 
-They are historical ML-policy research tooling, not event-learning authority.
+They support older ML-policy experiments and are not part of the current
+event-learning approach.
 
 ## By subsystem
 
@@ -57,7 +59,7 @@ They are historical ML-policy research tooling, not event-learning authority.
 - **Combined-signal research:** allocator comparisons and diagnostics now live
   in [`../research/combined_signals/`](../research/combined_signals/), along
   with allocator-signal builders and Monte Carlo comparisons; this is research
-  analysis, not the stable command surface.
+  analysis rather than general-purpose commands.
 - **Threshold-rebalance research:** comparisons and feature-matrix Monte Carlo
   now live in [`../research/threshold_rebalance/`](../research/threshold_rebalance/).
   The executable strategy lineage remains here: `threshold_rebalance_fast_v2.py`,
@@ -88,9 +90,9 @@ Repository-maintenance tools now live in
 in this research-command directory.
 
 The remaining test-named programs are not interchangeable: several use
-`yfinance` or real data, while others are synthetic smoke executables. Inspect
-the header and arguments before running them; do not treat a `test_*.py` name as
-proof of an offline regression test.
+`yfinance` or real data, while others are synthetic smoke executables. Check
+the header and arguments before running one. A `test_*.py` filename does not
+guarantee a small offline regression test.
 
 Current classification of the remaining files:
 

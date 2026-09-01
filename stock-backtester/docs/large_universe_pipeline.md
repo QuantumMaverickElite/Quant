@@ -1,8 +1,8 @@
 # Large-universe mean-reversion runbook
 
-This runbook describes the current command and artifact flow. It does not
-declare H20 versus H100 authority or claim equivalence between peer/spread
-implementations.
+This runbook describes the current commands and files passed between stages.
+The project has not chosen H20 or H100 as the default, and the peer/spread
+implementations have not been shown to be equivalent.
 
 ## Pipeline
 
@@ -20,9 +20,9 @@ build universe
   -> reports and market-fabric diagnostics
 ```
 
-## Stages and owners
+## Stages and commands
 
-| Stage | Stable command | Reusable owner / status |
+| Stage | Stable command | Reusable implementation / notes |
 | --- | --- | --- |
 | Universe selection | `scripts/build_universe.py` | Command-owned research policy |
 | Price/Rust matrix export | `scripts/export_rust_matrix_inputs.py` | Compatibility-sensitive matrix contract |
@@ -63,13 +63,13 @@ Common handoff families include:
 /tmp/quant_peers/
 ```
 
-These are temporary local locations but stable reproducibility interfaces.
+These paths live under `/tmp`, but several commands pass data through them.
 Record their exact metadata files, input hashes, universe construction flags,
 return settings, peer window/filter settings, and downstream output paths.
 
 Generated pipeline artifacts also appear under `outputs/correlation/`,
 `outputs/signals/`, `outputs/context/`, `outputs/backtests/`, and Rust-input or
-stress folders. Retention authority is documented in
+stress folders. Guidance on what to keep is documented in
 [output_policy.md](output_policy.md).
 
 ## Research discipline
@@ -78,7 +78,7 @@ stress folders. Retention authority is documented in
   full-market experiment.
 - Treat matrix metadata, ticker/date alignment, dtype, and binary shape as
   contracts.
-- Preserve missing-data, overlap, ranking, and schema behavior behind tests.
+- Keep missing-data, overlap, ranking, and schema behavior covered by tests.
 - Compare against appropriate baselines and same-universe controls.
 - Record horizon choices without declaring H20 or H100 canonical.
 - Keep evaluation/diagnostic programs in the corresponding `research/` lane.
@@ -93,10 +93,10 @@ position, portfolio, and summary mechanics live in
 `src/backtester/backtests/mean_reversion_daily_portfolio.py`; the script retains
 downloads, paths, Parquet/CSV writes, and terminal presentation.
 
-This is not a benchmark-authority decision and does not change or unify the
-separate threshold, matrix, one-pass peer/spread, or Rust simulation paths.
+Extracting the evaluator did not make it the preferred benchmark or merge it
+with the threshold, matrix, one-pass peer/spread, or Rust simulation paths.
 
-## Safe validation
+## Validation
 
 The deterministic peer/spread contracts are:
 

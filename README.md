@@ -10,33 +10,28 @@ documentation.
 1. Read the [stock-backtester project map](stock-backtester/README.md).
 2. Use its [documentation index](stock-backtester/docs/README.md) for current
    architecture, research workflow, outputs, and subsystem guides.
-3. Use [reorganization history](stock-backtester/docs/reorg/README.md) only for
-   migration archaeology.
+3. Use [reorganization history](stock-backtester/docs/reorg/README.md) when you
+   need to understand an older path or migration decision.
 
-## Root layout and ownership
+## What is at the repository root
 
 | Path | Status |
 | --- | --- |
 | `stock-backtester/` | Main active quant research system |
-| `archive/` | Tracked, human-readable historical intelligence-overlay preservation; not runtime or research authority |
-| `dividend-capture/` | Preserved historical dividend output compatibility state plus empty local `data/` and `notes/` placeholders; no tracked research source |
-| `worker_ingest/` | Ignored/local operational cache and synchronization interface used by tracked Chromebook parsers; its root path is a compatibility contract |
+| `archive/` | Older intelligence versions kept so earlier experiments can be inspected or recovered; nothing here runs as part of the current system |
+| `dividend-capture/` | Result files from the older dividend research; the research code itself now lives in `stock-backtester/research/dividend_capture/` |
+| `worker_ingest/` | Local files exchanged with the Chromebook worker; existing parsers read this exact root path |
 | `.codex/`, `.venv/` | Local tooling/environment state, not repository projects |
 
-Tracked dividend research lives under
+Dividend research code lives under
 [`stock-backtester/research/dividend_capture/`](stock-backtester/research/dividend_capture/README.md).
-Phase 26 retained the 60-file root dividend output tree because its four
-historical generations are not proven exactly regenerable, its path is
-documented by the migrated research commands, and the existing
-`stock-backtester/outputs/dividend/` lane has different lineage. The worker
-cache and dividend output state do not appear in normal Git inventories.
-The 66 former intelligence overlays are now recoverable from the tracked
-archive; the old ignored source directories are intentionally absent. Root
-decisions and overlay preservation evidence are in the
-[Phase 25 root topology record](stock-backtester/docs/reorg/PHASE25_ROOT_TOPOLOGY.md)
-and [Phase 25B physical-cleanup record](stock-backtester/docs/reorg/PHASE25B_ROOT_PHYSICAL_CLEANUP.md).
-Current output classification and retention policy are in the
-[Phase 26 taxonomy](stock-backtester/docs/reorg/PHASE26_OUTPUT_TAXONOMY.md).
+Its 60 historical output files stay at `dividend-capture/outputs/` because the
+research commands still document that path and an exact rebuild from live
+market data is not guaranteed. The worker cache and dividend results are local
+generated files, so they do not appear in normal Git inventories.
 
-No root-level lane should be inferred to be production authority merely because
-it has its own directory.
+Old intelligence overlays are stored under `archive/`; their former ignored
+directories have been removed. See the
+[reorganization history](stock-backtester/docs/reorg/README.md) for migration
+details and the [output policy](stock-backtester/docs/output_policy.md) before
+moving or deleting generated files.

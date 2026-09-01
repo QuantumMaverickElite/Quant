@@ -1,4 +1,9 @@
-# Reorganization Status Board
+# Reorg V1 phase history
+
+This is the accumulated work log for Reorg V1. It preserves the status text
+written during each phase, including plans that were later completed or
+superseded. For the final repository map and known follow-up work, use
+[REORG_V1_FREEZE.md](REORG_V1_FREEZE.md).
 
 ## Phase 0 status
 

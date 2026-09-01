@@ -1,13 +1,13 @@
 # Intelligence
 
-The intelligence subsystem contains three distinct lineages. They share some
-data and commands but must not be treated as one promoted allocator.
+The intelligence subsystem contains three approaches. They share some data and
+commands, but they are not interchangeable and none is the portfolio allocator.
 
-## Authority and status
+## Which approach to use
 
-| Lineage | Status | Ownership |
+| Approach | Status | Code |
 | --- | --- | --- |
-| Event learning | Current research direction; not allocator authority | `events/`, `llm/`, `features/`, `calibration/`; evaluation under `research/event_learning/` |
+| Event learning | Current research direction; does not allocate portfolios directly | `events/`, `llm/`, `features/`, `calibration/`; evaluation under `research/event_learning/` |
 | Heuristic intelligence | Still-wired operational fallback | package-root engine, providers, evidence graph, scoring, reporting, and signal integration |
 | ML policy | Historical research tooling | `ml_policy/` with compatibility commands under `scripts/` |
 
@@ -29,11 +29,11 @@ Evaluation and benchmark programs live under
 
 ## Operational heuristic fallback
 
-`intelligence_engine.py` and related source loading, claim/evidence extraction,
-price-risk scoring, opportunity/regime scoring, reporting, and signal
-integration remain operationally wired. Provider and ingestion files remain at
-the package root because worker packaging and exact import paths are
-compatibility constraints.
+`intelligence_engine.py` and the related source loading, claim/evidence
+extraction, price-risk scoring, opportunity/regime scoring, reporting, and
+signal integration are still wired into operational commands. Provider and
+ingestion files remain at the package root because worker bundles and existing
+imports use those exact paths.
 
 Start with [the operational engine note](../../../docs/market_intelligence_engine.md).
 Legacy standalone scorers are documented under
@@ -42,22 +42,23 @@ Legacy standalone scorers are documented under
 ## Historical ML-policy research
 
 The [ML-policy package](ml_policy/README.md) contains reusable mechanics for
-historical application, validation, sweep, and permutation studies. Its stable
-historical commands remain under `scripts/`. It is not current event-learning
-or allocator authority. Versioned research documentation is indexed under
+older application, validation, sweep, and permutation studies. Its commands
+remain under `scripts/` so earlier experiments still run. It is not part of
+the current event-learning approach and does not allocate portfolios.
+Versioned research documentation is indexed under
 [`docs/history/intelligence/`](../../../docs/history/intelligence/README.md).
 
 ## Providers, workers, and training
 
-Provider/source acquisition modules remain near the package root. Worker
-scripts and root `worker_ingest/` infrastructure have operational deployment,
-bundle, and path assumptions; do not reorganize them without a dedicated
-contract audit.
+Provider and source-acquisition modules remain near the package root. Worker
+scripts package these modules and read results from exact paths under the root
+`worker_ingest/` directory, so moving them requires updating and testing that
+workflow as a whole.
 
 Historical training commands remain user-facing under `scripts/`. Shared
 manifest writing and child-step launching live in
 `training_orchestration.py`. Batch, pool, and detached long-run modes remain
-separate; no baseline authority is inferred.
+separate. Their presence does not identify one run as the preferred baseline.
 
 ## Inputs, outputs, validation
 

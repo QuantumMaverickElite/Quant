@@ -1,10 +1,13 @@
-# Authoritative Subsystem Map
+# Phase 0 subsystem map
 
-Phase 0 baseline: branch `reorg/phase0-authority-inventory`, HEAD descended from `phase2/api-llm-event-classifier`. This document records current ownership hypotheses supported by tracked code, documentation, imports, and recent branch history. It does not authorize moves or behavior changes.
+Phase 0 baseline: branch `reorg/phase0-authority-inventory`, HEAD descended from
+`phase2/api-llm-event-classifier`. This is the subsystem map used at the start
+of Reorg V1, so some wording and paths describe the repository as it existed
+then. For the current layout, use [architecture.md](../architecture.md).
 
 Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script map is [SCRIPT_INVENTORY.md](SCRIPT_INVENTORY.md); output interfaces are in [OUTPUT_CONTRACTS.md](OUTPUT_CONTRACTS.md).
 
-## Authority summary
+## Phase 0 findings
 
 | Subsystem | Canonical path | Status | Evidence / boundary |
 |---|---|---|---|
@@ -42,15 +45,17 @@ Machine-readable source: [subsystems.csv](subsystems.csv). The detailed script m
 | Workers | `scripts/workers/`, local `worker_ingest/` | OPERATIONAL FALLBACK | HIGH | HIGH |
 | Visualization | `visuals/`, `src/backtester/visuals/` | ACTIVE RESEARCH | HIGH | MEDIUM |
 
-## Authority boundaries
+## How to read the table
 
-- “Canonical” means current source location, not necessarily production-ready or scientifically validated.
+- “Canonical” meant the source location identified during Phase 0, not a claim
+  that the code was production-ready or scientifically validated.
 - The operational heuristic intelligence path remains protected because it is still exported and listed in `configs/sacred_scripts.json`.
-- Event-learning/LLM work is the current research direction on this branch, not a replacement for operational intelligence.
+- Event-learning and LLM work was the current research direction on that
+  branch, while operational intelligence remained available.
 - Matrix-oriented Python/Rust workflows and package-oriented Python workflows are intentionally recorded as coexisting systems.
 - No subsystem is classified obsolete from version naming alone.
 
-## User decision required
+## Questions that remained after Phase 0
 
 - Confirm whether the operational heuristic intelligence path is still actively used.
 - Confirm whether remote Chromebook/SSH worker conventions are permanent compatibility requirements.
