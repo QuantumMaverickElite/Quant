@@ -189,6 +189,22 @@ Completed on `reorg/phase0-authority-inventory`:
   No quantitative implementation, generated output, overlay, worker, or data
   content changed.
 
+## Phase 23 status — MarketState implementation extraction
+
+- Added deterministic contracts for MarketState composition, feature rows,
+  rebalance calendars, momentum, capped portfolio weights, lagged returns,
+  summaries, schemas, ordering, and script helper compatibility.
+- Fast-volatility feature-matrix mechanics now live in
+  `src/backtester/decision/market_state_features.py`; the command remains
+  `scripts/build_market_state_feature_matrix.py`.
+- Historical GARCH portfolio mechanics now live in
+  `src/backtester/backtests/market_state_portfolio.py`; the command and its
+  `run_backtest` compatibility path remain in
+  `scripts/backtest_market_state_portfolio.py`.
+- Fast-volatility, GARCH, scan/paper-trade, and threshold-rebalance paths remain
+  distinct research generations. No allocator authority or quantitative
+  methodology was changed.
+
 ## Phase 15 status — mean-reversion research topology
 
 - Six evaluation, robustness, inspection, and same-universe control programs

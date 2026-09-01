@@ -15,6 +15,9 @@ The current offline tests are:
   orchestration contracts.
 - `test_peer_spread_contracts.py` — deterministic cached peer-search, staged
   spread, one-pass schema, and downstream signal contracts.
+- `test_market_state_contracts.py` — deterministic MarketState composition,
+  fast feature-row, rebalance, momentum, portfolio weighting/return, schema,
+  and script-to-package compatibility contracts.
 
 From `stock-backtester/`, run the current offline suite with:
 
@@ -24,7 +27,7 @@ PYTHONPATH=src python -m unittest \
   tests.test_experiment_registry tests.test_parameter_config_registry \
   tests.test_reorg_phase0_inventory \
   tests.test_intelligence_training_orchestration \
-  tests.test_peer_spread_contracts
+  tests.test_peer_spread_contracts tests.test_market_state_contracts
 ```
 
 Run one test module by replacing the module name, for example:

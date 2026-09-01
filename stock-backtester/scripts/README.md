@@ -23,6 +23,8 @@ the commands most likely to be useful on re-entry.
 | `summarize_rust_stress_runs.py` | summarize Rust results | research evaluator |
 | `run_market_intelligence_live.py` | operational intelligence loop | live/provider assumptions |
 | `run_market_intelligence_batch.py` | intelligence batch research | research / intelligence |
+| `build_market_state_feature_matrix.py` | build fast-volatility MarketState features | wrapper over `backtester.decision.market_state_features` plus download/output orchestration |
+| `backtest_market_state_portfolio.py` | run historical GARCH MarketState portfolio research | command over `backtester.backtests.market_state_portfolio`; also preserves `run_backtest` compatibility |
 
 Historical ML-policy commands remain at their old paths and are compatibility
 wrappers over `src/backtester/intelligence/ml_policy/`:
@@ -58,6 +60,10 @@ They are historical ML-policy research tooling, not event-learning authority.
   The executable strategy lineage remains here: `threshold_rebalance_fast_v2.py`,
   `threshold_rebalance_from_feature_matrix.py`, `threshold_rebalance_fast_v3.py`,
   and `threshold_rebalance_matrix_engine.py`.
+- **MarketState research:** state composition lives in
+  `backtester.decision.market_state`; reusable fast feature construction and
+  historical GARCH portfolio mechanics live in the package modules documented
+  above. The fast and GARCH paths remain distinct research generations.
 - **Event-learning evaluation:** dataset audits and LLM benchmark programs now
   live in [`../research/event_learning/evaluation/`](../research/event_learning/evaluation/).
   Commands that build event facts, labels, datasets, and classifier inputs

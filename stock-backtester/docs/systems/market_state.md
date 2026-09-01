@@ -1,6 +1,7 @@
-# MarketState System
+# MarketState system
 
-The MarketState system combines volatility and entropy into an allocator-facing object.
+The MarketState system combines volatility and entropy into an allocator-facing
+object. It remains a research decision layer, not promoted allocator authority.
 
 The core formula is:
 
@@ -58,10 +59,27 @@ while preserving defensive behavior in unstable regimes?
 
 ## Related Scripts
 
-```text
-scripts/build_market_state_feature_matrix.py
-research/threshold_rebalance/monte_carlo_from_feature_matrix.py
-scripts/backtest_market_state_portfolio.py
-scripts/scan_market_state.py
-scripts/test_market_state_trades.py
-```
+Reusable ownership and stable commands are:
+
+- `src/backtester/decision/market_state.py` — state schema, composition, and
+  capital posture;
+- `src/backtester/decision/market_state_features.py` — fast-volatility feature
+  rows, rebalance dates, entropy-row conversion, and momentum scores;
+- `scripts/build_market_state_feature_matrix.py` — download/output wrapper for
+  the fast feature path;
+- `src/backtester/backtests/market_state_portfolio.py` — historical GARCH-path
+  portfolio scoring, weighting, return, and summary mechanics;
+- `scripts/backtest_market_state_portfolio.py` — download, reporting, plotting,
+  and compatibility command;
+- `research/threshold_rebalance/monte_carlo_from_feature_matrix.py` — feature
+  matrix threshold-rebalance research.
+
+The fast-volatility feature path and historical GARCH portfolio path are not
+declared equivalent. `scripts/scan_market_state.py`,
+`scripts/test_market_state_trades.py`, `scripts/test_market_state.py`, and
+`scripts/test_real_market_state.py` remain data-dependent research/smoke
+commands. `scripts/monte_carlo_market_state.py` retains its historical import
+of the portfolio command's `run_backtest` compatibility entry point.
+
+Deterministic package and compatibility contracts live in
+`tests/test_market_state_contracts.py`. They do not download prices.

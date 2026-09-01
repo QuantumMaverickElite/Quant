@@ -77,6 +77,19 @@ These regimes are not established as equivalent. The staged schema retains
 Volatility and entropy analytics feed decision and MarketState layers, which
 can influence allocator scores and permissions. Reusable mechanics live under
 `src/backtester/analytics/`, `decision/`, `context/`, and `engines/`.
+`backtester.decision.market_state` owns the allocator-facing state object and
+composition policy. Fast-volatility feature-matrix mechanics live in
+`backtester.decision.market_state_features`; the historical GARCH portfolio
+simulation mechanics live separately in
+`backtester.backtests.market_state_portfolio`. Their stable commands remain
+`scripts/build_market_state_feature_matrix.py` and
+`scripts/backtest_market_state_portfolio.py`.
+
+Those fast-volatility and GARCH paths are separate research generations, not
+established equivalents. Scan, paper-trade, smoke, and Monte Carlo commands
+retain their historical behavior and authority remains research-only or
+unresolved; MarketState is not promoted allocator authority by this ownership
+split.
 Threshold-rebalance commands remain under `scripts/`; comparisons and
 Monte Carlo studies live under `research/threshold_rebalance/`. Fast V2,
 feature-matrix, Fast V3, and matrix-engine authority remains unresolved.

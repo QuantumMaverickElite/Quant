@@ -1,6 +1,23 @@
-# Volatility Strategy Backtest
+# Research backtests
 
-This module contains a research prototype of a volatility-based options trading strategy.
+## MarketState portfolio mechanics
+
+`market_state_portfolio.py` owns reusable mechanics extracted from
+`scripts/backtest_market_state_portfolio.py`: historical GARCH metric
+resolution, date-local state construction, momentum scoring, capped weighting,
+one-day-lag portfolio returns, drawdown, and summary statistics. The script
+retains data download, CLI, progress, plotting, output writing, and its
+historical `run_backtest` compatibility entry point.
+
+This path is distinct from the fast-volatility feature-matrix implementation in
+`backtester.decision.market_state_features`. Neither is promoted as allocator
+authority. Offline behavior is protected by
+`tests/test_market_state_contracts.py`.
+
+## Volatility strategy prototype
+
+`volatility_backtest.py` contains a research prototype of a volatility-based
+options trading strategy.
 
 ---
 
